@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000">
+
+    <title>MASTER TERMINAL PRO</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <link rel="manifest" href="manifest.json">
+    <script>
+        /* Rejestracja Service Workera dla PWA */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    navigator.serviceWorker.register('service-worker.js');
+                }, 100); 
+            });
+        }
+    </script>
+    
+    <style>
+        :root {
+            --bg: #000;
+            --accent: #00ff41;
+            --panel: rgba(10, 10, 10, 0.9);
+            --safe-top: env(safe-area-inset-top, 20px);
+        }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: var(--bg); font-family: 'Courier New', monospace; color: var(--accent); user-select: none; }
+        
+        /* Style Overlay i Boot */
+        #overlay { position: fixed; inset: 0; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .boot-box { text-align: center; width: 80%; max-width: 400px; }
+        h1 { font-size: 1.5em; letter-spacing: 4px; margin-bottom: 30px; }
+        .id-input { background: transparent; border: none; border-bottom: 2px solid #222; color: var(--accent); font-family: inherit; font-size: 1.5em; text-align: center; width: 100%; outline: none; margin-bottom: 40px; }
+        .boot-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; cursor: pointer; text-transform: uppercase; }
+        
+        /* Style Mapy i HUD */
+        #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 1; filter: brightness(0.6) grayscale(0.5); background: #000; }
+        #device-list-panel { position: absolute; top: var(--safe-top); left: 10px; width: 220px; background: var(--panel); z-index: 1000; border: 1px solid var(--accent); display: none; }
+        .panel-header { background: var(--accent); color: black; padding: 5px; font-weight: bold; font-size: 10px; text-align: center; }
+        .device-item { padding: 10px; border-bottom: 1px solid #1a1a1a; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; }
+        .device-item.active { background: rgba(0, 255, 65, 0.3); }
+        #hud { position: absolute; top: var(--safe-top); right: 10px; background: var(--panel); padding: 10px; border: 1px solid var(--accent); z-index: 1000; text-align: right; display: none; }
+        
+        /* Nakładka Fullscreen */
+        #nakladka-pelnodostepna {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.01);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* STYLE BANERA PWA */
+        #baner-instalacji-pwa {
+            position: fixed;
+            bottom: -110px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: var(--panel);
+            border: 1px solid var(--accent);
+            padding: 15px;
+            z-index: 100000;
+            transition: bottom 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #baner-instalacji-pwa.widoczny {
+            bottom: 100px;
+        }
+        .naglowek-pwa { text-align: center; }
+        .naglowek-pwa h2 { font-size: 14px; margin: 0; color: #fff; }
+        .naglowek-pwa h3 { font-size: 12px; margin: 5px 0; color: var(--accent); }
+        .pwa-buttons { display: flex; gap: 10px; }
+
+        /* Elementy PiP */
+        #pip-canvas { display: none; }
+        #pip-video { display: none; }
+        .panel-btn { width: 100%; background: #111; border: none; color: var(--accent); font-family: inherit; font-size: 9px; padding: 8px; cursor: pointer; border-top: 1px solid #222; text-align: left; }
+        .panel-btn:hover { background: #1a1a1a; }
+
+        /* JOYSTICK */
+        #joystick-container {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .joy-row { display: flex; gap: 5px; }
+        .joy-btn {
+            width: 50px;
+            height: 50px;
+            background: var(--panel);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 5px;
+            touch-action: manipulation;
+        }
+        .joy-btn:active { background: var(--accent); color: #000; }
+    </style>
+</head>
+<body>
+
+    <!-- Ekran startowy (Login) -->
+    <div id="overlay">
+        <div class="boot-box">
+            <h1>Nazwa Urządzenia:</h1>
+            <input type="text" id="device-id" class="id-input" placeholder="Podaj swoją nazwę" autocomplete="off">
+            <br>
+            <button class="boot-btn" onclick="engageSystem()">Wejdź</button>
+        </div>
+    </div>
+
+    <!-- Lista urządzeń -->
+    <div id="device-list-panel">
+        <div class="panel-header">TERMINAL SIECIOWY</div>
+        <div id="list-container"></div>
+    </div>
+
+    <!-- HUD Prędkości -->
+    <div id="hud">
+        <div id="target-name" style="font-size: 10px;">MOJA POZYCJA</div>
+        <div style="font-size: 24px; font-weight: bold;"><span id="speed-val">00.0</span> <small style="font-size: 10px;">KM/H</small></div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API_BASE = window.location.origin;
+        let map, myId = "", targetId = null;
+        let deviceLayers = {};
+
+        // 1. Inicjalizacja systemu po podaniu ID
+        async function engageSystem() {
+            myId = document.getElementById('device-id').value.trim().toUpperCase();
+            if (!myId) return;
+
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('device-list-panel').style.display = 'block';
+            document.getElementById('hud').style.display = 'block';
+
+            initMap();
+            // Cykliczna synchronizacja (wysyłka i pobieranie danych) co 1.5 sekundy
+            setInterval(sync, 1500);
+        }
+
+        // 2. Konfiguracja mapy Leaflet
+        function initMap() {
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([51.9, 14.7], 16);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
+        }
+
+        // 3. Główna funkcja wysyłająca lokalizację do serwera
+        async function sync() {
+            // Pobieranie pozycji z przeglądarki
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const payload = {
+                    id: myId,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    speed: pos.coords.speed || 0
+                };
+
+                // WYSYŁKA DANYCH DO SERWERA (POST)
+                fetch(`${API_BASE}/update-location`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error("Błąd wysyłki:", err));
+
+            }, (err) => console.warn("GPS Error:", err), { enableHighAccuracy: true });
+
+            // POBIERANIE DANYCH WSZYSTKICH URZĄDZEŃ (GET)
+            try {
+                const res = await fetch(`${API_BASE}/get-all-locations`);
+                const activeDevices = await res.json();
+                updateMapMarkers(activeDevices);
+                renderList(activeDevices);
+            } catch (e) {}
+        }
+
+        // 4. Aktualizacja markerów na mapie
+        function updateMapMarkers(devices) {
+            Object.keys(devices).forEach(id => {
+                const data = devices[id];
+                const pos = [data.lat, data.lng];
+
+                if (!deviceLayers[id]) {
+                    const color = (id === myId) ? '#00ff41' : '#ff3e3e';
+                    deviceLayers[id] = L.circleMarker(pos, { 
+                        radius: 8, 
+                        color: color, 
+                        fillOpacity: 0.8 
+                    }).addTo(map).bindTooltip(id, { permanent: true, direction: 'top' });
+                } else {
+                    deviceLayers[id].setLatLng(pos);
+                }
+
+                // Śledzenie (centrowanie mapy) na sobie lub wybranym celu
+                if (id === myId && !targetId) {
+                    map.panTo(pos);
+                    document.getElementById('speed-val').innerText = (data.speed * 3.6).toFixed(1);
+                }
+            });
+        }
+
+        // 5. Renderowanie listy urządzeń w panelu
+        function renderList(devices) {
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            Object.keys(devices).forEach(id => {
+                const div = document.createElement('div');
+                div.className = `device-item ${targetId === id ? 'active' : ''}`;
+                div.innerHTML = `<span>> ${id}</span><span>${(devices[id].speed * 3.6).toFixed(0)} km/h</span>`;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>

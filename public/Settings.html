@@ -1,0 +1,1027 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Manifest i Service Worker -->
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+<style>
+    body {
+    user-select: none;
+      margin: 0;
+      background: url('3.jpg');
+      background-size: cover;              /* Dopasuj do ekranu */
+      background-repeat: no-repeat;        /* Nie powtarzaj */
+      background-position: center center;  /* Wyśrodkuj */
+      background-attachment: fixed;    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+         .calendar-modal .modal {
+        max-width: 400px;
+        padding: 20px;
+
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #111;
+        font-size: 1.5em;
+        font-weight: 700;
+        
+    }
+
+    .calendar-header button {
+        background-color: #4444;
+        color: #11111;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 0.9em;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-header button:hover {
+        background-color: #6664;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        text-align: center;
+        
+    }
+
+    .calendar-grid div {
+        padding: 10px 5px;
+        border-radius: 5px;
+        background-color: #3339;
+        color: #000;
+        font-size: 0.9em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-grid .day-name {
+        font-weight: 700;
+        color: #000;
+        background-color: #2725;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-grid .day {
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-grid .day:hover {
+        background-color: #5a5a6a;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .calendar-grid .current-day {
+        background-color: #00F8;
+        color: #fff;
+        font-weight: 700;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);*
+        
+    }
+
+    .calendar-grid .current-day:hover {
+        background-color: #0056b3;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        *-
+    }
+
+    .calendar-grid .outside-month {
+        color: #777;
+        background-color: #1118;
+        cursor: default;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal {
+        background-color: #222;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        color: #00ccff;
+    }
+
+    .close-modal-button {
+        background: none;
+        color: #fff;
+        font-size: 1.5em;
+        border: none;
+        cursor: pointer;
+    }
+  .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        backdrop-filter: blur(8px);
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal {
+        background-color: #5555;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        width: 90%;
+        max-width: 350px;
+        transform: scale(0.7);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease;
+        position: relative;
+        border: 1px solid rgba(70, 70, 100, 0.5);
+    }
+
+    .modal-overlay.active .modal {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(80, 80, 100, 0.5);
+        padding-bottom: 10px;
+    }
+
+    .modal-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #111;
+    }
+
+    .close-modal-button {
+        background: none;
+        border: none;
+        font-size: 30px;
+        color: #b0b0b0;
+        cursor: pointer;
+        transition: color 0.3s ease, transform 0.2s ease;
+        line-height: 1;
+    }
+
+    .close-modal-button:hover {
+        color: #ff6b6b;
+        transform: rotate(90deg);
+    }
+
+    .calculator-display {
+        background-color: #3338;
+        color: #111;
+        font-size: 2em;
+        text-align: right;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        white-space: nowrap;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .calculator-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .calculator-buttons button {
+        background-color: #5555;
+        color: #fff;
+        padding: 18px 0;
+        font-size: 1.4em;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .calculator-buttons button:hover {
+        background-color: #6662;
+        transform: translateY(-1px);
+    }
+
+    .calculator-buttons .operator { background-color: #00F5; }
+    .calculator-buttons .operator:hover { background-color: #00F4; }
+    .calculator-buttons .equals { background-color: #2835; grid-column: span 2; }
+    .calculator-buttons .equals:hover { background-color: #2725; }
+    .calculator-buttons .clear { background-color: #F005 }
+    .calculator-buttons .clear:hover { background-color: #F004; }
+
+.phone-frame {
+      margin-top: 0PX;
+      width: 400px;
+      height: 820px;
+      border-radius: 40px;
+      padding: 15px;
+      overflow: hidden;
+  
+      position: relative;
+    }    
+  
+/* Powiększanie widgetu i okien przy najechaniu kursorem */
+.widget:hover, .window:hover, .window-2:hover {
+  transform: scale(1.03); /* Powiększenie o 20% */
+  z-index: 10; /* Podnosi element nad inne */
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+
+/* Zachowanie dla widgetu (dodanie przestrzeni na dole w celu uniknięcia zasłonięcia tekstu) */
+.widget {
+  margin-top: 40px;
+  width: 100%;
+  height: 21%;
+  background: #5559;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+  position: relative;
+  padding-bottom: 60px; /* Dodajemy przestrzeń na dole */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Powiększanie okien */
+.window {
+ background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 10px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+  color:#eeee;
+}
+  
+    .window i {
+                  margin-top:5px;
+ margin-left:-3px;
+            font-size: 45px;
+        }
+        }
+        .window p {
+            margin-top:0px;
+            font-size:9px;
+
+    }
+.window-2 {
+  background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 10px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+  color:#eeee;
+}
+        .window-2 i {
+                      margin-top:5px;
+
+            font-size: 45px;
+        }
+       .window-2 p {
+            margin-top:0px;
+            font-size:9px;a
+    }
+.clock {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 0; /* Usuwamy margines na dole */
+}
+
+.clock-part {
+   margin-top: -60px;
+  background: white;
+  color: black;
+  font-size: 60px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
+}
+
+.date {
+  text-align: right;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+
+    .below-clock {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+
+    .left-info .location {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .left-info .desc {
+      font-size: 16px;
+    }
+
+    .right-info {
+      text-align: right;
+    }
+
+    .right-info .temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .right-info .range {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .weather-icon {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 100px;
+      color: #FFD700;
+    }
+
+    
+    .container {
+      padding: 15px;
+    }
+
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+    }
+
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1,1); /* cień dla toolbaru */
+      border-radius: 20px;
+    }
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+   border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 3); /* cień przycisku */
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2); /* cień po najechaniu */
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="h-screen animate__animated animate__bounceIn" id="body"> <!-- Przeiscia-->
+<script>    function animateExit(event) {
+      event.preventDefault();
+      const link = event.currentTarget.href;
+      const body = document.getElementById('body');
+      body.classList.remove('animate__bounceIn');
+      body.classList.add('animate__bounceOut');
+      setTimeout(() => {
+        window.location.href = link;
+      }, 700);
+    }
+    </script>  
+<div class="phone-frame">
+  <div class="widget" button id="fullscreenBtn">
+      <div class="clock">
+        <div class="clock-part" id="hours">09</div>
+        <div class="clock-part" id="minutes">34</div>
+      </div>
+      <div class="date" id="date">pon. kwi 14</div>
+
+      <div class="below-clock">
+        <div class="left-info text-white">
+          <div class="location">Gubin</div>
+          <div class="desc">Przeważnie słonecznie</div>
+        </div>
+        <div class="right-info text-white">
+          <div class="temp">15°C</div>
+          <div class="range">22° / 10°</div>
+        </div>
+      </div>
+
+      <div class="weather-icon">☀️</div>
+    </div>
+
+   
+    <div class="container grid grid-cols-4 gap-5 text-white text-xl">
+
+<div class="window" onclick="window.location.href='1/gra.html';"><i class="fas fa-gamepad"></i><p>  </p></div>
+
+<div class="window" onclick="window.location.href='1/Coder.html';"><i class="fas fa-laptop-code"></i><p</p></div>
+<div class="window-2" onclick="window.location.href='1/ftp.html';"><i class="fas fa-folder-open"></i><p</p></div>
+<div class="window-2" onclick="window.location.href='1/OS.html';">
+  <i class="fas fa-clock"></i><p></p></div>
+
+ <div class="window-2"onclick="window.location.href='1/kalkulator.html';"><i class="fas fa-swatchbook"></i><p></p></div>
+<div class="window-2"onclick="window.location.href='1/OSS.html';"><i class="fas fa-satellite"></i><p></p></div>
+<div class="window-2"onclick="window.location.href='1/czat.html';"><i class="fab fa-sketch"></i><p></p></div>
+<div class="window-2"onclick="window.location.href='1/OS.html';"><i class="fas fa-cog fa-spin"> </i><p></p></div>
+      </div>
+    <div class="container grid grid-cols-2 gap-5 text-white text-xl">
+        <div class="window" id="openCalendarModal"><i class="fas fa-calendar-day"></i><p>Kalendarz</p></div>
+
+<div class="window" "open-modal-button" id="openCalculatorModal"><i class="fab fa-nutritionix"></i></i><p>Kalkulator</p></div>
+        
+<div class="modal-overlay" id="calculatorModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Kalkulator</h2>
+            <button class="close-modal-button">&times;</button>
+        </div>
+        <div class="calculator-display" id="calcDisplay">0</div>
+        <div class="calculator-buttons">
+            <button class="clear">C</button>
+            <button class="operator">+/-</button>
+            <button class="operator">%</button>
+            <button class="operator">/</button>
+
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button class="operator">*</button>
+
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button class="operator">-</button>
+
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button class="operator">+</button>
+
+            <button>0</button>
+            <button>.</button>
+            <button class="equals">=</button>
+        </div>
+    </div>
+</div>
+         
+</div>
+
+<div class="modal-overlay calendar-modal" id="calendarModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Kalendarz</h2>
+            <button class="close-modal-button" data-modal="calendarModal">&times;</button>
+        </div>
+        <div class="modal-content">
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <span id="currentMonthYear"></span>
+                <button id="nextMonth">&gt;</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- dni tygodnia i dni miesiąca będą dodawane dynamicznie -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const openCalendarModalBtn = document.getElementById('openCalendarModal');
+        const calendarModalOverlay = document.getElementById('calendarModal');
+        const currentMonthYearSpan = document.getElementById('currentMonthYear');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const closeModalBtns = document.querySelectorAll('.close-modal-button');
+
+        let currentCalendarDate = new Date();
+
+        const monthNames = [
+            "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+            "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        ];
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                if (modalId === 'calendarModal') {
+                    renderCalendar();
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const today = new Date();
+
+            currentMonthYearSpan.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+
+            const startDayOfWeek = (firstDayOfMonth.getDay() === 0) ? 6 : firstDayOfMonth.getDay() - 1;
+
+            calendarGrid.innerHTML = `
+                <div class="day-name">Pn</div>
+                <div class="day-name">Wt</div>
+                <div class="day-name">Śr</div>
+                <div class="day-name">Cz</div>
+                <div class="day-name">Pt</div>
+                <div class="day-name">So</div>
+                <div class="day-name">Nd</div>
+            `;
+
+            // Poprzedni miesiąc – puste pola
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const prevMonthDay = new Date(year, month, 0).getDate() - startDayOfWeek + i + 1;
+                const div = document.createElement('div');
+                div.classList.add('outside-month');
+                div.textContent = prevMonthDay;
+                calendarGrid.appendChild(div);
+            }
+
+            // Dni aktualnego miesiąca
+            for (let day = 1; day <= daysInMonth; day++) {
+                const div = document.createElement('div');
+                div.classList.add('day');
+                div.textContent = day;
+
+                if (
+                    year === today.getFullYear() &&
+                    month === today.getMonth() &&
+                    day === today.getDate()
+                ) {
+                    div.classList.add('current-day');
+                }
+
+                calendarGrid.appendChild(div);
+            }
+
+            // Uzupełnienie do 42 komórek (6 tygodni)
+            const totalCells = startDayOfWeek + daysInMonth;
+            const remainingCells = 42 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const div = document.createElement('div');
+                div.classList.add('outside-month');
+                div.textContent = i;
+                calendarGrid.appendChild(div);
+            }
+        }
+
+        openCalendarModalBtn.addEventListener('click', () => openModal('calendarModal'));
+
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modalId = btn.dataset.modal;
+                closeModal(modalId);
+            });
+        });
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+    });
+</script>
+
+        <br><br><br>
+
+     <!-- Toolbar -->
+    <div class="flex justify-center mt-4">
+      <button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+        <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+
+    <div id="toolbar" class="transition-all duration-300">
+      <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+        <!-- Strzałka -->
+        <button title="Powrót" onclick="window.location.href='VideoMaster.html'; animateExit(event) ">
+          <i class="fas fa-undo  text-xl"></i>
+        </button>
+        <!-- Domek -->
+        <button title="Home" onclick="window.location.href='SmartHome.html';animateExit(event)">
+    <i  class="fas fa-home text-xl"></i>
+        </button>
+        <!-- Zegar -->
+        <button title="Video" onclick="window.location.href='GPS.html';animateExit(event)">
+          <i class="fas fa-cogs text-xl"></i>
+        </button>
+      </div>
+
+  <!-- JavaScript -->
+  <script>
+ 
+  const apiKey = "b7443c3648481492ff7eb47a9f334466";
+  const miasto = "Gubin";
+  const weatherIcon = document.querySelector(".weather-icon");
+  const desc = document.querySelector(".desc");
+  const temp = document.querySelector(".temp");
+  const range = document.querySelector(".range");
+
+  function getWeather() {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${miasto}&appid=${apiKey}&units=metric&lang=pl`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        const main = data.weather[0].main.toLowerCase();
+        const description = data.weather[0].description;
+        const temperature = Math.round(data.main.temp);
+        const tempMin = Math.round(data.main.temp_min);
+        const tempMax = Math.round(data.main.temp_max);
+
+        // Wybór emoji na podstawie warunków pogodowych
+        let emoji = "🌥️"; // domyślnie częściowo pochmurne 
+        if (main.includes("clear")) {
+          emoji = "☀️";
+        } else if (main.includes("clouds")) {
+          emoji = "⛅";
+        } else if (main.includes("rain") || main.includes("drizzle")) {
+          emoji = "🌧️";
+        } else if (main.includes("thunderstorm")) {
+          emoji = "⛈️";
+        } else if (main.includes("snow")) {
+          emoji = "❄️";
+        } else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) {
+          emoji = "🌫️";
+        }
+
+        // Aktualizacja elementów na stronie
+        weatherIcon.textContent = emoji;
+        desc.textContent = description.charAt(0).toUpperCase() + description.slice(1);
+        temp.textContent = `${temperature}°C`;
+        range.textContent = `${tempMax}° / ${tempMin}°`;
+      })
+      .catch(error => {
+        console.error("Błąd pobierania pogody:", error);
+      });
+  }
+
+  // Pierwsze pobranie i ustawienie interwału
+  getWeather();
+  setInterval(getWeather, 30 * 60 * 1000); // Odśwież co 30 minut
+      document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+});
+      
+      
+    function toggleToolbar() {
+      const toolbar = document.getElementById('toolbar');
+      const icon = document.getElementById('toggleIcon');
+      const iconPath = document.getElementById('iconPath');
+      const isOpen = toolbar.classList.contains('max-h-40');
+
+      if (isOpen) {
+        toolbar.classList.remove('max-h-40');
+        icon.classList.remove('rotate-180');
+        iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+      } else {
+        toolbar.classList.add('max-h-40');
+        icon.classList.add('rotate-180');
+        iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+      }
+    }
+
+    function updateClockAndDate() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      document.getElementById("hours").innerText = hours;
+      document.getElementById("minutes").innerText = minutes;
+
+      const dni = ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."];
+      const mies = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+      const dzien = dni[now.getDay()];
+      const miesiac = mies[now.getMonth()];
+      const data = `${dzien} ${miesiac} ${now.getDate()}`;
+      document.getElementById("date").innerText = data;
+    }
+
+    setInterval(updateClockAndDate, 1000);
+    updateClockAndDate();
+
+    let locked = false;
+
+    function toggleLock() {
+      const iconContainer = document.getElementById("lockIcon");
+      if (locked) {
+        iconContainer.innerHTML = `
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11V6a3 3 0 00-6 0m-4 5h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      } else {
+        iconContainer.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2 .896 2 2v1H10v-1c0-1.104.896-2 2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11V8a5 5 0 00-10 0v3M5 11h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      }
+         locked = !locked;
+    }// Pobieramy referencje do elementów HTML
+const openCalculatorModalBtn = document.getElementById('openCalculatorModal'); // Przycisk otwierający kalkulator
+const calculatorModalOverlay = document.getElementById('calculatorModal');     // Nakładka z kalkulatorem (modal)
+const calcDisplay = document.getElementById('calcDisplay');                     // Wyświetlacz działania
+const calcButtons = calculatorModalOverlay.querySelectorAll('.calculator-buttons button'); // Wszystkie przyciski kalkulatora
+
+// Obsługa otwierania modala kalkulatora
+openCalculatorModalBtn.addEventListener('click', () => {
+    calculatorModalOverlay.classList.add('active');     // Pokazuje modal
+    document.body.style.overflow = 'hidden';            // Blokuje przewijanie tła
+});
+
+// Obsługa zamykania kalkulatora przyciskiem X
+calculatorModalOverlay.querySelector('.close-modal-button').addEventListener('click', () => {
+    calculatorModalOverlay.classList.remove('active');  // Ukrywa modal
+    document.body.style.overflow = '';                  // Odblokowuje przewijanie
+});
+
+// Obsługa zamknięcia kliknięciem poza kalkulatorem (na overlay)
+calculatorModalOverlay.addEventListener('click', (event) => {
+    if (event.target === calculatorModalOverlay) {
+        calculatorModalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Zmienne stanu kalkulatora
+let currentInput = '0';         // Aktualnie wprowadzana liczba
+let operator = null;            // Bieżący operator (+, -, *, / itp.)
+let firstOperand = null;        // Pierwsza liczba w działaniu
+let waitingForSecondOperand = false; // Czy kalkulator czeka na drugą liczbę
+let expression = '';            // Pełne działanie jako tekst
+
+// Aktualizacja wyświetlacza – pokazuje działanie lub bieżącą wartość
+function updateDisplay() {
+    calcDisplay.textContent = expression || currentInput;
+}
+
+// Resetuje wszystkie zmienne i czyści wyświetlacz
+function resetCalculator() {
+    currentInput = '0';
+    operator = null;
+    firstOperand = null;
+    waitingForSecondOperand = false;
+    expression = '';
+    updateDisplay();
+}
+
+// Obsługa wprowadzania cyfry
+function inputDigit(digit) {
+    if (waitingForSecondOperand) {
+        currentInput = digit;             // Nadpisz bieżący input
+        waitingForSecondOperand = false;
+    } else {
+        currentInput = currentInput === '0' ? digit : currentInput + digit; // Dodaj cyfrę
+    }
+    expression += digit;                 // Dołącz cyfrę do wyrażenia
+    updateDisplay();
+}
+
+// Obsługa przecinka dziesiętnego
+function inputDecimal(dot) {
+    if (!currentInput.includes(dot)) {
+        currentInput += dot;             // Dodaj przecinek tylko jeśli nie ma
+        expression += dot;               // Dodaj do całego działania
+    }
+    updateDisplay();
+}
+
+// Obsługa operatorów: + - * / = %
+function handleOperator(nextOperator) {
+    const inputValue = parseFloat(currentInput); // Zamień tekst na liczbę
+
+    if (operator && waitingForSecondOperand) {
+        // Jeśli użytkownik zmienia operator (np. z "+" na "-")
+        expression = expression.slice(0, -1) + nextOperator; // Zamień ostatni operator
+        operator = nextOperator;
+        updateDisplay();
+        return;
+    }
+
+    // Dodaj operator do pełnego wyrażenia
+    if (nextOperator !== '=') {
+        expression += nextOperator;
+    }
+
+    // Jeśli to pierwsza liczba – zapisz jako operand
+    if (firstOperand === null) {
+        firstOperand = inputValue;
+    } else if (operator) {
+        // Jeśli jest już pierwszy operand i operator – oblicz wynik
+        const result = performCalculation[operator](firstOperand, inputValue);
+        currentInput = String(result);    // Zaktualizuj bieżący input
+        firstOperand = result;            // Zaktualizuj pierwszy operand
+    }
+
+    waitingForSecondOperand = true;       // Czekamy teraz na drugą liczbę
+    operator = nextOperator;              // Zapisujemy operator
+
+    // Jeśli wciśnięto "=" – pokaż tylko wynik
+    if (nextOperator === '=') {
+        expression += ' = ' + currentInput; // Dokończ działanie tekstowo
+        expression = currentInput;          // Zresetuj display do samego wyniku
+        firstOperand = null;                // Zresetuj stan kalkulatora
+        operator = null;
+        waitingForSecondOperand = false;
+    }
+
+    updateDisplay();
+}
+
+// Obiekt z operacjami matematycznymi
+const performCalculation = {
+    '/': (a, b) => a / b,
+    '*': (a, b) => a * b,
+    '+': (a, b) => a + b,
+    '-': (a, b) => a - b,
+    '%': (a, b) => a % b,
+    '=': (a, b) => b // przy '=' tylko zwracamy drugą liczbę
+};
+
+// Obsługa kliknięć przycisków kalkulatora
+calcButtons.forEach(button => {
+    const value = button.textContent;
+
+    button.addEventListener('click', () => {
+        if (value === 'C') {
+            return resetCalculator();        // Wyczyść wszystko
+        }
+        if (value === '.') {
+            return inputDecimal(value);      // Obsłuż przecinek
+        }
+        if (value === '+/-') {
+            // Zmiana znaku liczby
+            currentInput = String(-parseFloat(currentInput));
+            if (expression.endsWith(currentInput.slice(1))) {
+                // Zamień np. "23" na "-23" w wyrażeniu
+                expression = expression.slice(0, -currentInput.length + 1) + currentInput;
+            } else {
+                // Jeśli znak zmieniany przy nowym wprowadzeniu
+                expression = currentInput;
+            }
+            return updateDisplay();
+        }
+        if (['/', '*', '+', '-', '=', '%'].includes(value)) {
+            return handleOperator(value);    // Obsłuż operator
+        }
+
+        // Obsługa cyfr
+        inputDigit(value);
+    });
+});
+
+  </script>
+</body>
+</html>
+
+
+
+                 
+                

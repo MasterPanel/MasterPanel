@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VideoMaster</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+}
+video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  background: black;
+  transform-origin: center center;
+  transition: transform 0.5s;
+}
+#controls, #progressContainer {
+  transition: opacity 0.5s;
+}
+#controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+#controls button {
+  background: transparent;
+  border: none;
+  font-size: 80px;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+#controls button:hover {
+  opacity: 1;
+}
+#fileButton, #rotateButton, #pipButton {
+  position: absolute;
+  top: 15px;
+  background: transparent;
+  border: none;
+  color: #9994;
+  font-size: 32px;
+  cursor: pointer;
+  opacity: 0.8;
+  z-index: 10;
+  transition: opacity 0.3s;
+}
+#fileButton:hover, #rotateButton:hover, #pipButton:hover {
+  opacity: 1;
+}
+#fileButton { right: 15px; }
+#rotateButton { left: 15px; }
+#pipButton { right: 70px; }
+#progressContainer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: gray;
+  font-size: 20px;
+  z-index: 10;
+  opacity: 0.8;
+}
+#progress {
+  flex: 1;
+  margin: 0 10px;
+  height: 10px;
+  cursor: pointer;
+  accent-color: red;
+  opacity: 0.8;
+}
+.hidden {
+  display: none;
+}
+.hidden-opacity {
+  opacity: 0;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<video id="video" playsinline></video>
+
+<div id="controls">
+  <button id="playPauseBtn"><i class="fa-solid fa-folder-open"></i></button>
+</div>
+
+<button id="rotateButton" class="hidden"><i class="fa-solid fa-rotate-right"></i></button>
+<button id="pipButton" class="hidden"><i class="fa-solid fa-clone"></i></button>
+<button id="fileButton" class="hidden"><i class="fa-solid fa-folder-open"></i></button>
+
+<div id="progressContainer" class="hidden-opacity">
+  <span id="currentTime">0:00</span>
+  <input type="range" id="progress" value="0" min="0" max="100">
+  <span id="duration">0:00</span>
+</div>
+
+<input type="file" id="fileInput" accept="video/*" class="hidden" />
+
+<script>
+const video = document.getElementById('video');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const fileInput = document.getElementById('fileInput');
+const fileButton = document.getElementById('fileButton');
+const rotateButton = document.getElementById('rotateButton');
+const pipButton = document.getElementById('pipButton');
+const controls = document.getElementById('controls');
+const progress = document.getElementById('progress');
+const progressContainer = document.getElementById('progressContainer');
+const currentTimeEl = document.getElementById('currentTime');
+const durationEl = document.getElementById('duration');
+
+let hideTimeout;
+let rotation = 0;
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function showControls() {
+  controls.classList.remove('hidden-opacity');
+  fileButton.classList.remove('hidden-opacity');
+  progressContainer.classList.remove('hidden-opacity');
+  rotateButton.classList.remove('hidden-opacity');
+  pipButton.classList.remove('hidden-opacity');
+  clearTimeout(hideTimeout);
+  hideTimeout = setTimeout(() => {
+    controls.classList.add('hidden-opacity');
+    fileButton.classList.add('hidden-opacity');
+    progressContainer.classList.add('hidden-opacity');
+    rotateButton.classList.add('hidden-opacity');
+    pipButton.classList.add('hidden-opacity');
+  }, 3000);
+}
+
+document.addEventListener('mousemove', showControls);
+document.addEventListener('touchstart', showControls);
+
+playPauseBtn.addEventListener('click', () => {
+  if (!video.src) {
+    fileInput.click();
+    return;
+  }
+  togglePlayPause();
+  showControls();
+});
+
+fileButton.addEventListener('click', () => {
+  fileInput.click();
+});
+
+rotateButton.addEventListener('click', () => {
+  rotation = (rotation + 90) % 360;
+  video.style.transform = `rotate(${rotation}deg)`;
+  showControls();
+});
+
+// 🔹 Obsługa Picture-in-Picture
+pipButton.addEventListener('click', async () => {
+  try {
+    if (!document.pictureInPictureElement) {
+      await video.requestPictureInPicture();
+    } else {
+      await document.exitPictureInPicture();
+    }
+  } catch (err) {
+    console.warn('PiP nie jest obsługiwany:', err);
+  }
+  showControls();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.play();
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+    fileButton.classList.remove('hidden');
+    rotateButton.classList.remove('hidden');
+    pipButton.classList.remove('hidden');
+    showControls();
+
+    // 🔹 automatyczne wejście w pełny ekran
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+    else if (video.msRequestFullscreen) video.msRequestFullscreen();
+  }
+});
+
+video.addEventListener('timeupdate', () => {
+  if (video.duration) {
+    progress.value = (video.currentTime / video.duration) * 100;
+    currentTimeEl.textContent = formatTime(video.currentTime);
+    durationEl.textContent = formatTime(video.duration);
+  }
+});
+
+progress.addEventListener('input', () => {
+  if (video.duration) {
+    video.currentTime = (progress.value / 100) * video.duration;
+  }
+});
+
+video.addEventListener('ended', () => {
+  playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+  video.pause();
+});
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    video.style.width = '100vw';
+    video.style.height = '100vh';
+  }, 500);
+});
+
+function togglePlayPause() {
+  if (!video.src) return;
+  if (video.paused) {
+    video.play();
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+  } else {
+    video.pause();
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+  }
+}
+
+document.addEventListener('touchstart', (e) => {
+  if (!e.target.closest('#progress')) {
+    togglePlayPause();
+  }
+  showControls();
+});
+
+showControls();
+</script>
+</body>
+</html>

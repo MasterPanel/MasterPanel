@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Manager - Master OS</title>
+
+<style>
+:root {
+--bg-color:#1a1a1a;
+--card-bg:rgba(255,255,255,0.06);
+--glass-blur:blur(10px);
+--glass-border:1px solid rgba(255,255,255,0.1);
+--accent-color:#38bdf8;
+--text-primary:#ffffff;
+--text-secondary:#a0a0a0;
+--danger:#ef4444;
+--success:#22c55e;
+}
+
+*{box-sizing:border-box}
+
+body{
+font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+background-color:var(--bg-color);
+background-image:
+radial-gradient(at 10% 10%,rgba(56,189,248,0.15) 0px,transparent 50%),
+radial-gradient(at 90% 90%,rgba(34,197,94,0.08) 0px,transparent 50%);
+color:var(--text-primary);
+margin:0;
+padding:20px;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.app-container{
+width:100%;
+max-width:400px;
+display:flex;
+flex-direction:column;
+gap:25px;
+}
+
+.grid-menu{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:15px;
+width:100%;
+}
+
+.tool-card{
+background:var(--card-bg);
+backdrop-filter:var(--glass-blur);
+border:var(--glass-border);
+padding:20px;
+border-radius:20px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+transition:all .3s ease;
+width:100%;
+aspect-ratio:1/1;
+box-shadow:0 8px 32px 0 rgba(0,0,0,.2);
+}
+
+.tool-card:hover{
+background:rgba(255,255,255,0.1);
+transform:translateY(-5px);
+}
+
+.icon-wrapper{
+height:60px;
+display:flex;
+align-items:center;
+justify-content:center;
+margin-bottom:10px;
+}
+
+.icon-img{
+height:50px;
+}
+
+.label{
+font-size:.9rem;
+text-align:center;
+}
+
+#camera-preview{
+display:none;
+flex-direction:column;
+}
+
+video{
+width:100%;
+}
+
+.btn-close{
+background:var(--danger);
+border:none;
+padding:10px 20px;
+border-radius:10px;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app-container">
+
+<div class="grid-menu">
+
+<!-- TELEFON -->
+
+<div class="tool-card" onclick="openNative('tel:')">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/1538/1538493.png" class="icon-img">
+</div>
+<span class="label">Telefon</span>
+</div>
+
+<!-- SMS -->
+
+<div class="tool-card" onclick="openNative('sms:')">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/6711/6711888.png" class="icon-img">
+</div>
+<span class="label">SMS</span>
+</div>
+
+<!-- KAMERA -->
+
+<div class="tool-card" onclick="toggleCamera()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/2668/2668914.png" class="icon-img">
+</div>
+<span class="label">Kamera</span>
+</div>
+
+<!-- BLUETOOTH -->
+
+<div class="tool-card" onclick="connectBluetooth()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/731/731985.png" class="icon-img">
+</div>
+<span class="label">Bluetooth</span>
+</div>
+
+<!-- GEOLOKACJA -->
+
+<div class="tool-card" onclick="getLocation()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="icon-img">
+</div>
+<span class="label">GPS</span>
+</div>
+
+<!-- UDOSTĘPNIJ -->
+
+<div class="tool-card" onclick="shareApp()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/929/929610.png" class="icon-img">
+</div>
+<span class="label">Udostępnij</span>
+</div>
+
+<!-- PŁATNOŚCI -->
+
+<div class="tool-card" onclick="pay()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png" class="icon-img">
+</div>
+<span class="label">Płatności</span>
+</div>
+
+<!-- BIOMETRIA -->
+
+<div class="tool-card" onclick="biometric()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/709/709496.png" class="icon-img">
+</div>
+<span class="label">Biometria</span>
+</div>
+
+<!-- POWIADOMIENIA -->
+
+<div class="tool-card" onclick="notify()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/1827/1827272.png" class="icon-img">
+</div>
+<span class="label">Powiadomienia</span>
+</div>
+
+<!-- WIBRACJA -->
+
+<div class="tool-card" onclick="vibrate()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" class="icon-img">
+</div>
+<span class="label">Wibracja</span>
+</div>
+
+<!-- SCHOWEK -->
+
+<div class="tool-card" onclick="clipboard()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" class="icon-img">
+</div>
+<span class="label">Schowek</span>
+</div>
+
+<!-- BATERIA -->
+
+<div class="tool-card" onclick="battery()">
+<div class="icon-wrapper">
+<img src="https://cdn-icons-png.flaticon.com/512/3103/3103446.png" class="icon-img">
+</div>
+<span class="label">Bateria</span>
+</div>
+
+</div>
+
+<div id="camera-preview">
+<video id="video" autoplay playsinline></video>
+<button class="btn-close" onclick="stopCamera()">Zamknij</button>
+</div>
+
+</div>
+
+<script>
+
+let stream=null;
+
+// Kamera
+async function toggleCamera(){
+const video=document.getElementById('video');
+if(stream){stopCamera();return}
+stream=await navigator.mediaDevices.getUserMedia({video:true});
+video.srcObject=stream;
+document.getElementById('camera-preview').style.display='flex'
+}
+
+function stopCamera(){
+stream.getTracks().forEach(t=>t.stop());
+stream=null;
+document.getElementById('camera-preview').style.display='none'
+}
+
+// Bluetooth
+async function connectBluetooth(){
+try{
+const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true});
+alert('Połączono z '+device.name);
+}catch(e){alert(e)}
+}
+
+// GPS
+function getLocation(){
+navigator.geolocation.getCurrentPosition(pos=>{
+alert('Lat:'+pos.coords.latitude+' Lng:'+pos.coords.longitude)
+})
+}
+
+// Share
+async function shareApp(){
+if(navigator.share){
+await navigator.share({title:'MasterOS',url:location.href})
+}
+}
+
+// Payment
+async function pay(){
+const request=new PaymentRequest([{supportedMethods:'basic-card'}],{
+total:{label:'Test',amount:{currency:'PLN',value:'1.00'}}
+});
+await request.show()
+}
+
+// Biometric
+async function biometric(){
+if(window.PublicKeyCredential){
+alert('Biometria dostępna')
+}
+}
+
+// Notifications
+async function notify(){
+await Notification.requestPermission();
+new Notification('MasterOS działa')
+}
+
+// Vibrate
+function vibrate(){
+navigator.vibrate([200,100,200])
+}
+
+// Clipboard
+async function clipboard(){
+await navigator.clipboard.writeText('MasterOS');
+alert('Skopiowano')
+}
+
+// Battery
+async function battery(){
+const b=await navigator.getBattery();
+alert('Bateria '+Math.round(b.level*100)+'%')
+}
+
+function openNative(url){
+window.open(url,'_blank')
+}
+
+</script>
+
+</body>
+</html>

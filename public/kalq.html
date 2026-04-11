@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MASTER PANEL</title>
+  <style>
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --glass-bg: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --accent-color: #00d4ff;
+    }
+
+    body {
+      user-select: none;    
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at top right, #1e1e2f, #0a0a12);
+      color: #f1f1f1;
+      margin: 0;
+      padding-bottom: var(--safe-bottom);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .phone-frame {
+      width: 100%;
+      max-width: 380px;
+      padding: 20px;
+      box-sizing: border-box;
+      padding-top: calc(var(--safe-top) + 20px);
+    }
+
+    #fs-toggle-btn {
+      font-size: 24px;
+      font-weight: 300;
+      color: var(--accent-color); 
+      text-align: center; 
+      margin-bottom: 20px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+      transition: opacity 0.2s;
+      -webkit-touch-callout: none;
+    }
+
+    #fs-toggle-btn:active {
+      opacity: 0.6;
+    }
+
+    label { 
+      display: block; 
+      margin: 12px 0 6px; 
+      font-size: 0.85em; 
+      color: rgba(255, 255, 255, 0.6);
+      padding-left: 4px;
+    }
+
+    textarea {
+      background: var(--glass-bg);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      color: #fff;
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      outline: none;
+      resize: none;
+      height: 46px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    textarea:focus {
+      border-color: var(--accent-color);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .calc-btn {
+      padding: 14px;
+      background: linear-gradient(135deg, #4f46e5 0%, #00d4ff 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      margin-top: 25px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    svg {
+      margin-top: 25px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      width: 100%;
+      height: 190px;
+    }
+
+    #resultList {
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    #resultList li {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      padding: 12px 15px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .diff-container {
+      font-size: 0.85em;
+      font-weight: bold;
+      color: #4caf50;
+      margin-left: 8px;
+    }
+
+    .val-max { color: #2e7d32; } 
+    .val-min { color: #4caf50; } 
+
+    .final-val {
+      color: #ff4c4c; 
+      font-weight: bold;
+      font-size: 1.4em;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div id="fs-toggle-btn">Master Panel</div>
+
+  <form id="calcForm" onsubmit="return false;">
+    <label>Wysokość początkowa (cm):</label>
+    <textarea id="startHeight" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" oninput="saveData(); limitLines(this)"></textarea>
+
+    <label>Wysokość środkowa (cm):</label>
+    <textarea id="midHeight" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" oninput="saveData(); limitLines(this)"></textarea>
+
+    <label>Wysokość końcowa (cm):</label>
+    <textarea id="endHeight" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" oninput="saveData(); limitLines(this)"></textarea>
+
+    <label>Szerokość przęsła (cm):</label>
+    <textarea id="width" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" oninput="saveData(); limitLines(this)"></textarea>
+    
+    <button type="button" class="calc-btn" onclick="calculate()">OBLICZ DŁUGOŚCI</button>
+  </form>
+
+  <svg id="chart"></svg>
+  <ul id="resultList"></ul>
+</div>
+
+<script>
+  // Funkcja blokująca entery
+  function limitLines(el) {
+    el.value = el.value.replace(/[\r\n\t]/g, "");
+  }
+
+  // Zapisywanie danych do pamięci lokalnej
+  function saveData() {
+    const data = {
+      h1: document.getElementById("startHeight").value,
+      h2: document.getElementById("midHeight").value,
+      h3: document.getElementById("endHeight").value,
+      w: document.getElementById("width").value
+    };
+    localStorage.setItem('panelCalcData', JSON.stringify(data));
+  }
+
+  // Wczytywanie danych przy starcie
+  window.onload = function() {
+    const saved = localStorage.getItem('panelCalcData');
+    if (saved) {
+      const data = JSON.parse(saved);
+      document.getElementById("startHeight").value = data.h1;
+      document.getElementById("midHeight").value = data.h2;
+      document.getElementById("endHeight").value = data.h3;
+      document.getElementById("width").value = data.w;
+      calculate(); 
+    }
+  };
+
+  // Logika Long Press na nagłówku
+  const fsBtn = document.getElementById('fs-toggle-btn');
+  let pressTimer;
+
+  const startPress = () => {
+    pressTimer = setTimeout(() => {
+      window.location.href = "paczki.html";
+    }, 800);
+  };
+
+  const cancelPress = () => {
+    clearTimeout(pressTimer);
+  };
+
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  fsBtn.addEventListener('mousedown', startPress);
+  fsBtn.addEventListener('mouseup', cancelPress);
+  fsBtn.addEventListener('touchstart', startPress);
+  fsBtn.addEventListener('touchend', cancelPress);
+
+  // Główna logika obliczeń
+  function calculate() {
+    const h1 = parseFloat(document.getElementById("startHeight").value.trim().replace(',', '.'));
+    const h2 = parseFloat(document.getElementById("midHeight").value.trim().replace(',', '.'));
+    const h3 = parseFloat(document.getElementById("endHeight").value.trim().replace(',', '.'));
+    const w = parseFloat(document.getElementById("width").value.trim().replace(',', '.'));
+
+    if (isNaN(h1) || isNaN(h2) || isNaN(h3) || isNaN(w) || w <= 0) return;
+
+    saveData();
+
+    // Wyliczanie współczynników paraboli y = ax^2 + bx + c
+    const a = (2 * h1 - 4 * h2 + 2 * h3) / (w * w);
+    const b = (4 * h2 - 3 * h1 - h3) / w;
+    const c = h1;
+
+    const panelWidth = 9;
+    const panelCount = Math.round(w / panelWidth);
+    const dx = w / panelCount;
+    
+    const svg = document.getElementById("chart");
+    const list = document.getElementById("resultList");
+    svg.innerHTML = "";
+    list.innerHTML = "";
+
+    // Logika wizualna - zmiana na stałą skalę
+    const minY = Math.min(h1, h2, h3);
+    const maxY = Math.max(h1, h2, h3);
+    
+    // Zwiększamy bufor, aby wykres reagował na proporcje (np. min 20cm różnicy widocznej zawsze)
+    const rangeY = Math.max(maxY - minY, 40); 
+
+    const svgW = svg.clientWidth || 340;
+    const svgH = 190;
+    const paddingX = 25;
+    const paddingY = 30;
+    const usableW = svgW - (paddingX * 2);
+    const usableH = svgH - (paddingY * 2);
+
+    let heights = [];
+    for (let i = 0; i < panelCount; i++) {
+      const x = i * dx;
+      const y = a * x * x + b * x + c;
+      heights.push(y);
+    }
+
+    // Rysowanie ścieżki
+    let pathD = "";
+    const precision = 50; 
+    for (let i = 0; i <= precision; i++) {
+      const x = (i / precision) * w;
+      const y = a * x * x + b * x + c;
+      const px = paddingX + (x / w) * usableW;
+      
+      // Obliczanie py tak, by odzwierciedlało realną różnicę w skali rangeY
+      const py = (svgH - paddingY) - ((y - minY) / rangeY) * usableH;
+      pathD += (i === 0 ? "M" : "L") + px + "," + py + " ";
+    }
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathD);
+    path.setAttribute("stroke", "#4f46e5");
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke-width", 3);
+    svg.appendChild(path);
+
+    // Generowanie punktów i listy
+    heights.forEach((y, i) => {
+      const x = i * dx;
+      const px = paddingX + (x / w) * usableW;
+      const py = (svgH - paddingY) - ((y - minY) / rangeY) * usableH;
+
+      let diffInfo = "";
+      if (i < heights.length - 1) {
+        const nextY = heights[i + 1];
+        if (Math.abs(y - nextY) >= 1) {
+          const maxVal = Math.max(y, nextY).toFixed(1);
+          const minVal = Math.min(y, nextY).toFixed(1);
+          diffInfo = `<span class="diff-container">(<span class="val-max">${maxVal}</span>-<span class="val-min">${minVal}</span>)</span>`;
+        }
+      }
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>P${i + 1} ${diffInfo}</span>
+        <span class="final-val">${y.toFixed(1)} cm</span>
+      `;
+      list.appendChild(li);
+
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", px); 
+      dot.setAttribute("cy", py); 
+      dot.setAttribute("r", 4);
+      dot.setAttribute("fill", "#00d4ff");
+      svg.appendChild(dot);
+    });
+
+    const totalLi = document.createElement("li");
+    totalLi.style.justifyContent = "center";
+    totalLi.style.background = "rgba(79, 70, 229, 0.2)";
+    totalLi.innerHTML = `<strong>LICZBA PANELI: ${panelCount}</strong>`;
+    list.appendChild(totalLi);
+  }
+</script>
+</body>
+</html>

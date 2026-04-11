@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Casino</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --gold-border: #d4af37;
+      --panel-bg: #1a1a1a;
+      --display-bg: #000;
+      --text-gold: #f1c40f;
+    }
+
+    body {
+        user-select: none;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      background: url('https://bikematch.network/wp-content/uploads/2025/12/image-4-1024x574.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;    
+      font-family: 'Arial Black', sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+
+    #slot-machine {
+      margin-top: 30px; /* Dostosowany margines dla większej skali */
+      width: 300px;
+      height: 100px;
+      zoom: 1.25; /* Powiększenie całości o 25% */
+    }
+
+    /* Bębny */
+    .reels-container {
+      display: flex;
+      justify-content: space-between;
+      background: #000;
+      padding: 15px;
+      border-radius: 15px;
+      gap: 10px;
+      border: 4px solid var(--gold-border);
+    }
+  #fs-toggle-btn {
+ 
+      -webkit-touch-callout: none;
+    }
+
+    #fs-toggle-btn:active {
+      opacity: 0.6;
+    }
+    .reel {
+      width: 1500px;
+      height: 150px;
+      background: linear-gradient(to bottom, #fff 0%, #ccc 50%, #fff 100%);
+      border: 3px solid var(--gold-border);
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .symbol-container {
+      transition: transform 2s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    }
+
+    .symbol {
+      height: 150px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 80px;
+      color: #d63031;
+      text-shadow: 2px 2px 0px #fff;
+    }
+
+    .symbol img {
+      max-width: 80%;
+      max-height: 80%;
+      object-fit: contain;
+    }
+
+    /* Wyświetlacze danych */
+    .displays {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      gap: 10px;
+    }
+
+    .display-box {
+      flex: 1;
+      text-align: center;
+    }
+
+    .screen {
+      background: var(--display-bg);
+      border: 2px solid #666;
+      border-radius: 8px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', monospace;
+      font-size: 1.4rem;
+      color: #0f0;
+      margin-bottom: 5px;
+    }
+
+    /* Animacja pulsowania dla wygranej */
+    @keyframes winPulse {
+      0% { transform: scale(1); border-color: #666; }
+      50% { transform: scale(1.1); border-color: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
+      100% { transform: scale(1); border-color: #666; }
+    }
+
+    .win-active {
+      animation: winPulse 0.5s infinite;
+      color: #ffd700 !important;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: #bbb;
+      text-transform: uppercase;
+    }
+
+    /* Przyciski */
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 20px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      color: white;
+      text-transform: uppercase;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+
+    .btn:active { transform: translateY(4px); box-shadow: none; }
+
+    .btn-red { background: linear-gradient(#ff4757, #990000); flex: 1; height: 50px;}
+    .btn-spin { 
+      background: linear-gradient(#2ecc71, #1b5e20); 
+      height: 120px;
+      width: 180px;
+      font-size: 1.5rem;
+    }
+
+    /* TOAST STYLE */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      margin-top: 600px;
+    }
+
+    .toast {
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      padding: 15px 30px;
+      border: 2px solid var(--gold-border);
+      border-radius: 15px;
+      margin-top: 90px;
+      font-size: 1.3rem;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+      animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      min-width: 250px;
+    }
+
+    .toast i {
+      margin: 0 10px;
+      color: var(--text-gold);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .header-title {
+        font-size: 40px;
+        text-align: center;
+        color: var(--text-gold);
+        margin-bottom: 20px;
+        font-style: italic;
+        text-shadow: 2px 2px 5px black;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div id="slot-machine"> 
+
+  <div class="header-title" id="fs-toggle-btn">Master Casino</div>
+
+  <div class="reels-container">
+    <div class="reel"><div class="symbol-container"></div></div>
+    <div class="reel"><div class="symbol-container"></div></div>
+    <div class="reel"><div class="symbol-container"></div></div>
+  </div>
+
+  <div class="displays">
+    <div class="display-box">
+      <div class="screen" id="balance">1000</div>
+      <div class="label">Środki</div>
+    </div>
+    <div class="display-box">
+        <div class="screen" id="bet-display">10</div>
+        <div class="label">Stawka</div>
+      </div>
+    <div class="display-box">
+      <div class="screen" id="win-display">0</div>
+      <div class="label">Wygrana</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div style="display:flex; flex-direction:column; gap:10px; flex:1;">
+        <button class="btn btn-red" onclick="location.reload()">Wypłać</button>
+        <button class="btn btn-red" onclick="changeBet()">Stawka</button>
+    </div>
+    <button class="btn btn-spin" id="spinBtn" onclick="spin()">ZAKRĘĆ</button>
+  </div>
+</div>
+
+<script>
+    // Logika Long Press na nagłówku
+  const fsBtn = document.getElementById('fs-toggle-btn');
+  let pressTimer;
+
+  const startPress = () => {
+    pressTimer = setTimeout(() => {
+      window.location.href = "Ruletka.html";
+    }, 800);
+  };
+
+  const cancelPress = () => {
+    clearTimeout(pressTimer);
+  };
+
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  fsBtn.addEventListener('mousedown', startPress);
+  fsBtn.addEventListener('mouseup', cancelPress);
+  fsBtn.addEventListener('touchstart', startPress);
+  fsBtn.addEventListener('touchend', cancelPress);
+
+  
+  // Tablica z symbolami
+  const SYMBOLS = [
+    'https://cdn-icons-png.flaticon.com/512/9210/9210120.png', 
+    'https://cdn-icons-png.flaticon.com/512/8616/8616939.png', 
+    'https://cdn-icons-png.flaticon.com/512/12338/12338895.png', 
+    'https://cdn-icons-png.flaticon.com/512/536/536089.png', 
+    'https://cdn-icons-png.flaticon.com/512/8336/8336920.png',
+    'https://cdn-icons-png.flaticon.com/512/590/590772.png',
+    'https://cdn-icons-png.flaticon.com/512/415/415733.png',
+    'https://cdn-icons-png.flaticon.com/512/415/415733.png',
+    'https://cdn-icons-png.flaticon.com/512/11414/11414267.png',
+    'https://cdn-icons-png.flaticon.com/512/3567/3567506.png',
+    'https://cdn-icons-png.flaticon.com/512/15378/15378865.png',
+    'https://cdn-icons-png.flaticon.com/512/2108/2108641.png',
+    'https://cdn-icons-png.flaticon.com/512/445/445076.png',
+    'https://cdn-icons-png.flaticon.com/512/12691/12691172.png',
+    'https://cdn-icons-png.flaticon.com/512/8336/8336939.png',
+    'https://cdn-icons-png.flaticon.com/512/2909/2909761.png'
+  ];
+
+  // Mapowanie wartości wygranych
+  const VALUES = { 
+    'https://cdn-icons-png.flaticon.com/512/536/536089.png': 500,
+    'https://cdn-icons-png.flaticon.com/512/2108/2108641.png' : 400,
+    'https://cdn-icons-png.flaticon.com/512/11414/11414267.png' : 250,
+    'https://cdn-icons-png.flaticon.com/512/9210/9210120.png': 100,
+    'https://cdn-icons-png.flaticon.com/512/415/415733.png': 100,
+    'https://cdn-icons-png.flaticon.com/512/12691/12691172.png' : 90,
+    'https://cdn-icons-png.flaticon.com/512/3567/3567506.png' : 80,
+    'https://cdn-icons-png.flaticon.com/512/445/445076.png' : 70,
+    'https://cdn-icons-png.flaticon.com/512/15378/15378865.png' : 60,
+    'https://cdn-icons-png.flaticon.com/512/8616/8616939.png': 50, 
+    'https://cdn-icons-png.flaticon.com/512/12338/12338895.png': 40, 
+    'https://cdn-icons-png.flaticon.com/512/536/536089.png': 30, 
+    'https://cdn-icons-png.flaticon.com/512/8336/8336920.png':20,
+    'https://cdn-icons-png.flaticon.com/512/415/415733.png' : 20,
+    'https://cdn-icons-png.flaticon.com/512/590/590772.png': 10, 
+    'https://cdn-icons-png.flaticon.com/512/2909/2909761.png' : 10
+  };
+  
+  let balance = 1000;
+  let currentBet = 10;
+  const reels = document.querySelectorAll('.symbol-container');
+
+  // Obsługa powiadomień
+  function showToast(message, isWin = false) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    const icon = isWin ? '<i class="fas fa-crown"></i>' : '<i class="fas fa-sync-alt fa-spin"></i>';
+    toast.innerHTML = `${icon} ${message} ${icon}`;
+    
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 500);
+    }, 2000);
+  }
+
+  // Inicjalizacja bębnów
+  function init() {
+    reels.forEach(reel => {
+      reel.innerHTML = '';
+      for(let i=0; i<3; i++) {
+        const div = document.createElement('div');
+        div.className = 'symbol';
+        const img = document.createElement('img');
+        img.src = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        div.appendChild(img);
+        reel.appendChild(div);
+      }
+    });
+  }
+
+  // Zmiana stawki
+  function changeBet() {
+    currentBet = currentBet >= 50 ? 10 : currentBet + 10;
+    document.getElementById('bet-display').textContent = currentBet;
+  }
+
+  // Główna funkcja losowania
+  async function spin() {
+    if (balance < currentBet) {
+      showToast("BRAK ŚRODKÓW!");
+      return;
+    }
+
+    document.getElementById('win-display').classList.remove('win-active');
+    balance -= currentBet;
+    updateUI();
+    document.getElementById('spinBtn').disabled = true;
+    showToast("LOSOWANIE");
+
+    const results = [];
+    const winChance = 0.3; // Zwiększona szansa na wygraną
+    const forceWin = Math.random() < winChance;
+    const forcedSymbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+
+    for (let i = 0; i < reels.length; i++) {
+      const targetSymbol = forceWin ? forcedSymbol : SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      results.push(targetSymbol);
+      
+      reels[i].style.transition = 'none';
+      reels[i].style.transform = 'translateY(0)';
+      
+      const pool = [];
+      for(let j=0; j<20; j++) pool.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+      pool.push(targetSymbol);
+
+      reels[i].innerHTML = pool.map(s => `<div class="symbol"><img src="${s}"></div>`).join('');
+      reels[i].offsetHeight; 
+      
+      reels[i].style.transition = `transform ${1.5 + i * 0.5}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
+      reels[i].style.transform = `translateY(-${(pool.length - 1) * 150}px)`;
+    }
+
+    setTimeout(() => checkWin(results), 2500);
+  }
+
+  // Sprawdzanie wygranej
+  function checkWin(results) {
+    const isWin = results[0] === results[1] && results[1] === results[2];
+    const winDisplay = document.getElementById('win-display');
+    
+    if (isWin) {
+      const prize = VALUES[results[0]] * (currentBet / 10);
+      balance += prize;
+      winDisplay.textContent = prize;
+      winDisplay.classList.add('win-active');
+      showToast("WYGRANA: " + prize + "!", true);
+    } else {
+      winDisplay.textContent = "0";
+      showToast("SPRÓBUJ PONOWNIE");
+    }
+
+    updateUI();
+    document.getElementById('spinBtn').disabled = false;
+  }
+
+  // Aktualizacja interfejsu
+  function updateUI() {
+    document.getElementById('balance').textContent = balance;
+  }
+
+  init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000">
+
+    <title>Master Panel - Transmitter UI</title>
+    
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root { 
+            --akcent: #00f2ff;
+            --bg-glass: rgba(15, 23, 42, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1e293b 0%, #000 100%);
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Kontener główny */
+        .transmitter-card {
+            width: 90%;
+            max-width: 400px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Nagłówek */
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header i {
+            font-size: 2.5rem;
+            color: var(--akcent);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.3));
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            letter-spacing: 2px;
+            font-weight: 300;
+            color: #cbd5e1;
+        }
+
+        /* Wyświetlacz wpisanych cyfr */
+        .code-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .digit-box {
+            width: 50px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-family: monospace;
+            color: var(--akcent);
+            transition: 0.2s;
+        }
+
+        .digit-box.active {
+            border-color: var(--akcent);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        /* Klawiatura numeryczna */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key:active {
+            background: var(--akcent);
+            color: #000;
+            transform: scale(0.95);
+        }
+
+        .key.clear { color: #ff4d4d; }
+
+        /* Przycisk akcji */
+        .action-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            background: #334155;
+            color: #94a3b8;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.3s;
+            pointer-events: none;
+        }
+
+        .action-btn.ready {
+            background: var(--akcent);
+            color: #000;
+            pointer-events: all;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+
+        .action-btn.streaming {
+            background: #ff4d4d;
+            color: #fff;
+            pointer-events: all;
+        }
+
+        /* Status na dole */
+        .footer-status {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="transmitter-card">
+        <div class="header">
+            <i class="fas fa-tower-broadcast" id="mainIcon"></i>
+            <h1>KOD ODBIORCY</h1>
+        </div>
+
+        <div class="code-display">
+            <div class="digit-box" id="d0"></div>
+            <div class="digit-box" id="d1"></div>
+            <div class="digit-box" id="d2"></div>
+            <div class="digit-box" id="d3"></div>
+        </div>
+
+        <div class="keypad" id="keypad">
+            <div class="key" onclick="press(1)">1</div>
+            <div class="key" onclick="press(2)">2</div>
+            <div class="key" onclick="press(3)">3</div>
+            <div class="key" onclick="press(4)">4</div>
+            <div class="key" onclick="press(5)">5</div>
+            <div class="key" onclick="press(6)">6</div>
+            <div class="key" onclick="press(7)">7</div>
+            <div class="key" onclick="press(8)">8</div>
+            <div class="key" onclick="press(9)">9</div>
+            <div class="key clear" onclick="clearAll()"><i class="fas fa-undo"></i></div>
+            <div class="key" onclick="press(0)">0</div>
+            <div class="key clear" onclick="backspace()"><i class="fas fa-backspace"></i></div>
+        </div>
+
+        <button class="action-btn" id="actionBtn" onclick="toggleStream()">POŁĄCZ</button>
+
+        <div class="footer-status" id="peerStatus">Inicjalizacja...</div>
+    </div>
+
+    <script>
+        let currentCode = "";
+        let peer = new Peer('NAD-' + Math.floor(1000 + Math.random() * 9000));
+        let localStream = null;
+
+        const actionBtn = document.getElementById('actionBtn');
+        const peerStatus = document.getElementById('peerStatus');
+        const mainIcon = document.getElementById('mainIcon');
+
+        peer.on('open', (id) => {
+            peerStatus.innerText = "Twoje ID: " + id;
+        });
+
+        // Logika wpisywania
+        function press(num) {
+            if (currentCode.length < 4) {
+                currentCode += num;
+                updateDisplay();
+            }
+        }
+
+        function backspace() {
+            currentCode = currentCode.slice(0, -1);
+            updateDisplay();
+        }
+
+        function clearAll() {
+            currentCode = "";
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            for (let i = 0; i < 4; i++) {
+                const box = document.getElementById('d' + i);
+                box.innerText = currentCode[i] || "";
+                box.classList.toggle('active', !!currentCode[i]);
+            }
+
+            if (currentCode.length === 4) {
+                actionBtn.classList.add('ready');
+                actionBtn.innerText = "ROZPOCZNIJ TRANSMISJĘ";
+            } else {
+                actionBtn.classList.remove('ready');
+                actionBtn.innerText = "POŁĄCZ";
+            }
+        }
+
+        // Logika streamu
+        async function toggleStream() {
+            if (localStream) {
+                stopStream();
+                return;
+            }
+
+            const targetId = 'ODB-' + currentCode;
+
+            try {
+                // Wykrywanie urządzenia
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                
+                if (!isMobile && navigator.mediaDevices.getDisplayMedia) {
+                    localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                } else {
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" }, 
+                        audio: true 
+                    });
+                }
+
+                peer.call(targetId, localStream);
+
+                // Update UI
+                actionBtn.classList.add('streaming');
+                actionBtn.innerText = "ZAKOŃCZ TRANSMISJĘ";
+                mainIcon.style.color = "#ff4d4d";
+                document.getElementById('keypad').style.pointerEvents = "none";
+                document.getElementById('keypad').style.opacity = "0.3";
+
+                localStream.getVideoTracks()[0].onended = stopStream;
+
+            } catch (err) {
+                alert("Błąd: " + err.message);
+                stopStream();
+            }
+        }
+
+        function stopStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            actionBtn.classList.remove('streaming');
+            mainIcon.style.color = "var(--akcent)";
+            document.getElementById('keypad').style.pointerEvents = "all";
+            document.getElementById('keypad').style.opacity = "1";
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>

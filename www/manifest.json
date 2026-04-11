@@ -1,0 +1,78 @@
+{
+  "id": "masterpanel-pwa",
+  "name": "MasterPanel",
+  "short_name": "MasterPanel",
+  "description": "Panel sterowania systemem Smart Home.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "color_scheme": "dark",
+  "categories": ["utilities", "productivity", "smart-home"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/Coder.html",
+      "accept": {
+        "text/html": [".html", ".htm"],
+        "text/x-c++src": [".ino"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+masterpanel",
+      "url": "/?open=%s"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Coder",
+      "short_name": "Coder",
+      "description": "Edytor Kodu",
+      "url": "/Coder.html",
+      "icons": [{ "src": "Coder.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Master_OS",
+      "short_name": "MasterOS",
+      "description": "System Operacyjny",
+      "url": "/os.html",
+      "icons": [{ "src": "os.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "WYKRESY",
+      "short_name": "Pomiar DHT11",
+      "description": "Temperatura/Wilgotność.",
+      "url": "/WYKRESY.html",
+      "icons": [{ "src": "temp.png", "sizes": "96x96" }]
+    }
+  ]
+}

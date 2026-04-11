@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').then(registration => {
+          console.log('Service Worker zarejestrowany:', registration);
+        }).catch(error => {
+          console.log('Rejestracja Service Workera nie powiodła się:', error);
+        });
+      });
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100vh; position: relative; }
+    #vertical-toolbar {
+      position: absolute; top: 110px; left: 10px;
+      display: flex; flex-direction: column;
+      z-index: 1000;
+      background-color: rgba(30, 30, 30, 0.9);
+      padding: 5px; border-radius: 5px;
+    }
+    #vertical-toolbar button {
+      width: 40px; height: 40px; margin: 5px;
+      background-color: #444; color: white;
+      border: none; border-radius: 5px;
+      cursor: pointer; font-size: 16px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    #vertical-toolbar button:hover { background-color: #666; }
+    .dropdown {
+      display: none; flex-direction: column;
+      background-color: #222; border-radius: 5px;
+      margin-left: 50px; margin-top: -5px;
+      padding: 5px; position: absolute; z-index: 1001;
+    }
+    .dropdown button {
+      background-color: #444; color: #fff;
+      border: none; padding: 5px 10px;
+      margin: 2px 0; border-radius: 4px;
+      cursor: pointer;
+    }
+    .dropdown button:hover { background-color: #666; }
+    #gps-data {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #1115;
+      color: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="map">
+    <div id="vertical-toolbar">
+      <button id="vtool1" title="Źródło GPS"><i class="fas fa-globe text-4xl"></i></button>
+      <div class="dropdown" id="dropdown1">
+        <button id="gpsPhone"><i class="fas fa-street-view"></i></button>
+        <button id="gpsModule"><i class="fas fa-satellite-dish"></i></button>
+        <button id="gpsCompare"><i class="fas fa-ruler-combined"></i></button>
+      </div>
+      <button id="vtool2" title="Rysuj trasę"><i class="fas fa-route text-4xl"></i></button>
+      <button id="vtool3" title="Reset trasy"><i class="fas fa-eraser text-3xl"></i></button>
+      <button id="toggleFollow" title="Śledzenie pozycji" class="bg-green-600"><i class="fas fa-crosshairs text-3xl"></i></button>
+      <button id="vtool4" title="MasterOS" onclick="window.location.href='os.html';"><i class="fas fa-biohazard  text-3xl"></i></button>
+
+            <button id="vtool4" title="Powrót" onclick="window.location.href='index.html';"><i class="fas fa-undo text-2xl"></i></button>
+    </div>
+
+    <div id="gps-data">
+      <div><strong>Szerokość:</strong> <span id="lat">N/A</span></div>
+      <div><strong>Długość:</strong> <span id="lng">N/A</span></div>
+      <div><strong>Dokładność:</strong> <span id="accuracy">N/A</span> m</div>
+      <div><strong>Prędkość:</strong> <span id="speed">N/A</span> km/h</div>
+      <div id="distanceDisplay"><strong>Odległość:</strong> N/A m</div>
+    </div>
+  </div>
+
+  <script>
+    const map = L.map('map').setView([51.9515, 14.7282], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker = L.marker([51.9515, 14.7282]).addTo(map);
+    let moduleMarker = null;
+    let routePolyline = L.polyline([], { color: 'red' }).addTo(map);
+    let drawRoute = false;
+    let routePoints = [];
+
+    let phoneWatcherId = null;
+    let gpsModuleIntervalId = null;
+    let compareTimer = null;
+    let compareLine = null;
+    let showPhone = true;
+
+    // API endpoint for location data
+    const API_ENDPOINT = '';
+
+    // Wake Lock API
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock aktywowany!');
+      } catch (err) {
+        console.error(`Błąd aktywacji Wake Lock: ${err.name}, ${err.message}`);
+      }
+    };
+
+    // Automatycznie zwalnia Wake Lock przy ukryciu strony
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLock !== null && document.visibilityState === 'hidden') {
+        await wakeLock.release();
+        wakeLock = null;
+        console.log('Wake Lock zdezaktywowany (strona ukryta).');
+      }
+    });
+
+    function stopTracking() {
+      if (phoneWatcherId !== null) {
+        navigator.geolocation.clearWatch(phoneWatcherId);
+        phoneWatcherId = null;
+      }
+      if (gpsModuleIntervalId !== null) {
+        clearInterval(gpsModuleIntervalId);
+        gpsModuleIntervalId = null;
+      }
+      if (compareTimer !== null) {
+        clearInterval(compareTimer);
+        compareTimer = null;
+      }
+      if (moduleMarker) {
+        map.removeLayer(moduleMarker);
+        moduleMarker = null;
+      }
+      if (compareLine) {
+        map.removeLayer(compareLine);
+        compareLine = null;
+      }
+      document.getElementById('distanceDisplay').textContent = 'Odległość: N/A m';
+    }
+
+    async function sendPosition(position) {
+      const { latitude, longitude } = position.coords;
+      try {
+        await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            latitude, 
+            longitude,
+            source: 'phone' // Dodano source dla backendu [cite: 8]
+          }),
+        });
+        console.log('Lokalizacja wysłana do API.');
+      } catch (error) {
+        console.error('Błąd wysyłania lokalizacji:', error);
+      }
+    }
+
+    async function getModulePositions() {
+      try {
+        const response = await fetch(API_ENDPOINT);
+        const data = await response.json();
+        // Zmieniono dostęp do danych na data.esp32.current [cite: 8]
+        if (data && data.esp32 && data.esp32.current) {
+          const lastLocation = data.esp32.current;
+          return {
+            coords: {
+              latitude: lastLocation.latitude,
+              longitude: lastLocation.longitude,
+              accuracy: 1, 
+              speed: 0,
+            }
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error('Błąd pobierania lokalizacji z API:', error);
+        return null;
+      }
+    }
+
+    function startPhoneTracking() {
+      stopTracking();
+      requestWakeLock();
+      phoneWatcherId = navigator.geolocation.watchPosition(position => {
+        updatePosition(position);
+        sendPosition(position); 
+      }, showError, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
+    }
+
+    function getGpsModuleData() {
+      stopTracking();
+      requestWakeLock();
+      gpsModuleIntervalId = setInterval(async () => {
+        const position = await getModulePositions();
+        if (position) {
+          updatePosition(position);
+        }
+      }, 2000);
+    }
+
+    function startCompareMode() {
+      stopTracking();
+      requestWakeLock();
+      let phonePos = null;
+
+      phoneWatcherId = navigator.geolocation.watchPosition(pos => {
+        phonePos = pos;
+        sendPosition(pos); 
+      }, showError, { enableHighAccuracy: true });
+
+      compareTimer = setInterval(async () => {
+        const modulePos = await getModulePositions();
+        if (!phonePos || !modulePos) return;
+
+        const plat = phonePos.coords.latitude;
+        const plng = phonePos.coords.longitude;
+        const mlat = modulePos.coords.latitude;
+        const mlng = modulePos.coords.longitude;
+
+        if (compareLine) {
+          map.removeLayer(compareLine);
+        }
+
+        compareLine = L.polyline([[plat, plng], [mlat, mlng]], {
+          color: '#ccc', weight: 3, dashArray: '4, 4'
+        }).addTo(map);
+
+        const distance = map.distance([plat, plng], [mlat, mlng]);
+        document.getElementById('distanceDisplay').textContent = `Odległość: ${distance.toFixed(1)} m`;
+
+        if (!moduleMarker) {
+          moduleMarker = L.circleMarker([mlat, mlng], { radius: 8, color: 'blue' }).addTo(map);
+        } else {
+          moduleMarker.setLatLng([mlat, mlng]);
+        }
+
+        marker.setLatLng([plat, plng]);
+
+        const focusLatLng = showPhone ? [plat, plng] : [mlat, mlng];
+        map.setView(focusLatLng, 16);
+        showPhone = !showPhone;
+      }, 5000);
+    }
+
+    function updatePosition(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+      const speed = position.coords.speed;
+
+      marker.setLatLng([lat, lng]);
+      if (followCamera) {
+        map.setView([lat, lng], 16);
+      }
+
+      document.getElementById('lat').textContent = lat.toFixed(5);
+      document.getElementById('lng').textContent = lng.toFixed(5);
+      document.getElementById('accuracy').textContent = accuracy.toFixed(1);
+      document.getElementById('speed').textContent = speed !== null ? (speed * 3.6).toFixed(1) : 'N/A';
+
+      if (drawRoute) {
+        routePoints.push([lat, lng]);
+        routePolyline.setLatLngs(routePoints);
+      }
+    }
+
+    function showError(error) {
+
+    }
+
+    // Obsługa przycisków
+    document.getElementById('gpsPhone').addEventListener('click', () => {
+      routePoints = [];
+      routePolyline.setLatLngs([]);
+      startPhoneTracking();
+    });
+
+    document.getElementById('gpsModule').addEventListener('click', () => {
+      routePoints = [];
+      routePolyline.setLatLngs([]);
+      getGpsModuleData();
+    });
+
+    document.getElementById('gpsCompare').addEventListener('click', () => {
+      routePoints = [];
+      routePolyline.setLatLngs([]);
+      startCompareMode();
+    });
+
+    document.getElementById('vtool2').addEventListener('click', () => {
+      drawRoute = !drawRoute;
+      if (drawRoute) {
+        routePoints = [];
+        routePolyline.setLatLngs([]);
+      }
+    });
+
+    document.getElementById('vtool3').addEventListener('click', () => {
+      routePoints = [];
+      routePolyline.setLatLngs([]);
+    });
+
+    // Dropdown
+    const vtool1 = document.getElementById('vtool1');
+    const dropdown1 = document.getElementById('dropdown1');
+    vtool1.addEventListener('click', () => {
+      dropdown1.style.display = dropdown1.style.display === 'flex' ? 'none' : 'flex';
+    });
+    document.addEventListener('click', function (e) {
+      if (!vtool1.contains(e.target) && !dropdown1.contains(e.target)) {
+        dropdown1.style.display = 'none';
+      }
+    });
+
+    startPhoneTracking();
+    let followCamera = true;
+
+    document.getElementById('toggleFollow').addEventListener('click', () => {
+      followCamera = !followCamera;
+      const btn = document.getElementById('toggleFollow');
+      btn.classList.toggle('bg-green-600', followCamera);
+      btn.classList.toggle('bg-gray-600', !followCamera);
+    });
+
+    // Pełny ekran - tylko po interakcji z użytkownikiem
+    let isFullscreenRequested = false;
+    function enterFullscreen() {
+      if (isFullscreenRequested) return;
+
+      const docElem = document.documentElement;
+      if (docElem.requestFullscreen) {
+        docElem.requestFullscreen().then(() => {
+          isFullscreenRequested = true;
+        }).catch(err => {
+          console.error(`Błąd: ${err.message}`);
+        });
+      } else {
+        console.warn("Przeglądarka nie obsługuje trybu pełnoekranowego.");
+      }
+    }
+
+    document.addEventListener('click', enterFullscreen, { once: true });
+    document.addEventListener('keydown', enterFullscreen, { once: true });
+    document.addEventListener('touchstart', enterFullscreen, { once: true });
+
+  </script>
+</body>
+</html>

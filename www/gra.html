@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Gra3D</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#87ceeb">
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js");
+      });
+    }
+  </script>
+  <style>
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      background: #0x87ceeb; 
+      font-family: 'Segoe UI', sans-serif;  
+      touch-action: none;
+      /* NOTCH */
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+    }
+    #ui { 
+      position: absolute; 
+      top: 20px; 
+      left: 20px; 
+      color: #fff; 
+      pointer-events: none; 
+      z-index: 10;   
+      top: calc(20px + env(safe-area-inset-top));
+      left: calc(20px + env(safe-area-inset-left)); 
+    }
+    .stat { font-size: 1.2rem; font-weight: bold; text-shadow: 2px 2px 4px #000; margin-bottom: 5px; }
+    #scoreVal { color: #f1c40f; font-size: 2rem; }
+    #toast-container { 
+      position: fixed; 
+      top: 20px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      z-index: 1000; 
+      width: 80%; 
+      top: calc(20px + env(safe-area-inset-top)); 
+    }
+    .toast { 
+      background: rgba(0,0,0,0.8); 
+      color: #f1c40f; 
+      padding: 15px; 
+      border: 2px solid #d4af37; 
+      border-radius: 50px; 
+      text-align: center; 
+      animation: fadeIn 0.3s; 
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* STYL NAKŁADKI FULLSCREEN */
+    #fullscreen-overlay {
+      position: fixed;
+      inset: 0;
+      background: #9991;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f1c40f;
+      font-size: 1.6rem;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ui">
+  <div class="stat">DYSTANS: <span id="scoreVal">0</span>m</div>
+  <div class="stat" id="ammoUI" style="color: #ff4757;">POCISKI: 0</div>
+  <div class="stat" id="jumpUI" style="color: #eccc68;">PODWÓJNY SKOK: OFF</div>
+</div>
+
+<button id="installBtn" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 18px;
+  border-radius: 30px;
+  border: none;
+  background: #f1c40f;
+  color: #000;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,.4);
+  display: none;
+  z-index: 1000;
+">
+  Zainstaluj grę
+</button>
+
+<div id="fullscreen-overlay">
+</div>
+<div id="toast-container"></div>
+
+<script type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+  import * as THREE from 'three';
+
+  // --- LOGIKA PEŁNEGO EKRANU ---
+  const fsOverlay = document.getElementById('fullscreen-overlay');
+  const root = document.documentElement;
+
+  function enterFullscreen() {
+    if (root.requestFullscreen) {
+      root.requestFullscreen().catch(err => console.log(err));
+    } else if (root.webkitRequestFullscreen) {
+      root.webkitRequestFullscreen();
+    } else if (root.msRequestFullscreen) {
+      root.msRequestFullscreen();
+    }
+  }
+
+  fsOverlay.addEventListener('click', () => {
+    enterFullscreen();
+  });
+
+  // Obsługa zmiany stanu fullscreen
+  const handleFsChange = () => {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      fsOverlay.style.display = 'none';
+    } else {
+      fsOverlay.style.display = 'flex';
+    }
+  };
+
+  document.addEventListener('fullscreenchange', handleFsChange);
+  document.addEventListener('webkitfullscreenchange', handleFsChange);
+
+  // --- ZMIENNE GRY ---
+  let scene, camera, renderer, cube;
+  let obstacles = [], decor = [], powerups = [], bullets = [];
+  let score = 0, isGameOver = false, currentLane = 0;
+  const laneWidth = 3;
+  let touchStartX = 0, touchStartY = 0;
+  
+  let ammo = 0, hasDoubleJump = false, jumpCount = 0;
+  let velocityY = 0;
+  const gravity = -0.015, jumpForce = 0.35, groundY = 0.6;
+
+  function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.Fog(0x87ceeb, 25, 65);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 6, 12);
+    camera.lookAt(0, 0, -5);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    sun.position.set(10, 20, 10);
+    sun.castShadow = true;
+    scene.add(sun);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+    // Sceneria
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 1000), new THREE.MeshPhongMaterial({ color: 0x333333 }));
+    road.rotation.x = -Math.PI / 2; road.receiveShadow = true;
+    scene.add(road);
+
+    const grass = new THREE.Mesh(new THREE.PlaneGeometry(200, 1000), new THREE.MeshPhongMaterial({ color: 0x2d9e4a }));
+    grass.rotation.x = -Math.PI / 2; grass.position.y = -0.1;
+    scene.add(grass);
+
+    // Gracz
+    cube = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshPhongMaterial({ color: 0xe74c3c }));
+    cube.position.y = groundY; cube.castShadow = true;
+    scene.add(cube);
+
+    // Sterowanie dotykowe
+    window.addEventListener('touchstart', e => { 
+      touchStartX = e.touches[0].clientX; 
+      touchStartY = e.touches[0].clientY; 
+    });
+
+    window.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) moveLane(dx > 0 ? 1 : -1);
+      else if (dy < -30) handleJump();
+      else if (dy > 30 || Math.abs(dx) < 10) shoot();
+      if (isGameOver) restart();
+    });
+
+    // Sterowanie klawiaturą
+    window.addEventListener('keydown', e => {
+      if (e.code === 'ArrowLeft') moveLane(-1);
+      if (e.code === 'ArrowRight') moveLane(1);
+      if (e.code === 'Space' || e.code === 'ArrowUp') handleJump();
+      if (e.code === 'KeyF' || e.code === 'ControlLeft' || e.code === 'Enter') shoot(); 
+      if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) restart();
+    });
+
+    window.addEventListener('resize', onWindowResize);
+    animate();
+  }
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function handleJump() {
+    if (isGameOver) return;
+    const maxJumps = hasDoubleJump ? 2 : 1;
+    if (jumpCount < maxJumps) {
+      velocityY = jumpForce;
+      jumpCount++;
+      if (jumpCount === 2) {
+        showToast("PODWÓJNY SKOK!");
+        hasDoubleJump = false; 
+        updateUI();
+      }
+    }
+  }
+
+  function shoot() {
+    if (ammo > 0 && !isGameOver) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshBasicMaterial({color: 0xffff00}));
+      b.position.set(cube.position.x, cube.position.y, cube.position.z);
+      scene.add(b);
+      bullets.push(b);
+      ammo--;
+      updateUI();
+    }
+  }
+
+  function moveLane(dir) { currentLane = Math.max(-1, Math.min(1, currentLane + dir)); }
+
+  function spawnWorld() {
+    // Dekoracje
+    if (Math.floor(score * 10) % 60 === 0) {
+      const side = Math.random() > 0.5 ? 1 : -1;
+      const posX = side * (12 + Math.random() * 5);
+      
+      if (Math.random() > 0.5) {
+        const h = Math.random() * 8 + 2;
+        const b = new THREE.Mesh(new THREE.BoxGeometry(4, h, 4), new THREE.MeshPhongMaterial({ color: 0x95a5a6 }));
+        b.position.set(posX, h/2, -60);
+        scene.add(b); decor.push(b);
+      } else {
+        const treeGroup = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.4, 4, 0.4), new THREE.MeshPhongMaterial({ color: 0x5d4037 }));
+        trunk.position.y = 2;
+        const leaves = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshPhongMaterial({ color: 0x2ecc71 }));
+        leaves.position.y = 4.5;
+        treeGroup.add(trunk); treeGroup.add(leaves);
+        treeGroup.position.set(posX, 0, -60);
+        scene.add(treeGroup); decor.push(treeGroup);
+      }
+    }
+    
+    // Przeszkody
+    if (Math.random() < 0.005) {
+      const rand = Math.random();
+      if (rand > 0.8) { 
+        const freeLane = Math.floor(Math.random() * 3) - 1;
+        [-1, 0, 1].forEach(lane => {
+          if (lane !== freeLane) {
+            const gatePart = new THREE.Mesh(new THREE.BoxGeometry(laneWidth, 5, 1.5), new THREE.MeshPhongMaterial({color: 0x34495e}));
+            gatePart.position.set(lane * laneWidth, 2.5, -60);
+            scene.add(gatePart); obstacles.push(gatePart);
+          }
+        });
+      } else {
+        let obs;
+        if (rand > 0.4) obs = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4, 1.5), new THREE.MeshPhongMaterial({color: 0x222222}));
+        else obs = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2), new THREE.MeshPhongMaterial({color: 0x222222}));
+        obs.position.set((Math.floor(Math.random()*3)-1)*laneWidth, 0.6, -60);
+        scene.add(obs); obstacles.push(obs);
+      }
+    }
+
+    // Nagrody
+    if (Math.random() < 0.01) {
+      const isSpring = Math.random() > 0.5;
+      const pu = isSpring ? 
+        new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 8), new THREE.MeshBasicMaterial({color: 0xffd32a})) :
+        new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshBasicMaterial({color: 0xff3f34}));
+      pu.userData = { type: isSpring ? 'spring' : 'ammo' };
+      pu.position.set((Math.floor(Math.random()*3)-1)*laneWidth, 1, -60);
+      scene.add(pu); powerups.push(pu);
+    }
+  }
+
+  function updateUI() {
+    document.getElementById('ammoUI').textContent = `POCISKI: ${ammo}`;
+    document.getElementById('jumpUI').textContent = `PODWÓJNY SKOK: ${hasDoubleJump ? 'ON' : 'OFF'}`;
+  }
+
+  function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    container.innerHTML = `<div class="toast">${msg}</div>`;
+    setTimeout(() => { if(container.innerHTML.includes(msg)) container.innerHTML = ''; }, 2000);
+  }
+
+  function restart() {
+    isGameOver = false; score = 0; ammo = 0; hasDoubleJump = false; jumpCount = 0;
+    currentLane = 0; velocityY = 0; cube.position.y = groundY;
+    [...obstacles, ...decor, ...powerups, ...bullets].forEach(o => scene.remove(o));
+    obstacles = []; decor = []; powerups = []; bullets = [];
+    updateUI();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!isGameOver) {
+      score += 0.2;
+      document.getElementById('scoreVal').textContent = Math.floor(score);
+      const speed = 0.45 + (score/3000);
+
+      cube.position.y += velocityY;
+      if (cube.position.y > groundY) velocityY += gravity;
+      else { cube.position.y = groundY; velocityY = 0; jumpCount = 0; }
+      cube.rotation.x -= speed * 0.4;
+      cube.position.x += (currentLane * laneWidth - cube.position.x) * 0.15;
+
+      spawnWorld();
+
+      bullets.forEach((b, i) => {
+        b.position.z -= 1.5;
+        obstacles.forEach((obs, oi) => {
+          if (b.position.distanceTo(obs.position) < 2) {
+            scene.remove(obs); obstacles.splice(oi, 1);
+            scene.remove(b); bullets.splice(i, 1);
+          }
+        });
+        if (b.position.z < -70) { scene.remove(b); bullets.splice(i, 1); }
+      });
+
+      [...obstacles, ...decor, ...powerups].forEach((obj, i) => {
+        obj.position.z += speed;
+        if (obj.position.z > 20) {
+          scene.remove(obj);
+          if (obstacles.includes(obj)) obstacles.splice(obstacles.indexOf(obj), 1);
+          else if (decor.includes(obj)) decor.splice(decor.indexOf(obj), 1);
+          else powerups.splice(powerups.indexOf(obj), 1);
+        }
+      });
+
+      const playerBox = new THREE.Box3().setFromObject(cube);
+      obstacles.forEach(obs => {
+        if (playerBox.intersectsBox(new THREE.Box3().setFromObject(obs))) {
+          isGameOver = true;
+          showToast("DYSTANS: " + Math.floor(score));
+        }
+      });
+
+      powerups.forEach((pu, i) => {
+        if (playerBox.intersectsBox(new THREE.Box3().setFromObject(pu))) {
+          if (pu.userData.type === 'ammo') { ammo += 3; showToast("+3 POCISKI!"); }
+          else { hasDoubleJump = true; showToast("PODWÓJNY SKOK!"); }
+          scene.remove(pu); powerups.splice(i, 1);
+          updateUI();
+        }
+      });
+    }
+    renderer.render(scene, camera);
+  }
+
+  init();
+
+  // PWA Install
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') showToast("Gra zainstalowana!");
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+</script>
+</body>
+</html>

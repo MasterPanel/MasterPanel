@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
+    
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+        user-select: none;
+      margin: 0;
+    background: url('1.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+      .tick {
+      position: absolute;
+      height: 1px;
+      background-color: #666; /* slate-300 */
+    }
+
+    .tick-label {
+      position: absolute;
+      font-size: 0.75rem;
+      color: #666;
+      left: 100%;
+      margin-left: 0.5rem;
+      transform: translateY(50%);
+    }
+.humidity-gradient {
+    background: linear-gradient(to top, #38bdf8 0%, #0ea5e9 25%, #0284c7 50%, #075985 100%);
+}
+
+    .thermo-gradient {
+      background: linear-gradient(to top, #ef4444 0%, #f97316 25%, #facc15 50%, #38bdf8 100%);
+    }
+            
+  @keyframes neonPulse {
+ 
+    0%, 100% {
+      filter: drop-shadow(0 0 2px #ff5733)
+              drop-shadow(0 0 1px #ff784e)
+              drop-shadow(0 0 3px #ff5733);
+    }
+    50% {
+      filter: drop-shadow(0 0 2px #ff784e)
+              drop-shadow(0 0 3px #ff5733)
+              drop-shadow(0 0 3px #ff784e);
+    }
+  }
+
+  @keyframes neonPulseHum {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px #3498db)
+              drop-shadow(0 0 1px #5dade2)
+              drop-shadow(0 0 3px #3498db);
+    }
+    50% {
+      filter: drop-shadow(0 0 2px #5dade2)
+              drop-shadow(0 0 3px #3498db)
+              drop-shadow(0 0 3px #5dade2);
+    }
+  }
+      
+      .circle-container {
+      margin: 10px;
+      width: 160px;
+      height: 140px;
+      position: relative;
+    }
+
+    svg {
+      transform: rotate(-90deg);
+    }
+
+    .circle-bg {
+      fill: none;
+      stroke: #113;
+      stroke-width: 10;
+    }
+
+     .circle-progress2 {
+      fill: none;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 440; /* 2πr for r=70 */
+      stroke-dashoffset: 440;
+      animation: neonPulseHum 2.5s infinite ease-in-out;
+      transition: stroke-dashoffset 0.5s linear, stroke 0.5s; 
+      }
+    .circle-progress {
+      fill: none;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 440; /* 2πr for r=70 */
+      stroke-dashoffset: 440;
+   animation: neonPulse 2.5s infinite ease-in-out;
+    transition: stroke-dashoffset 0.5s linear, stroke 0.5s;   
+      }
+
+
+    .label {
+      position: absolute;
+      top: 55%;
+      left: 52%;
+      transform: translate(-50%, -50%);
+      font-size: 42px;
+      font-weight: bold;
+      color: #111;
+    }  
+
+    .phone-frame {
+      width: 400px;
+      height: 940px;
+      border-radius: 40px;
+      padding: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .widget {
+      margin-top: 100px;
+      width: 100%;
+      height: 18%;
+      background: #5559;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+      padding-bottom: 60px;
+      transition: all 0.3s ease-in-out;
+      position: relative;
+    }
+
+    .widget:hover,
+    .window:hover,
+    .window-2:hover {
+      transform: scale(1.03);
+      z-index: 10;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .window,
+    .window-2 {
+      background: #5559;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+      text-align: center;
+      transition: all 0.3s ease-in-out;
+      color: #eee;
+    }
+
+    .window i {
+      font-size: 30px;
+      color: #333;
+    }
+
+    .window p {
+      font-size: 20px;
+      color: #ccc;
+    }
+
+    .window-2 i {
+      margin-top: 12px;
+      font-size: 45px;
+    }
+
+    .window-2 p {
+      font-size: 9px;
+    }
+
+    .clock {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .clock-part {
+      margin-top: -60px;
+      background: white;
+      color: black;
+      font-size: 60px;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .date {
+      text-align: right;
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: white;
+    }
+
+    .below-clock {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .left-info .location {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .left-info .desc {
+      font-size: 16px;
+    }
+
+    .right-info {
+      text-align: right;
+    }
+
+    .right-info .temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .right-info .range {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .weather-icon {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 100px;
+      color: #FFD700;
+    }
+
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1, 1);
+      border-radius: 20px;
+    }
+
+    #toolbar button {
+      background-color: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 3);
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+             nav {
+ padding-left: 0.6rem; 
+    }
+
+    nav button {
+
+      background-color: #3335;
+      color: white;
+      padding: 0.5rem 1rem;;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+    }
+
+    nav button:hover {
+      background-color: #555a;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+    }
+
+    nav button.active {
+      background-color: #4449;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+      font-weight: 700;
+    }
+
+    /* Kontener dla pokojów */
+    .rooms-container {
+      position: relative;
+      width: 100%;
+      height: 460px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    /* Style dla każdego pokoju */
+    .room {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .room.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Animacje przejść */
+    .room.slide-up.active {
+      transform: translateY(0);
+    }
+    .room.slide-up {
+      transform: translateY(100%);
+    }
+
+    .room.slide-left.active {
+      transform: translateX(0);
+    }
+    .room.slide-left {
+      transform: translateX(100%);
+    }
+
+    .room.zoom-in.active {
+      transform: scale(1);
+    }
+    .room.zoom-in {
+      transform: scale(0.5);
+    }
+
+    .room.fade-in.active {
+      opacity: 1;
+    }
+    .room.fade-in {
+      opacity: 0;
+    }
+
+    .room-content {
+      display: flex;
+      flex-col;
+      items-center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      height: 100%;
+    }
+
+    .room-title {
+      font-size: 2.5rem;
+
+      color: white;
+    }
+
+    .control-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .device-button {
+      background: #3335;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .device-button:hover {
+      background: #4449;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .device-button i {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+  </style>
+</head>
+<body class=" h-screen animate__animated animate__bounceIn" id="body">
+<div class="phone-frame">
+      
+  <div class="widget" id="fullscreenBtn">
+    <div class="clock">
+      <div class="clock-part" id="hours">09</div>
+      <div class="clock-part" id="minutes">34</div>
+    </div>
+    <div class="date" id="date">pon. kwi 14</div>
+
+    <div class="below-clock text-white">
+      <div class="left-info">
+        <div class="location">Gubin</div>
+        <div class="desc">Przeważnie słonecznie</div>
+      </div>
+      <div class="right-info">
+        <div class="temp">15°C</div>
+        <div class="range">22° / 10°</div>
+      </div>
+    </div>
+    <div class="weather-icon">⛅</div>
+  </div>
+
+  <nav>
+    <button data-page="slide-up" class="active" onclick="showRoom('salon', 'slide-up', this)">Salon</button>
+    <button data-page="slide-left" onclick="showRoom('sypialnia', 'slide-left', this)">Sypialnia</button>
+    <button data-page="zoom-in" onclick="showRoom('lazienka', 'zoom-in', this)">Łazienka</button>
+    <button data-page="fade-in" onclick="showRoom('lena', 'fade-in', this)">Lena</button>
+  </nav>
+
+  
+  <div class="rooms-container">
+
+    <div id="salon" class="room slide-up active">
+       <center> <div class="room-content"> 
+        <h2 class="text-5xl text-center w-full">Salon</b>
+           
+      <div class="control-section">
+         
+  <div class="flex gap-20 p-5">
+    <div class="relative flex items-end h-64 w-10 bg-gray-900 rounded-xl C">
+      <div id="tempBar" class="absolute bottom-0 w-full thermo-gradient z-10 transition-all duration-500 ease-in-out rounded-xl"></div>
+      <div class="absolute inset-0 z-20"></div>
+
+      <script>
+        const tempContainer = document.currentScript.parentElement;
+        const steps = 10;
+for (let i = 0; i <= steps; i++) {
+  const percent = 5 + (i / steps) * 90;
+          const tick = document.createElement('div');
+          tick.className = 'tick absolute ';
+          tick.style.bottom = percent + '%';
+          tick.style.left = '0';
+          tick.style.width = (i % 2 === 0) ? '50%' : '30%';
+          tempContainer.appendChild(tick);
+        }
+      </script>
+    </div>
+
+    <div class="relative flex items-end h-64 w-10 bg-gray-900 rounded-xl py-2">      <div id="humBar" class="absolute bottom-0 w-full humidity-gradient z-10 transition-all duration-500 ease-in-out rounded-xl"></div>
+
+      <div class="absolute inset-0 z-20"></div>
+
+      <script>
+        const humContainer = document.currentScript.parentElement;
+        for (let i = 0; i <= 10; i++) {
+          const percent = 5+(i / 10) * 90;
+          const tick = document.createElement('div');
+          tick.className = 'tick absolute';
+          tick.style.bottom = percent + '%';
+          tick.style.left = '0';
+          tick.style.width = (i % 2 === 0) ? '50%' : '30%';
+          humContainer.appendChild(tick);
+        }
+      </script>
+    </div>
+  </div>
+
+  <div class="flex gap-20 ">
+    <p class=" text-lg"> <span id="tempValue">--</span> °C</p>
+    <p class=" text-lg"> <span id="humValue">--</span> %</p>
+  </div>
+</div>
+ </div>
+
+
+</div>
+
+       <div id="sypialnia" class="room slide-left">
+     <center>  <div class="room-content">
+         <h2 class="text-5xl text-center w-full">Sypialnia</b>
+        <div class="control-section">
+   <div class="circle-container">
+        <svg width="160" height="160">
+          <circle class="circle-bg" cx="80" cy="80" r="70" />
+          <circle class="circle-progress" id="tempCircle" cx="80" cy="80" r="70" stroke="#ff5733" />
+        </svg>
+        <div class="label" id="tempLabel">--°C</div>
+      </div>
+      <i style="display:block; font-size:22px; color:grey; margin-top:-4px;">Temperatura</i>
+
+      <div class="circle-container">
+        <svg width="160" height="160">
+          <circle class="circle-bg" cx="80" cy="80" r="70" />
+          <circle class="circle-progress2" id="humCircle" cx="80" cy="80" r="70" stroke="#3498db" />
+        </svg>
+        <div class="label" id="humLabel">--%</div>
+      </div>
+      <i style="display:block; font-size:22px; color:grey; margin-top:-5px;">Wilgotność</i>
+    </div>
+
+ </div> </div>
+
+       <div id="lazienka" class="room zoom-in">
+       <center>
+    <div class="room-content">
+ <h2 class="text-5xl text-center w-full">Łazienka</b>
+        <div class="control-section">
+      <div class="control-section">
+        <div class="circle-container">
+          <svg width="160" height="160">
+            <circle class="circle-bg" cx="80" cy="80" r="70" />
+            <circle class="circle-progress" id="tempCircleLazienka" cx="80" cy="80" r="70" stroke="#ff5733" />
+          </svg>
+          <div class="label" id="tempLabelLazienka">--°C</div>
+        </div>
+        <i style="display:block; font-size:22px; color:grey; margin-top:-4px;">Temperatura</i>
+
+        <div class="circle-container">
+          <svg width="160" height="160">
+            <circle class="circle-bg" cx="80" cy="80" r="70" />
+            <circle class="circle-progress2" id="humCircleLazienka" cx="80" cy="80" r="70" stroke="#3498db" />
+          </svg>
+          <div class="label" id="humLabelLazienka">--%</div>
+        </div>
+        <i style="display:block; font-size:22px; color:grey; margin-top:-5px;">Wilgotność</i>
+      </div>
+    </div>
+  </center>
+</div>
+
+    <div id="lena" class="room fade-in">
+  <center>
+    <div class="room-content">
+ <h2 class="text-5xl text-center w-full">Lena</b>
+        <div class="control-section">        <div class="flex gap-20 p-5">
+          <div class="relative flex items-end h-64 w-10 bg-gray-900 rounded-xl">
+            <div id="tempBarLena" class="absolute bottom-0 w-full thermo-gradient z-10 transition-all duration-500 ease-in-out rounded-xl"></div>
+            <div class="absolute inset-0 z-20"></div>
+            <script>
+              const tempContainerLena = document.currentScript.parentElement;
+              const stepsLena = 10;
+              for (let i = 0; i <= stepsLena; i++) {
+                const percent = 5 + (i / stepsLena) * 90;
+                const tick = document.createElement('div');
+                tick.className = 'tick absolute';
+                tick.style.bottom = percent + '%';
+                tick.style.left = '0';
+                tick.style.width = (i % 2 === 0) ? '50%' : '30%';
+                tempContainerLena.appendChild(tick);
+              }
+            </script>
+          </div>
+
+          <div class="relative flex items-end h-64 w-10 bg-gray-900 rounded-xl">
+            <div id="humBarLena" class="absolute bottom-0 w-full humidity-gradient z-10 transition-all duration-500 ease-in-out rounded-xl"></div>
+
+            <div class="absolute inset-0 z-20"></div>
+            <script>
+              const humContainerLena = document.currentScript.parentElement;
+              for (let i = 0; i <= 10; i++) {
+                const percent = 5 + (i / 10) * 90;
+                const tick = document.createElement('div');
+                tick.className = 'tick absolute';
+                tick.style.bottom = percent + '%';
+                tick.style.left = '0';
+                tick.style.width = (i % 2 === 0) ? '50%' : '30%';
+                humContainerLena.appendChild(tick);
+              }
+            </script>
+          </div>
+        </div>
+
+        <div class="flex gap-20">
+          <p class="text-lg"> <span id="tempValueLena">--</span> °C</p>
+          <p class="text-lg"> <span id="humValueLena">--</span> %</p>
+        </div>
+      </div>
+    </div>
+  </center>
+</div>
+
+    
+ </div>
+
+  <div class="flex justify-center">
+    <button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+      <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+
+  <div id="toolbar" class="transition-all duration-300">
+    <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+      <button onclick="window.location.href='SmartHome.html'; animateExit(event) ""><i class="fas fa-undo text-xl"></i></button>
+      <button onclick="window.location.href='SmartHome.html'; animateExit(event) "><i class="fas fa-home text-xl"></i></button>
+      <button onclick="window.location.href='Settings.html'; animateExit(event) "><i class="fas fa-cogs text-xl"></i></button>
+    </div>
+  </div>
+</div>
+<script>
+  // Zmienne globalne
+  let currentRoom = 'salon';
+  
+  // Tablica zawierająca nazwy wszystkich pokojów zdefiniowanych w HTML
+  const ROOM_HTML_IDS = ['salon', 'sypialnia', 'lazienka', 'lena']; 
+  const BASE_URL = "https://masterpanell.vercel.app/api/dht";
+
+  // Funkcja zmiany pokoju z animacją (pozostaje bez zmian)
+  function showRoom(roomId, animationType, buttonElement) {
+    const allRooms = document.querySelectorAll('.room');
+    allRooms.forEach(room => {
+      room.classList.remove('active');
+    });
+    const allButtons = document.querySelectorAll('nav button');
+    allButtons.forEach(btn => {
+      btn.classList.remove('active');
+    });
+    buttonElement.classList.add('active');
+    setTimeout(() => {
+      const targetRoom = document.getElementById(roomId);
+      if (targetRoom) {
+        targetRoom.classList.add('active');
+        currentRoom = roomId;
+      }
+    }, 100);
+  }
+
+  // Funkcja ustawiająca postęp dla wskaźników kołowych (pozostaje bez zmian)
+  function setProgress(id, value) {
+    const circle = document.getElementById(id);
+    if (!circle) return;
+    const radius = 70;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (value / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+  }
+
+  /**
+   * NOWA FUNKCJA: Aktualizuje wskaźniki kołowe (Sypialnia, Łazienka).
+   * @param {string} roomId - ID pokoju ('sypialnia' lub 'lazienka').
+   * @param {number} temp - Wartość temperatury.
+   * @param {number} hum - Wartość wilgotności.
+   */
+  function updateCircleDisplays(roomId, temp, hum) {
+      // Określenie sufiksu ID (brak dla 'sypialnia', 'Lazienka' dla 'lazienka')
+      const suffix = roomId === 'sypialnia' ? '' : 'Lazienka';
+
+      const tempLabel = document.getElementById(`tempLabel${suffix}`);
+      const humLabel = document.getElementById(`humLabel${suffix}`);
+      
+      if (tempLabel) tempLabel.innerText = temp.toFixed(1) + "°C";
+      if (humLabel) humLabel.innerText = hum.toFixed(1) + "%";
+      
+      // TEMP: Skalowanie do zakresu koła (np. 0°C = 0%, 40°C = 100%)
+      const tempProgress = (temp / 40) * 100;
+      setProgress(`tempCircle${suffix}`, tempProgress);
+      
+      // HUM: Skalowanie do zakresu koła (0% = 0%, 100% = 100%)
+      setProgress(`humCircle${suffix}`, hum);
+  }
+
+  /**
+   * NOWA FUNKCJA: Aktualizuje paski (Salon, Lena).
+   * @param {string} roomId - ID pokoju ('salon' lub 'lena').
+   * @param {number} temp - Wartość temperatury.
+   * @param {number} hum - Wartość wilgotności.
+   */
+  function updateBarDisplays(roomId, temp, hum) {
+    // Określenie sufiksu ID (brak dla 'salon', 'Lena' dla 'lena')
+    const suffix = roomId === 'salon' ? '' : 'Lena';
+
+    const tempBar = document.getElementById(`tempBar${suffix}`);
+    const tempValue = document.getElementById(`tempValue${suffix}`);
+    const humBar = document.getElementById(`humBar${suffix}`);
+    const humValue = document.getElementById(`humValue${suffix}`);
+
+    // TEMP: Skalowanie paska do zakresu (np. 0-50°C)
+    if (tempBar && tempValue) {
+      const tempPercent = (temp / 50) * 100; 
+      tempBar.style.height = `${Math.min(Math.max(tempPercent, 0), 100)}%`;
+      tempValue.textContent = temp.toFixed(1);
+    }
+    
+    // HUM: Skalowanie paska do zakresu (0-100%)
+    if (humBar && humValue) {
+      const humPercent = hum; 
+      humBar.style.height = `${Math.min(Math.max(humPercent, 0), 100)}%`;
+      humValue.textContent = hum.toFixed(1);
+    }
+  }
+  
+  // ZMODYFIKOWANA GŁÓWNA FUNKCJA POBIERANIA DANYCH
+  async function fetchData() {
+    try {
+      const response = await fetch(BASE_URL);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      // Serwer zwraca obiekt JSON z danymi dla wszystkich pokoi
+      const allData = await response.json(); 
+      
+      // Iteracja po wszystkich pokojach i aktualizacja ich wskaźników
+      ROOM_HTML_IDS.forEach(roomHtmlId => {
+        const roomJsonKey = roomHtmlId; // Nazwa pokoju jest kluczem w JSON
+        const roomData = allData[roomJsonKey];
+
+        // Używamy tylko danych, które istnieją i są poprawne
+        if (roomData) {
+            const temp = parseFloat(roomData.temp);
+            const hum = parseFloat(roomData.hum);
+
+            if (!isNaN(temp) && !isNaN(hum)) {
+                // Pokój używający wskaźników kołowych
+                if (['sypialnia', 'lazienka'].includes(roomHtmlId)) {
+                  updateCircleDisplays(roomHtmlId, temp, hum);
+                } 
+                // Pokój używający pasków
+                else if (['salon', 'lena'].includes(roomHtmlId)) {
+                  updateBarDisplays(roomHtmlId, temp, hum);
+                }
+            }
+        }
+      });
+      
+    } catch (error) {
+      console.error('Błąd pobierania danych:', error);
+    }
+  }
+
+  // Pogoda (pozostaje bez zmian)
+  const apiKey = "b7443c3648481492ff7eb47a9f334466";
+  const miasto = "Gubin";
+  const weatherIcon = document.querySelector(".weather-icon");
+  const desc = document.querySelector(".desc");
+  const temp = document.querySelector(".temp");
+  const range = document.querySelector(".range");
+
+  function getWeather() {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${miasto}&appid=${apiKey}&units=metric&lang=pl`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        const main = data.weather[0].main.toLowerCase();
+        const description = data.weather[0].description;
+        const temperature = Math.round(data.main.temp);
+        const tempMin = Math.round(data.main.temp_min);
+        const tempMax = Math.round(data.main.temp_max);
+
+        let emoji = "🌥️";
+        if (main.includes("clear")) {
+          emoji = "☀️";
+        } else if (main.includes("clouds")) {
+          emoji = "⛅";
+        } else if (main.includes("rain") || main.includes("drizzle")) {
+          emoji = "🌧️";
+        } else if (main.includes("thunderstorm")) {
+          emoji = "⛈️";
+        } else if (main.includes("snow")) {
+          emoji = "❄️";
+        } else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) {
+          emoji = "🌫️";
+        }
+
+        weatherIcon.textContent = emoji;
+        desc.textContent = description.charAt(0).toUpperCase() + description.slice(1);
+        temp.textContent = `${temperature}°C`;
+        range.textContent = `${tempMax}° / ${tempMin}°`;
+      })
+      .catch(error => {
+        console.error("Błąd pobierania pogody:", error);
+      });
+  }
+
+  // Fullscreen (pozostaje bez zmian)
+  document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  });
+
+  // Toolbar (pozostaje bez zmian)
+  function toggleToolbar() {
+    const toolbar = document.getElementById("toolbar");
+    const icon = document.getElementById("toggleIcon");
+    const iconPath = document.getElementById("iconPath");
+    const isOpen = toolbar.classList.contains("max-h-40");
+
+    if (isOpen) {
+      toolbar.classList.remove("max-h-40");
+      icon.classList.remove("rotate-180");
+      iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+    } else {
+      toolbar.classList.add("max-h-40");
+      icon.classList.add("rotate-180");
+      iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+    }
+  }
+
+  // Zegar (pozostaje bez zmian)
+  function updateClockAndDate() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    document.getElementById("hours").innerText = hours;
+    document.getElementById("minutes").innerText = minutes;
+
+    const dni = ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."];
+    const mies = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+    const data = `${dni[now.getDay()]} ${mies[now.getMonth()]} ${now.getDate()}`;
+    document.getElementById("date").innerText = data;
+  }
+  
+  function animateExit(event) {
+    event.preventDefault();
+    const link = event.currentTarget.href;
+    const body = document.getElementById('body');
+    body.classList.remove('animate__bounceIn');
+    body.classList.add('animate__bounceOut');
+    setTimeout(() => {
+      window.location.href = link;
+    }, 700);
+  }
+
+  // Uruchomienie wszystkich funkcji
+  setInterval(updateClockAndDate, 1000);
+  updateClockAndDate();
+
+  setInterval(getWeather, 30 * 60 * 1000);
+  getWeather();
+
+  setInterval(fetchData, 5000);
+  fetchData();
+</script>
+
+</body>
+</html>

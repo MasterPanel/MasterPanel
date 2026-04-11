@@ -1,0 +1,582 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Master Store</title>
+        <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- MOBILE STORE VARIABLES --- */
+        :root {
+            --store-bg: #333;
+            --card-bg: #444;
+            --text-dark: #111;
+            --text-gray: #5f6368;
+            --accent-store: #01875f; /* Google Play Green */
+            --accent-light: #333;
+            --nav-bg: #222;
+            --border-light: #111;
+            --shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body, html {
+            user-select: none;
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--store-bg);
+            color: var(--text-dark);
+            height: 100%; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background: var(--nav-bg);
+            padding: 10px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            z-index: 10;
+        }
+
+        .user-avatar { width: 32px; height: 32px; background: #777; border-radius: 50%; }
+
+        /* --- SEARCH / ADD BAR --- */
+        .search-container {
+            padding: 10px 15px;
+            background: #444;
+        }
+        .search-box {
+            background: #333;
+            border-radius: 24px;
+            padding: 5px 15px 5px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-gray);
+            font-size: 14px;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            background: #333;
+            width: 100%;
+            font-size: 14px;
+            color: #111;
+            padding: 8px 0;
+        }
+
+        /* Przycisk szukaj na końcu paska */
+        .search-button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .search-button:active {
+            opacity: 0.5;
+        }
+
+        /* --- MAIN CONTENT (SCROLLABLE) --- */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px; /* Space for Bottom Nav */
+        }
+
+        /* --- CATEGORIES (HORIZONTAL) --- */
+        .categories {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+        .chip {
+            padding: 8px 16px;
+            background: #222;
+            color:#999;
+            border: 1px solid var(--border-light);
+            border-radius: 18px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .chip.active { background: #1119; border-color: var(--accent-store); color: var(--accent-store); }
+
+        /* --- SECTION TITLE --- */
+        .section-header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 18px; margin: 0; }
+        .see-more { color: var(--accent-store); font-size: 14px; font-weight: 500; }
+
+        /* --- APP GRID/LIST --- */
+        .app-list { padding: 0 15px; }
+        .app-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+        }
+        .app-icon { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+        .app-info { flex: 1; }
+        .app-name { font-weight: 500; font-size: 15px; margin-bottom: 2px; }
+        .app-meta { font-size: 12px; color: var(--text-gray); }
+            
+        .MINIicon { width: 20px; height: 20px; border-radius: 12px; object-fit: cover; }
+        .Sicon { width: 30px; height: 30px; border-radius: 2px; object-fit: cover; }
+        .install-btn {
+            background: var(--accent-store);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .install-btn.installing { background: #e0e0e0; color: #757575; }
+
+        /* --- PROGRESS BAR --- */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #eee;
+            margin-top: 8px;
+            border-radius: 2px;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-store);
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        /* --- BOTTOM NAVIGATION --- */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 65px;
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-gray);
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .nav-item.active { color: var(--accent-store); }
+        .nav-icon { font-size: 22px; }
+
+        /* --- MODAL --- */
+        #app-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            align-items: flex-end;
+        }
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 30px 20px;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.neon-container {
+    text-align: center;
+}
+
+/* --- Style Neonu --- */
+    /* Styl dla kontenera logo */
+        .logo {
+            font-family: 'Indie Flower', cursive;
+            font-size: 25px;
+            font-weight: 300;
+            /* Rozstrzelenie liter */
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            /* Kolor bazowy litery */
+            color: #edfff0; 
+            /* Przypisanie animacji mrygania (zepsuty neon) */
+            animation: flicker 20s linear infinite;
+            display: inline-block;
+        }
+
+        /* --- ANIMACJA ZEPSUTEGO NEONU --- */
+        @keyframes flicker {
+            /* 0-30%: Stabilne świecenie */
+            0%, 30%, 34%, 38%, 42%, 46%, 50%, 70%, 74%, 78%, 82%, 100% {
+                text-shadow:
+                    0 0 7px #fff,
+                    0 0 99px #fff,
+                    0 0 21px #931,
+                    0 0 42px #0fa,
+                    0 0 82px #349,
+                    0 0 92px #555,
+                    0 0 1px #0a0,
+                    0 0 151px #222;
+                opacity: 1;
+            }
+
+            /* Momentowe "zgaśnięcia" (efekt spięcia/zepsucia) */
+            32%, 36%, 40%, 44%, 72%, 76%, 80% {
+                text-shadow:
+                    0 0 2px rgba(255,255,255,0.9),
+                    0 0 5px rgba(0,255,170,0.9);
+                /* Przyciemnienie samej litery */
+                color: #000;
+                opacity: 0.9;
+            }
+
+            /* 50-60%: Faza lekkiego drżenia i spadku napięcia */
+            55% {
+                text-shadow:
+                    -1px 2px 7px #fff,
+                    0 0 10px #fff,
+                    -2px 2px 21px #0fa,
+                    0 0 42px #0fa,
+                    0 0 82px #0fa;
+                opacity: 0.8;
+            }
+
+            /* Krótkie, głębokie wygaszenie */
+            81% {
+                text-shadow: none;
+                color: #111;
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Master Store</div>
+        <div class="user-avatar"></div>
+    </header>
+
+    <div class="search-container">
+        <div class="search-box">
+            <img src="https://cdn-icons-png.flaticon.com/512/4666/4666840.png" class="MINIicon">
+            <input type="text" id="searchInput" class="search-input" placeholder="Wklej URL i naciśnij Enter...">
+            <button id="searchBtn" class="search-button">
+                <img src="https://cdn-icons-png.flaticon.com/128/639/639375.png" class="Sicon">
+            </button>
+        </div>
+    </div>
+
+    <main>
+        <div class="categories">
+            <div class="chip active">Dla Ciebie</div>
+            <div class="chip">Top Listy</div>
+            <div class="chip">Dzieci</div>
+            <div class="chip">Kategorie</div>
+            <div class="chip">Premium</div>
+        </div>
+
+        <section id="customAppsSection" style="display: none;">
+            <div class="section-header">
+                <h2>Twoje aplikacje</h2>
+            </div>
+            <div class="app-list" id="customAppsList"></div>
+        </section>
+
+        <section>
+            <div class="section-header">
+                <h2>Polecane Aplikacje</h2>
+                <span class="see-more">Zobacz więcej</span>
+            </div>
+            <div class="app-list">
+                <div class="app-card">
+                    <img src="https://cdn-icons-png.flaticon.com/512/5968/5968771.png" class="app-icon">
+                    <div class="app-info">
+                        <div class="app-name" onclick="openApp('Master Chat', 'Komunikacja • 4.8★', 'https://cdn-icons-png.flaticon.com/512/5968/5968771.png')">Master Chat</div>
+                        <div class="app-meta">Produktywność • 4.8★</div>
+                        <div class="progress-container" id="p-1-wrap"><div class="progress-bar" id="p-1"></div></div>
+                    </div>
+                    <button class="install-btn" onclick="startInstall(event, 1, 'Master Chat', 'https://cdn-icons-png.flaticon.com/512/5968/5968771.png', 'czat.html')">Instaluj</button>
+                </div>
+                <div class="app-card">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1137/1137751.png" class="app-icon">
+                    <div class="app-info">
+                        <div class="app-name" onclick="openApp('GPS', 'Narzędzia • 4.2★', 'https://cdn-icons-png.flaticon.com/512/1137/1137751.png')">GPS</div>
+                        <div class="app-meta">Narzędzia • 4.2★</div>
+                        <div class="progress-container" id="p-2-wrap"><div class="progress-bar" id="p-2"></div></div>
+                    </div>
+                    <button class="install-btn" onclick="startInstall(event, 2, 'GPS', 'https://cdn-icons-png.flaticon.com/512/1137/1137751.png', 'app.html')">Instaluj</button>
+                </div>
+                <div class="app-card">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2276/2276332.png" class="app-icon">
+                    <div class="app-info">
+                        <div class="app-name" onclick="openApp('Funkcje Natywne', 'IoT • 5.0★', 'https://cdn-icons-png.flaticon.com/512/2276/2276332.png')">Funkcje Natywne</div>
+                        <div class="app-meta">IoT • 5.0★</div>
+                        <div class="progress-container" id="p-3-wrap"><div class="progress-bar" id="p-3"></div></div>
+                    </div>
+                    <button class="install-btn" onclick="startInstall(event, 3, 'Funkcje Natywne', 'https://cdn-icons-png.flaticon.com/512/2276/2276332.png', 'nativ.html')">Instaluj</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================
+             SEKCJA: Narzędzia systemowe — Widgety pulpitu
+             ================================================ -->
+        <section style="margin-top: 20px;">
+            <div class="section-header">
+                <h2>Narzędzia systemowe</h2>
+            </div>
+            <div class="app-list">
+                <div class="app-card">
+                    <img src="https://cdn-icons-png.flaticon.com/512/6214/6214270.png" class="app-icon">
+                    <div class="app-info">
+                        <div class="app-name"  onclick="openApp('Widgety', 'Narzędzia • 4.9★', 'https://cdn-icons-png.flaticon.com/512/6214/6214270.png')">Widgety</div>
+                        <div class="app-meta">Narzędzia • Zegary, Pogoda, Notatki</div>
+                        <div class="progress-container" id="p-w1-wrap"><div class="progress-bar" id="p-w1"></div></div>
+                    </div>
+                    <button class="install-btn" id="btn-w1"
+                            onclick="startInstall(event, 'w1', 'Widgety', 'https://cdn-icons-png.flaticon.com/512/6214/6214270.png', '')">
+                        Instaluj
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-top: 20px;">
+            <div class="section-header">
+                <h2>Ostatnio zaktualizowane</h2>
+            </div>            <div class="app-list">
+                <div class="app-card">
+                    <img src="https://cdn-icons-png.flaticon.com/128/6301/6301959.png" class="app-icon">
+                    <div class="app-info">
+                        <div class="app-name"  onclick="openApp('Explorer', 'Systemowe • 12 MB', 'https://cdn-icons-png.flaticon.com/128/6301/6301959.png')">Explorer</div>
+                        <div class="app-meta">Systemowe • 12 MB</div>
+                    </div>
+                    <button class="install-btn" onclick="event.stopPropagation(); window.parent.postMessage({type: 'openApp', name: 'Explorer', url: 'app.html'}, '*')">Otwórz</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon"> <img src="https://cdn-icons-png.flaticon.com/128/1040/1040226.png" class="MINIicon"></span>
+            <span>Gry</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">   <img src="https://cdn-icons-png.flaticon.com/128/1040/1040224.png"class="MINIicon"> </span>
+            <span>Aplikacje</span>
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">  <img src="https://cdn-icons-png.flaticon.com/128/1137/1137751.png" class="MINIicon"> </span>
+            <span>Łączność</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">  <img src="https://cdn-icons-png.flaticon.com/128/1040/1040221.png" class="MINIicon"> </span>
+            <span>Ustawienia</span>
+        </div>
+    </nav>
+
+    <div id="app-modal" onclick="closeApp()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <img id="m-icon" src="" style="width: 80px; height: 80px; border-radius: 18px; object-fit: cover;">
+                <div>
+                    <h2 id="m-name" style="margin: 0;"></h2>
+                    <p id="m-meta" style="color: var(--text-gray); margin: 5px 0;"></p>
+                </div>
+            </div>
+            <p style="margin-top: 20px; line-height: 1.6; color: var(--text-gray);">
+                Ta aplikacja została zoptymalizowana pod kątem MasterOS. Oferuje pełną wydajność i funkcjonalność.
+            </p>
+            <button class="install-btn" style="width: 100%; padding: 15px; margin-top: 10px;" onclick="closeApp()">Zamknij szczegóły</button>
+        </div>
+    </div>
+
+    <script>
+        // Inicjalizacja przy starcie
+        window.onload = loadApps;
+
+        // Funkcja wykonująca akcję szukania/dodawania
+        function handleSearch() {
+            const input = document.getElementById("searchInput");
+            const url = input.value.trim();
+            if (isValidUrl(url)) {
+                processNewApp(url);
+                input.value = "";
+            } else {
+                alert("Wpisz poprawny adres URL");
+            }
+        }
+
+        // Obsługa wyszukiwarki - Enter
+        document.getElementById("searchInput").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                handleSearch();
+            }
+        });
+
+        // Obsługa wyszukiwarki - Kliknięcie przycisku
+        document.getElementById("searchBtn").addEventListener("click", function() {
+            handleSearch();
+        });
+
+        function isValidUrl(s) {
+            try { return !!new URL(s); } catch(e) { return false; }
+        }
+
+        // Przetwarzanie nowej aplikacji
+        function processNewApp(url) {
+            const domain = new URL(url).hostname;
+            const icon = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+            const appObj = { id: Date.now(), name: domain, icon: icon, url: url, installed: false };
+            
+            saveAppToLocal(appObj);
+            renderAppCard(appObj);
+        }
+
+        // Renderowanie karty w sekcji "Twoje aplikacje"
+        function renderAppCard(app) {
+            const section = document.getElementById("customAppsSection");
+            const list = document.getElementById("customAppsList");
+            section.style.display = "block";
+
+            const card = document.createElement("div");
+            card.className = "app-card";
+            card.id = `card-${app.id}`;
+            card.innerHTML = `
+                <img src="${app.icon}" class="app-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/565/565547.png'">
+                <div class="app-info">
+                    <div class="app-name">${app.name}</div>
+                    <div class="app-meta">Web App</div>
+                    <div class="progress-container" id="p-${app.id}-wrap"><div class="progress-bar" id="p-${app.id}"></div></div>
+                </div>
+                <button class="install-btn" id="btn-${app.id}">${app.installed ? 'Otwórz' : 'Instaluj'}</button>
+            `;
+
+            card.querySelector(".install-btn").onclick = (e) => {
+                startInstall(e, app.id, app.name, app.icon, app.url);
+            };
+
+            list.prepend(card);
+        }
+
+        // Logika instalacji
+        function startInstall(event, id, name, icon, url) {
+            const btn = event.target;
+            
+            if (btn.innerText === "Otwórz") {
+                window.parent.postMessage({ type: 'openApp', name: name, url: url }, '*');
+                return;
+            }
+
+            btn.classList.add('installing');
+            btn.innerText = "Czekaj...";
+            btn.disabled = true;
+
+            const wrap = document.getElementById(`p-${id}-wrap`);
+            const bar = document.getElementById(`p-${id}`);
+            if(wrap) wrap.style.display = "block";
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    btn.innerText = "Otwórz";
+                    btn.disabled = false;
+                    btn.classList.remove('installing');
+                    if(wrap) wrap.style.display = "none";
+                  
+                 // --- KLUCZOWA ZMIANA ---
+            if (name === 'Master Chat') {
+                // Zapisujemy instalację w przeglądarce
+                localStorage.setItem('masterChatInstalled', 'true');
+                
+                // Informujemy index.html o instalacji (floating chat + ikona pulpitu)
+                window.parent.postMessage({ type: 'APP_INSTALLED', app: 'Master Chat' }, '*');
+            }
+            // -----------------------
+                    // Aktualizacja statusu w LocalStorage
+                    updateInstallStatus(id);
+
+                    // Komunikat do systemu nadrzędnego
+                    window.parent.postMessage({
+                        type: 'installComplete',
+                        appName: name,
+                        appIcon: icon,
+                        appUrl: url
+                    }, '*');
+                }
+                if(bar) bar.style.width = progress + "%";
+            }, 200);
+        }
+
+        // --- OBSŁUGA LOCAL STORAGE ---
+
+        function saveAppToLocal(appObj) {
+            let apps = JSON.parse(localStorage.getItem('myCustomApps') || '[]');
+            apps.push(appObj);
+            localStorage.setItem('myCustomApps', JSON.stringify(apps));
+        }
+
+        function loadApps() {
+            let apps = JSON.parse(localStorage.getItem('myCustomApps') || '[]');
+            apps.forEach(app => renderAppCard(app));
+        }
+
+        function updateInstallStatus(id) {
+            let apps = JSON.parse(localStorage.getItem('myCustomApps') || '[]');
+            const index = apps.findIndex(a => a.id == id);
+            if(index !== -1) {
+                apps[index].installed = true;
+                localStorage.setItem('myCustomApps', JSON.stringify(apps));
+            }
+        }
+
+        function openApp(name, meta, icon) {
+            const modal = document.getElementById('app-modal');
+            document.getElementById('m-name').innerText = name;
+            document.getElementById('m-meta').innerText = meta;
+            document.getElementById('m-icon').src = icon;
+            modal.style.display = 'flex';
+        }
+
+        function closeApp() {
+            document.getElementById('app-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

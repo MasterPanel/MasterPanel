@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: sans-serif; 
+            background: #1e1e1e; 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+            user-select: none;
+        }
+        /* Okno wiadomości */
+        #chat-window { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        /* Wygląd chmurki */
+        .msg { 
+            background: #2d2d2d; 
+            padding: 8px 12px; 
+            border-radius: 12px; 
+            max-width: 85%; 
+            font-size: 0.9rem; 
+            border: 1px solid #3d3d3d; 
+            word-wrap: break-word; 
+            align-self: flex-start; 
+        }
+        .msg b { color: #4dabff; }
+        .msg span { font-size: 0.7rem; opacity: 0.5; margin-left: 8px; }
+        
+        /* Panel wpisywania */
+        #input-area { 
+            padding: 10px; 
+            background: #121212; 
+            display: flex; 
+            gap: 5px; 
+            border-top: 1px solid #333; 
+        }
+        input { 
+            background: #252525; 
+            border: 1px solid #444; 
+            color: white; 
+            padding: 8px; 
+            border-radius: 4px; 
+            flex: 1; 
+            outline: none; 
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:active { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+    <div id="chat-window"></div>
+
+    <div id="input-area">
+        <input type="text" id="msgInp" placeholder="Wiadomość..." autocomplete="off">
+        <button id="sendBtn">Wyślij</button>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const msgInp = document.getElementById('msgInp');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Funkcja rozpoznająca system operacyjny urządzenia
+        function getOS() {
+            const ua = navigator.userAgent;
+            if (/android/i.test(ua)) return "Android";
+            if (/iPad|iPhone|iPod/.test(ua)) return "iOS";
+            if (/Windows/i.test(ua)) return "Windows";
+            if (/Mac/i.test(ua)) return "MacOS";
+            if (/Linux/i.test(ua)) return "Linux";
+            return "User";
+        }
+
+        // Pobieranie historii z serwera
+        async function loadMessages() {
+            try {
+                const res = await fetch('/api/chat');
+                if (!res.ok) throw new Error('Błąd serwera');
+                const data = await res.json();
+                
+                chatWindow.innerHTML = '';
+                data.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'msg';
+                    // Wyświetlanie nazwy systemu (m.user) pobranej z bazy
+                    div.innerHTML = `<b>${m.user}:</b> ${m.text} <span>${m.time}</span>`;
+                    chatWindow.appendChild(div);
+                });
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            } catch (e) {
+                console.error("Nie udało się pobrać wiadomości");
+            }
+        }
+
+        // Wysyłanie wiadomości z dynamiczną nazwą użytkownika
+        async function sendMessage() {
+            const systemName = getOS(); // Pobranie nazwy systemu
+            const message = msgInp.value.trim();
+            
+            if (!message) return;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user: systemName, // Wysyłamy np. "Windows" zamiast "User"
+                        message: message 
+                    })
+                });
+
+                if (response.ok) {
+                    msgInp.value = '';
+                    await loadMessages();
+                }
+            } catch (e) {
+                console.error("Błąd wysyłania");
+            }
+        }
+
+        // Obsługa przycisków
+        sendBtn.onclick = sendMessage;
+        msgInp.onkeypress = (e) => { 
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
+
+        // Interwał odświeżania co 3 sekundy
+        setInterval(loadMessages, 3000);
+        // Pierwsze ładowanie
+        loadMessages();
+    </script>
+</body>
+</html>

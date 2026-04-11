@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+ <meta name="theme-color" content="#2d0036">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ <title>Mata Taneczna Mastera</title>
+ <style>
+ :root { --active-shadow: 0 0 40px rgba(255, 255, 255, 0.8); }
+
+ html {
+ background: radial-gradient(circle at center, #ff007f 0%, #8a2be2 35%, #2d0036 75%, #050505 100%);
+ height: 100%; margin: 0; padding: 0; overflow: hidden;
+ }
+
+ body {
+ user-select: none;
+ -webkit-tap-highlight-color: transparent; /* Usuwa niebieski prostokąt */
+ background: transparent; color: white; font-family: 'Segoe UI', sans-serif;
+ margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+ height: 100vh; height: -webkit-fill-available; width: 100vw; touch-action: auto;
+ }
+
+ #fs-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; cursor: pointer; background: transparent; }
+
+ #ui-layer {
+ position: absolute; top: calc(20px + env(safe-area-inset-top));
+ display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 10;
+ }
+
+ #score-board { font-size: 3rem; font-weight: bold; color: #ffd700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+ #status { font-size: 1rem; color: #ff4757; }
+
+ .mat-container { position: relative; width: 900px; height: 900px; transform-origin: center; }
+
+ .steps-btn {
+ position: absolute; width: 70px; height: 70px; border-radius: 40%; background: #994;
+ border: 4px solid; display: flex; align-items: center; justify-content: center; font-size: 4rem;
+ box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer;
+ -webkit-tap-highlight-color: transparent;
+ }
+
+ .step-btn {
+ position: absolute; width: 200px; height: 200px; border-radius: 50%;
+ background: rgba(0,0,0,0.4); border: 10px solid rgba(255,255,255,0.1);
+ display: flex; align-items: center; justify-content: center; transition: all 0.1s;
+ overflow: hidden; cursor: pointer;
+ -webkit-tap-highlight-color: transparent;
+ }
+
+ /* Styl dla kontenera obrazka/ikony */
+ .emoji-content {
+ width: 80%;
+ height: 80%;
+ background-size: contain;
+ background-repeat: no-repeat;
+ background-position: center;
+ transform: translateY(120%);
+ transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+ pointer-events: none;
+ }
+
+ .step-btn.up .emoji-content { transform: translateY(0); }
+ .step-btn.pressed { background-color: rgba(255,255,255,0.3); border-color: white; box-shadow: var(--active-shadow); }
+ 
+ /* Zamiana otworu emoji na grafikę tła */
+ .step-btn::after { 
+ content: ''; 
+ position: absolute; 
+ width: 110%;
+ height: 110%;
+ background-image: url('https://cdn-icons-png.flaticon.com/512/124/124585.png'); /* Przykładowa ikona otworu/cienia */
+ background-size: contain;
+ background-repeat: no-repeat;
+ background-position: center;
+ opacity: 0.3; 
+ z-index: -1; 
+ }
+
+ #start { top: 0px; left: 5%; border-color: #333; }
+ #minus { top: 0px; left: 20%; border-color: #33cc44; color: #33cc44; }
+ #plus { top: 0px; right: 20%; border-color: #33cc44; color: #33cc44; }
+ #NW { top: 10%; left: 15%; } #NE { top: 10%; right: 15%; }
+ #L { top: 45%; left: 0%; } #R { top: 45%; right: 0%; }
+ #S { bottom: 0px; left: 50%; transform: translateX(-50%); }
+
+ .center-graphic {
+ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+ font-size: 4rem; color: rgba(255,255,255,0.1); text-transform: uppercase; pointer-events: none;
+ }
+
+ @media (max-width: 900px), (max-height: 900px) {
+ .mat-container { transform: scale(min(0.8, calc(100vw / 950), calc(100vh / 950))); }
+ }
+ </style>
+</head>
+<body>
+ <div id="fs-overlay"></div>
+
+ <div id="ui-layer">
+ <div id="status">ŁĄCZENIE Z MATĄ...</div>
+ <div id="score-board">PUNKTY: 0</div>
+ </div>
+
+ <div class="mat-container">
+ <div id="start" class="steps-btn">►</div>
+ <div id="minus" class="steps-btn">➖</div>
+ <div id="plus" class="steps-btn">➕</div>
+ <div class="center-graphic">Lenusia</div>
+ 
+ <div id="NW" class="step-btn"><span class="emoji-content"></span></div>
+ <div id="NE" class="step-btn"><span class="emoji-content"></span></div>
+ <div id="L" class="step-btn"><span class="emoji-content"></span></div>
+ <div id="R" class="step-btn"><span class="emoji-content"></span></div>
+ <div id="S" class="step-btn"><span class="emoji-content"></span></div>
+ </div>
+
+ <script>
+ let score = 0;
+ const scoreEl = document.getElementById('score-board');
+ 
+ // Linki do ikon z Flaticon (przykładowe)
+ const animals = [
+ 'https://cdn-icons-png.flaticon.com/512/7254/7254595.png', // Królik
+ 'https://cdn-icons-png.flaticon.com/512/1917/1917928.png', // Lis
+ 'https://cdn-icons-png.flaticon.com/512/3975/3975095.png'  // Mysz
+ ];
+ const hitIcon = 'https://cdn-icons-png.flaticon.com/512/18948/18948059.png'; // Ikona trafienia (wybuch)
+
+ // --- PWA SETUP ---
+ const manifest = {
+ "name": "Mata Mastera",
+ "short_name": "Mata",
+ "start_url": ".",
+ "display": "standalone",
+ "background_color": "#2d0036",
+ "theme_color": "#2d0036",
+ "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/808/808476.png", "sizes": "512x512", "type": "image/png" }]
+ };
+ const link = document.createElement('link');
+ link.rel = 'manifest';
+ link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
+ document.head.appendChild(link);
+
+ if ('serviceWorker' in navigator) {
+ const swCode = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
+ navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'})));
+ }
+
+ // --- AUDIO ---
+ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+ function playSound(freq, type, duration) {
+ const osc = audioCtx.createOscillator();
+ const gain = audioCtx.createGain();
+ osc.type = type;
+ osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+ gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+ osc.connect(gain);
+ gain.connect(audioCtx.destination);
+ osc.start();
+ osc.stop(audioCtx.currentTime + duration);
+ }
+
+ const playHitSound = () => playSound(600, 'sine', 0.2);
+ const playMissSound = () => playSound(150, 'triangle', 0.3);
+
+ // --- LOGIKA GRY ---
+ document.querySelectorAll('.step-btn').forEach(btn => {
+ btn.addEventListener('pointerdown', (e) => { 
+ e.preventDefault(); 
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ handleInteraction(btn.id, "press"); 
+ });
+ btn.addEventListener('pointerup', (e) => { e.preventDefault(); handleInteraction(btn.id, "release"); });
+ });
+
+ function spawnEmoji() {
+ const buttons = document.querySelectorAll('.step-btn');
+ const randomBtn = buttons[Math.floor(Math.random() * buttons.length)];
+ if (!randomBtn.classList.contains('up')) {
+ const content = randomBtn.querySelector('.emoji-content');
+ // Ustawienie tła zamiast tekstu
+ content.style.backgroundImage = `url('${animals[Math.floor(Math.random() * animals.length)]}')`;
+ randomBtn.classList.add('up');
+ setTimeout(() => { randomBtn.classList.remove('up'); }, 1000);
+ }
+ setTimeout(spawnEmoji, Math.random() * 1500 + 500);
+ }
+
+ function handleInteraction(btnId, state) {
+ const btn = document.getElementById(btnId);
+ if (!btn) return;
+
+ if (state === "press") {
+ btn.classList.add('pressed');
+ if (btn.classList.contains('up')) {
+ score += 10;
+ scoreEl.innerText = `PUNKTY: ${score}`;
+ // Zmiana tła na ikonę trafienia
+ btn.querySelector('.emoji-content').style.backgroundImage = `url('${hitIcon}')`; 
+ playHitSound();
+ setTimeout(() => { btn.classList.remove('up'); }, 150);
+ } else {
+ playMissSound();
+ }
+ } else {
+ btn.classList.remove('pressed');
+ }
+ }
+
+ document.getElementById('fs-overlay').addEventListener('click', function() {
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+ this.style.display = 'none';
+ spawnEmoji();
+ });
+
+ // --- WEBSOCKET ESP32 ---
+ const ESP_IP = '192.168.1.15';
+ function connect() {
+ const socket = new WebSocket(`ws://${ESP_IP}:81`);
+ socket.onopen = () => { document.getElementById('status').innerText = "POŁĄCZONO!"; };
+ socket.onclose = () => { document.getElementById('status').innerText = "ROZŁĄCZONO!"; setTimeout(connect, 2000); };
+ socket.onmessage = (event) => {
+ try {
+ const data = JSON.parse(event.data);
+ handleInteraction(data.btn, data.state);
+ } catch (e) {}
+ };
+ }
+ connect();
+ </script>
+</body>
+</html>

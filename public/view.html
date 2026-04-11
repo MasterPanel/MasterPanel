@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000">
+
+    <title>Master Panel - Receiver UI</title>
+    
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root { 
+            --akcent: #00f2ff;
+            --bg-glass: rgba(15, 23, 42, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000; color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Kontener główny */
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Wideo Fullscreen */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+        }
+
+        /* Nagłówek Górny (Top Bar) */
+        .top-bar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .badge {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff4d4d;
+            border-radius: 50%;
+            display: none; /* Pokazywane przy streamie */
+        }
+
+        .live-active .live-dot {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Dolny Panel Kontrolny (HUD) */
+        .hud-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            z-index: 100;
+            background: var(--bg-glass);
+            backdrop-filter: blur(15px);
+            padding: 12px 25px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            opacity: 0;
+        }
+
+        .app-container:hover .hud-panel, .app-container:active .hud-panel {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .hud-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 5px;
+        }
+
+        .hud-btn:hover { color: var(--akcent); }
+        .hud-btn.active { color: var(--akcent); }
+
+        /* Ekran powitalny / Braku sygnału */
+        .placeholder {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, #1e293b 0%, #000 100%);
+            transition: opacity 0.5s;
+        }
+
+        .placeholder i {
+            font-size: 4rem;
+            color: var(--akcent);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Animacje */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Ukrywanie kursora w bezruchu */
+        .app-container.hide-cursor { cursor: none; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="mainContainer">
+        
+        <div class="top-bar">
+            <div class="badge" id="idBadge">
+                <i class="fas fa-fingerprint"></i>
+                <span id="my-id">Inicjalizacja...</span>
+            </div>
+            <div class="badge" id="statusBadge">
+                <div class="live-dot"></div>
+                <span id="status-text">OFFLINE</span>
+            </div>
+        </div>
+
+        <div class="placeholder" id="placeholder">
+            <i class="fas fa-broadcast-tower"></i>
+            <p style="letter-spacing: 2px; font-size: 0.9rem; opacity: 0.7;">OCZEKIWANIE NA POŁĄCZENIE</p>
+        </div>
+
+        <video id="remoteVideo" autoplay playsinline muted></video>
+
+        <div class="hud-panel">
+            <button class="hud-btn" onclick="toggleMute()" id="muteBtn" title="Dźwięk">
+                <i class="fas fa-volume-mute"></i>
+            </button>
+            <div style="width: 1px; height: 20px; background: var(--border);"></div>
+            <button class="hud-btn" onclick="toggleFS()" title="Pełny ekran">
+                <i class="fas fa-expand"></i>
+            </button>
+            <span id="room-name" style="font-size: 0.7rem; color: #888; font-weight: bold;">PANEL ODBIORCZY</span>
+        </div>
+
+    </div>
+
+    <script>
+        const peer = new Peer('ODB-' + Math.floor(1000 + Math.random() * 9000));
+        const videoEl = document.getElementById('remoteVideo');
+        const placeholder = document.getElementById('placeholder');
+        const statusText = document.getElementById('status-text');
+        const statusBadge = document.getElementById('statusBadge');
+        const myIdDisplay = document.getElementById('my-id');
+        const muteBtn = document.getElementById('muteBtn');
+
+        peer.on('open', (id) => {
+            myIdDisplay.innerText = id;
+        });
+
+        // Obsługa streamu
+        peer.on('call', (call) => {
+            call.answer();
+            
+            call.on('stream', (stream) => {
+                videoEl.srcObject = stream;
+                placeholder.style.opacity = "0";
+                setTimeout(() => placeholder.style.display = "none", 500);
+                
+                statusText.innerText = "LIVE";
+                statusBadge.classList.add('live-active');
+                
+                videoEl.play().catch(() => {
+                    console.log("Wymagana interakcja dla dźwięku");
+                });
+            });
+
+            call.on('close', resetUI);
+        });
+
+        function resetUI() {
+            videoEl.srcObject = null;
+            placeholder.style.display = "flex";
+            placeholder.style.opacity = "1";
+            statusText.innerText = "OFFLINE";
+            statusBadge.classList.remove('live-active');
+        }
+
+        // Sterowanie dźwiękiem
+        function toggleMute() {
+            videoEl.muted = !videoEl.muted;
+            muteBtn.innerHTML = videoEl.muted ? 
+                '<i class="fas fa-volume-mute"></i>' : 
+                '<i class="fas fa-volume-up" style="color: var(--akcent)"></i>';
+        }
+
+        // Pełny ekran
+        function toggleFS() {
+            const container = document.getElementById('mainContainer');
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) container.requestFullscreen();
+                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // Ukrywanie interfejsu przy braku ruchu myszy
+        let timeout;
+        document.addEventListener('mousemove', () => {
+            document.getElementById('mainContainer').classList.remove('hide-cursor');
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                document.getElementById('mainContainer').classList.add('hide-cursor');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

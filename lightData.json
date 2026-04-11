@@ -1,0 +1,18 @@
+{
+  "kuchnia": {
+    "brightness": 100,
+    "timestamp": 1775947162581
+  },
+  "lena": {
+    "brightness": 0,
+    "timestamp": 1775510734815
+  },
+  "salon": {
+    "brightness": 0,
+    "timestamp": 1775442587040
+  },
+  "sypialnia": {
+    "brightness": 0,
+    "timestamp": 1775416765031
+  }
+}

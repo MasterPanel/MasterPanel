@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000">
+
+<title>MASTER TERMINAL PRO</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+:root{
+--bg:#000;
+--accent:#00ff41;
+--panel:rgba(10,10,10,.9);
+--safe-top:env(safe-area-inset-top,20px);
+}
+
+body,html{
+margin:0;
+padding:0;
+height:100%;
+width:100%;
+overflow:hidden;
+background:var(--bg);
+font-family:'Courier New',monospace;
+color:var(--accent);
+user-select:none;
+}
+
+#map{
+position:absolute;
+top:0;
+bottom:0;
+left:0;
+right:0;
+z-index:1;
+filter:brightness(.6) grayscale(.5);
+background:#000;
+}
+
+#overlay{
+position:fixed;
+inset:0;
+background:var(--bg);
+z-index:99999;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+}
+
+.boot-box{text-align:center;width:80%;max-width:400px;}
+
+h1{font-size:1.5em;letter-spacing:4px;margin-bottom:30px;}
+
+.id-input{
+background:transparent;
+border:none;
+border-bottom:2px solid #222;
+color:var(--accent);
+font-family:inherit;
+font-size:1.5em;
+text-align:center;
+width:100%;
+outline:none;
+margin-bottom:40px;
+}
+
+.boot-btn{
+background:transparent;
+border:1px solid var(--accent);
+color:var(--accent);
+padding:15px 40px;
+cursor:pointer;
+text-transform:uppercase;
+}
+
+#device-list-panel{
+position:absolute;
+top:var(--safe-top);
+left:10px;
+width:220px;
+background:var(--panel);
+z-index:1000;
+border:1px solid var(--accent);
+display:none;
+}
+
+.panel-header{
+background:var(--accent);
+color:black;
+padding:5px;
+font-weight:bold;
+font-size:10px;
+text-align:center;
+}
+
+.device-item{
+padding:10px;
+border-bottom:1px solid #1a1a1a;
+cursor:pointer;
+font-size:12px;
+display:flex;
+justify-content:space-between;
+}
+
+.device-item.active{
+background:rgba(0,255,65,.3);
+}
+
+#hud{
+position:absolute;
+top:var(--safe-top);
+right:10px;
+background:var(--panel);
+padding:10px;
+border:1px solid var(--accent);
+z-index:1000;
+text-align:right;
+display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="overlay">
+<div class="boot-box">
+<h1>Nazwa Urządzenia</h1>
+<input type="text" id="device-id" class="id-input" placeholder="Podaj swoją nazwę">
+<br>
+<button class="boot-btn" onclick="engageSystem()">Wejdź</button>
+</div>
+</div>
+
+<div id="device-list-panel">
+<div class="panel-header">MASTER TERMINAL PRO</div>
+<div id="list-container"></div>
+</div>
+
+<div id="hud">
+<div id="target-name" style="font-size:10px;">ID</div>
+<div style="font-size:24px;font-weight:bold;">
+<span id="speed-val">00.0</span>
+<small style="font-size:10px;">KM/H</small>
+</div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* ================================
+   ZMIENNE SYSTEMU
+================================ */
+
+const API_BASE = window.location.origin;
+let map;
+let targetId=null;
+let myId="";
+let deviceLayers={};
+let lastKnownDevices={};
+
+
+/* ================================
+   START SYSTEMU
+================================ */
+
+async function engageSystem(){
+
+myId=document.getElementById('device-id').value.trim().toUpperCase();
+
+if(!myId)return;
+
+document.getElementById('overlay').style.display='none';
+document.getElementById('device-list-panel').style.display='block';
+document.getElementById('hud').style.display='block';
+
+initMap();
+
+setInterval(sync,1500);
+
+}
+
+
+/* ================================
+   INICJALIZACJA MAPY
+   (DODANA WARSTWA NAZW MIEJSCOWOŚCI)
+================================ */
+
+function initMap(){
+
+map=L.map('map',{
+zoomControl:false,
+attributionControl:false,
+fadeAnimation:true
+}).setView([51.9,14.7],16);
+
+
+/* główna ciemna mapa bez napisów */
+
+L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+{maxZoom:20}
+).addTo(map);
+
+
+/* NOWA WARSTWA – nazwy miast, ulic itd */
+
+L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+{maxZoom:20}
+).addTo(map);
+
+
+setTimeout(()=>{map.invalidateSize();},200);
+
+}
+
+
+/* ================================
+   SYNCHRONIZACJA GPS
+================================ */
+
+async function sync(){
+
+navigator.geolocation.getCurrentPosition((pos)=>{
+
+const data={
+id:myId,
+lat:pos.coords.latitude,
+lng:pos.coords.longitude,
+speed:pos.coords.speed||0
+};
+
+fetch(`${API_BASE}/update-location`,{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify(data)
+}).catch(()=>{});
+
+});
+
+try{
+
+const res=await fetch(`${API_BASE}/get-all-locations`);
+const activeDevices=await res.json();
+
+lastKnownDevices=activeDevices;
+
+for(const id in deviceLayers){
+
+if(!activeDevices[id]){
+
+map.removeLayer(deviceLayers[id].marker);
+map.removeLayer(deviceLayers[id].path);
+delete deviceLayers[id];
+
+if(targetId===id)targetId=null;
+
+}
+
+}
+
+renderList(activeDevices);
+
+Object.keys(activeDevices).forEach(id=>updateDevice(id,activeDevices[id]));
+
+}catch(e){}
+
+}
+
+
+/* ================================
+   LISTA URZĄDZEŃ
+================================ */
+
+function renderList(devices){
+
+const container=document.getElementById('list-container');
+container.innerHTML='';
+
+Object.keys(devices).forEach(id=>{
+
+const div=document.createElement('div');
+
+div.className=`device-item ${targetId===id?'active':''}`;
+
+div.innerHTML=`<span>> ${id}</span><span>${(devices[id].speed*3.6).toFixed(0)}</span>`;
+
+div.onclick=()=>{
+
+targetId=id;
+
+document.getElementById('target-name').innerText="WIDOK: "+id;
+
+};
+
+container.appendChild(div);
+
+});
+
+}
+
+
+/* ================================
+   AKTUALIZACJA MARKERÓW
+================================ */
+
+function updateDevice(id,data){
+
+const pos=[data.lat,data.lng];
+
+if(!deviceLayers[id]){
+
+const color=(id===myId)
+?'#00ff41'
+:`hsl(${Math.abs(id.split('').reduce((a,b)=>a+b.charCodeAt(0),0))%360},70%,50%)`;
+
+deviceLayers[id]={
+
+marker:L.circleMarker(pos,{
+radius:6,
+color:color,
+fillColor:color,
+fillOpacity:.8
+}).addTo(map),
+
+path:L.polyline([],{
+color:color,
+weight:2,
+opacity:.4
+}).addTo(map),
+
+history:[]
+
+};
+
+}
+
+const layer=deviceLayers[id];
+
+layer.marker.setLatLng(pos);
+
+if(id===targetId||(id===myId&&!targetId)){
+
+layer.history.push(pos);
+layer.path.setLatLngs(layer.history);
+
+map.panTo(pos);
+
+document.getElementById('speed-val').innerText=(data.speed*3.6).toFixed(1);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

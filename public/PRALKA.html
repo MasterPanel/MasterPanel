@@ -1,0 +1,454 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Pralka - 3D Smart Edition</title>
+    <style>
+        :root {
+            --glass:  #1119;
+            --glass-border: #1113;
+            --neon: #00ff41;
+            --accent: #00d4ff;
+            --red: #ff4b2b;
+            --yellow: #f1c40f;
+        }
+
+        body {         
+            user-select: none;
+            background: url('https://wallpapers.com/images/hd/2440x1440-desktop-pc-background-wkvl5uwxyeuanzts.jpg') center/cover no-repeat;
+            position: relative; 
+            overflow-x: hidden;
+            background-attachment: fixed;
+            background-size: cover;
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        #token-config-panel {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--accent);
+        }
+        
+        #input-token-field {
+            background: #000;
+            border: 1px solid #333;
+            color: var(--neon);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 300px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            margin-top: 10px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            cursor: grab;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .label { font-size: 0.8rem; opacity: 0.7; display: block; margin-bottom: 4px; }
+        .val { font-size: 1rem; font-weight: 700; color: var(--neon); }
+        .val-energy { color: var(--yellow); }
+
+        select, button {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: inherit;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-primary { background: var(--neon); color: #000; font-weight: bold; border: none; }
+        .btn-danger { color: var(--red); border-color: var(--red); font-weight: bold; }
+        .full { grid-column: span 2; }
+
+        #log {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.5);
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 8px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">Master Pralka</div>
+
+    <div class="section-title">Status urządzenia</div>
+    <div class="card-grid">
+        <div class="glass-card"><span class="label">Tryb</span><span id="st-machine" class="val">---</span></div>
+        <div class="glass-card"><span class="label">Koniec o</span><span id="st-time" class="val">---</span></div>
+        <div class="glass-card"><span class="label">Temp.</span><span id="st-temp" class="val">---</span></div>
+        <div class="glass-card"><span class="label">Wirowanie</span><span id="st-spin" class="val">---</span></div>
+        <div class="glass-card"><span class="label">Smart Control</span><span id="st-remote" class="val">---</span></div>
+        <div class="glass-card"> <span class="label">Energia (kWh)</span><span id="st-energy" class="val val-energy">---</span></div>
+    </div>
+
+    <div class="glass-card" style="display: none;"> <span class="label">Moc (W)</span>
+        <span id="st-power" class="val val-energy">---</span>
+    </div>
+
+    <div class="section-title">Wybór programu</div>
+    <select id="cycle-select">
+        <option value="1C">Bawełna</option>
+        <option value="1B">Eco 40-60</option>
+        <option value="1E">Syntetyki</option>
+        <option value="25">Pościel</option>
+        <option value="33">Higiena / Parowe</option>
+        <option value="28">Samo Wirowanie</option>
+        <option value="3A">Pranie 70°C</option>
+    </select>
+    <button onclick="setCycle()">Zastosuj program</button>
+
+    <div class="section-title">Zdalne sterowanie</div>
+    <div class="card-grid">
+        <button class="btn-primary full" id="run-btn" onclick="executeState('run')">START / WZNÓW</button>
+        <button onclick="executeState('pause')">PAUZA</button>
+        <button class="btn-danger" onclick="executeState('stop')">ANULUJ CYKL</button>
+    </div>
+
+    <button id="refresh-btn" style="margin-top: 25px; border-color: var(--accent); color: var(--accent);" onclick="refreshStatus()">
+        SYNCHRONIZUJ (<span id="cd-timer" class="timer-val">0</span>s)
+    </button>
+
+    <div id="log">Ładowanie systemu...</div>
+    
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button onclick="toggleTokenPanel()" style="width: auto; padding: 5px 15px; font-size: 0.7rem; color: var(--accent); border-color: var(--accent);">
+            USTAWIENIA TOKENA
+        </button>
+    </div>
+
+    <div id="token-config-panel">
+        <span class="label" style="color: var(--accent);">Personal Access Token (PAT)</span>
+        <input type="password" id="input-token-field" placeholder="Wklej tutaj swój token SmartThings...">
+        <button class="btn-primary" style="margin-top: 5px; padding: 8px;" onclick="saveTokenLocally()">ZAPISZ TOKEN</button>
+    </div>
+
+    <div class="section-title">Podgląd na żywo</div>
+    <div id="canvas-container"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    const CONFIG = {
+        deviceId: '4a61ca17-2d6e-20a5-ad5d-63e68241b650',
+        getToken: () => localStorage.getItem('ST_TOKEN_WASH') || ''
+    };
+
+    // Słownik mapujący stany pracy na polskie nazwy
+    const jobStateMap = {
+        'none': 'Gotowy',
+        'wash': 'Pranie',
+        'rinse': 'Płukanie',
+        'spin': 'Wirowanie',
+        'finish': 'Koniec',
+        'drying': 'Suszenie',
+        'weighting': 'Ważenie',
+        'wrinkleprevent': 'Ochrona przed zagnieceniem'
+    };
+
+    function toggleTokenPanel() {
+        const panel = document.getElementById('token-config-panel');
+        panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function saveTokenLocally() {
+        const token = document.getElementById('input-token-field').value.trim();
+        if(token) {
+            localStorage.setItem('ST_TOKEN_WASH', token);
+            updateLog("Token zapisany.");
+            toggleTokenPanel();
+        }
+    }
+
+    let isCooldown = false;
+    let scene, camera, renderer, drum, machineBody, controls;
+    let isSpinning = false;
+    let isFastSpin = false;
+    let currentRotationSpeed = 0;
+
+  
+    // --- INICJALIZACJA THREE.JS ---
+    function init3D() {
+        const container = document.getElementById('canvas-container');
+        scene = new THREE.Scene();
+        
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(6, 6, 12); 
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 30;
+        controls.target.set(0, 0, 0);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 7.5);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(-5, -5, -5);
+        scene.add(directionalLight, backLight, new THREE.AmbientLight(0xffffff, 0.4));
+
+        const bodyGeo = new THREE.BoxGeometry(4, 5, 4);
+        const bodyMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
+        machineBody = new THREE.Mesh(bodyGeo, bodyMat);
+        scene.add(machineBody);
+
+        const stripGeo = new THREE.BoxGeometry(4, 0.8, 0.1);
+        const stripMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const controlStrip = new THREE.Mesh(stripGeo, stripMat);
+        controlStrip.position.set(0, 2.1, 1.96);
+        scene.add(controlStrip);
+
+        const knobGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 32);
+        const knobMat = new THREE.MeshPhongMaterial({ color: 0x666666, specular: 0xffffff, shininess: 30 });
+        const knob = new THREE.Mesh(knobGeo, knobMat);
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(0.01, 2.1, 2.06);
+        scene.add(knob);
+
+        const displayGeo = new THREE.PlaneGeometry(1.5, 0.4);
+        const displayMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const displayScreen = new THREE.Mesh(displayGeo, displayMat);
+        displayScreen.position.set(1.2, 2.2, 2.02);
+        scene.add(displayScreen);
+
+        const textGeo = new THREE.PlaneGeometry(1.3, 0.3);
+        const textMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.8 });
+        const textPlaceholder = new THREE.Mesh(textGeo, textMat);
+        textPlaceholder.position.set(1.2, 2.2, 2.03);
+        scene.add(textPlaceholder);
+
+        const drumGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.5, 32);
+        const drumMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        drum = new THREE.Mesh(drumGeo, drumMat);
+        drum.rotation.x = Math.PI / 2;
+        drum.position.z = 1.8;
+        scene.add(drum);
+
+        const glassGeo = new THREE.CircleGeometry(1.1, 32);
+        const glassMat = new THREE.MeshPhongMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.4 });
+        const glass = new THREE.Mesh(glassGeo, glassMat);
+        glass.position.z = 2.1;
+        scene.add(glass);
+
+        animate3D();
+    }
+
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        if (controls) controls.update();
+
+        let targetSpeed = 0;
+        if (isSpinning) {
+            targetSpeed = isFastSpin ? 0.8 : 0.15;
+        }
+
+        if (currentRotationSpeed < targetSpeed) {
+            currentRotationSpeed += 0.005;
+        } else if (currentRotationSpeed > targetSpeed) {
+            currentRotationSpeed -= 0.005;
+        }
+        
+        drum.rotation.y += currentRotationSpeed;
+
+        if (currentRotationSpeed > 0.05) {
+            const shakeIntensity = isFastSpin ? 0.06 : 0.02;
+            const shakeSpeed = isFastSpin ? 0.15 : 0.05;
+            machineBody.position.x = Math.sin(Date.now() * shakeSpeed) * shakeIntensity;
+            machineBody.position.y = Math.cos(Date.now() * (shakeSpeed + 0.02)) * (shakeIntensity / 2);
+        } else {
+            machineBody.position.x = 0;
+            machineBody.position.y = 0;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // --- FUNKCJA GŁĘBOKIEGO SZUKANIA WARTOŚCI ---
+    function deepScan(obj, targetKey) {
+        let results = [];
+        const search = (item) => {
+            if (!item || typeof item !== 'object') return;
+            for (let key in item) {
+                if (key.toLowerCase().includes(targetKey.toLowerCase())) {
+                    if (item[key] && typeof item[key].value !== 'undefined') {
+                        results.push(item[key].value);
+                    } else if (typeof item[key] === 'number') {
+                        results.push(item[key]);
+                    }
+                }
+                search(item[key]);
+            }
+        };
+        search(obj);
+        return results.length > 0 ? Math.max(...results) : null;
+    }
+
+    async function refreshStatus() {
+        const token = CONFIG.getToken();
+        if(!token) { toggleTokenPanel(); return; }
+        if(isCooldown) return;
+        startCooldown(10); 
+        updateLog("Głębokie skanowanie parametrów...");
+        
+        try {
+            const res = await fetch(`https://api.smartthings.com/v1/devices/${CONFIG.deviceId}/status`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            // Status pracy - Logika wyboru etapu (Pranie/Płukanie/Wirowanie)
+            const rawState = (data.components.main?.washerOperatingState?.machineState?.value || "OFF").toUpperCase();
+            const jobState = (data.components.main?.washerOperatingState?.washerJobState?.value || "").toLowerCase();
+            
+            // Mapowanie etapu pracy na polski
+            let displayState = jobStateMap[jobState] || rawState;
+            if (rawState === 'READY' && jobState === 'none') displayState = "GOTOWY";
+            if (rawState === 'STOP') displayState = "ZATRZYMANO";
+
+            document.getElementById('st-machine').innerText = displayState;
+            
+            // Logika animacji 3D
+            const isRunning = (rawState === 'RUNNING' || rawState === 'RUN');
+            isSpinning = isRunning;
+            isFastSpin = (jobState === 'spin' || jobState === 'finish');
+
+            // Podstawowe (z komponentu main)
+            document.getElementById('st-temp').innerText = (data.components.main['samsungce.washerWaterTemperature']?.washerWaterTemperature?.value || "---") + "°C";
+            document.getElementById('st-spin').innerText = data.components.main['samsungce.washerCycle']?.spinLevel?.value || "---";
+            document.getElementById('st-remote').innerText = data.components.main['remoteControlStatus']?.remoteControlStatus?.value === 'runnable' ? "AKTYWNE" : "NIEAKTYWNE";
+            
+            const rawTime = data.components.main?.washerOperatingState?.completionTime?.value;
+            document.getElementById('st-time').innerText = rawTime ? new Date(rawTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "---";
+
+            // --- AGRESYWNE SKANOWANIE ENERGII W CAŁYM JSONIE ---
+            const foundPower = deepScan(data, "power");
+            const foundEnergy = deepScan(data, "energy");
+
+            document.getElementById('st-power').innerText = foundPower !== null ? foundPower + " W" : "0 W";
+            
+            let finalEnergy = foundEnergy !== null ? foundEnergy : 0;
+            if (finalEnergy > 50) finalEnergy = (finalEnergy / 1000).toFixed(2);
+            document.getElementById('st-energy').innerText = finalEnergy + " kWh";
+
+            updateLog(isRunning ? `Status: ${displayState}...` : "Gotowy.");
+        } catch(e) { 
+            updateLog("Błąd API."); 
+            console.error(e);
+        }
+    }
+
+    async function execute(capability, command, args = []) {
+        const token = CONFIG.getToken();
+        if(!token || isCooldown) return;
+        try {
+            const response = await fetch(`https://api.smartthings.com/v1/devices/${CONFIG.deviceId}/commands`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify([{ capability: capability, command: command, arguments: args }])
+            });
+            if(response.ok) { updateLog("Wysłano polecenie."); startCooldown(3); }
+        } catch(e) { updateLog("Błąd sieci"); }
+    }
+
+    function executeState(state) { return execute('washerOperatingState', 'setMachineState', [state]); }
+    function setCycle() { const cycle = document.getElementById('cycle-select').value; execute('samsungce.washerCycle', 'setWasherCycle', [`Table_02_Course_${cycle}`]); }
+    
+    function startCooldown(sec) {
+        isCooldown = true;
+        let t = sec;
+        const btn = document.getElementById('refresh-btn');
+        const timer = document.getElementById('cd-timer');
+        btn.disabled = true;
+        const int = setInterval(() => {
+            t--; timer.innerText = t;
+            if(t <= 0) { clearInterval(int); isCooldown = false; btn.disabled = false; timer.innerText = "0"; }
+        }, 1000);
+    }
+
+    function updateLog(msg) { document.getElementById('log').innerText = msg; }
+
+    window.onload = () => {
+        init3D();
+        if(CONFIG.getToken()) refreshStatus();
+        else toggleTokenPanel();
+    };
+</script>
+</body>
+</html>

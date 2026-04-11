@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3000 http://localhost:4000; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:3000 http://localhost:4000;">
+    <title>Listwa</title>
+    <style>
+        :root { --bg: #0f172a; --card: #2224; --accent: #38bdf8; --on: #22c55e; --off: #fff; }
+        
+        /* Obsługa notch za pomocą safe-area-inset */
+        body { 
+			        user-select: none;
+
+            font-family: 'Segoe UI', sans-serif; 
+            background: url('9.jpg') center/cover no-repeat;
+            position: relative; overflow: hidden;
+            background-attachment: fixed;
+            background-size: cover;
+            color: white; 
+            margin: 0; 
+            padding: calc(20px + env(safe-area-inset-top)) 
+                    calc(20px + env(safe-area-inset-right)) 
+                    calc(20px + env(safe-area-inset-bottom)) 
+                    calc(20px + env(safe-area-inset-left)); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .app { margin-top: 50px; border-radius:10px; padding: 20px; background: #999; border: 1px solid #111; width: 100%; max-width: 150px; }
+        .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid #111; text-align: center; }
+        
+        /* 4 Przyciski Toggle */
+        .toggle-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .switch-btn { 
+            border: none; padding:55px 10px; border: 1px solid #111; border-radius:80px; 
+            font-weight: bold; cursor: pointer; color: black; 
+            transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 10px;
+            background: var(--off);
+        }
+        .switch-btn.active { background: var(--on); box-shadow: 0 0 15px var(--on); }
+        .switch-btn span { font-size: 0.8rem; opacity: 0.8; }
+        .switch-USB { font-weight: bold; width: 100%; max-width: 50px; border: 1px solid #111; padding:2px; }
+        .switch-USB.active { background: var(--on); box-shadow: 0 0 15px var(--on); }
+        .val-display { font-size: 1.5rem; color: var(--accent); font-weight: bold; margin: 5px 0; }
+        .label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { font-size: 0.9rem; margin: 0 0 15px 0; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        
+        /* OVERLAY do pelnego ekranu rozciągnięty na cały obszar (również notch) */
+        #fullscreen-overlay {
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 9999; 
+            cursor: pointer;
+            background: rgba(0,0,0,0.01); 
+        }
+    </style>
+</head>
+<body>
+    <div id="fullscreen-overlay"></div>
+    <div class="app">
+        <div class="card">
+            <div class="label">Aktualny Pobór</div>
+            <div id="w-val" class="val-display">-- W</div>
+            <div id="v-val" class="label">-- V</div>
+        </div>
+
+        <div class="toggle-grid">
+            <button id="btn-1" class="switch-btn" onclick="toggle(1)">
+                Gniazdo
+                <span id="stat-1">...</span>
+            </button>
+            <button id="btn-2" class="switch-btn" onclick="toggle(2)">
+                Gniazdo
+                <span id="stat-2">...</span>
+            </button>
+            <button id="btn-3" class="switch-btn" onclick="toggle(3)">
+                Gniazdo
+                <span id="stat-3">...</span>
+            </button>
+            <center>
+                <button id="btn-7" class="switch-USB" onclick="toggle(7)">
+                    USB<br>
+                    <span id="stat-7">...</span>
+                </button>
+            </center>
+        </div>
+    </div>
+
+<script>
+    const fsOverlay = document.getElementById('fullscreen-overlay');
+    let currentDps = {};
+
+    /**
+     * Pobiera stan urządzenia przez API serwera głównego (port 3000)
+     */
+    async function sync() {
+        try {
+            // Zmieniono na ścieżkę z serv.js
+            const res = await fetch('/api/power/status');
+            const dps = await res.json();
+            currentDps = dps;
+
+            [1, 2, 3, 7].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                const stat = document.getElementById(`stat-${id}`);
+                const isOn = dps[id];
+
+                if (isOn) {
+                    btn.classList.add('active');
+                    stat.innerText = 'WŁ';
+                } else {
+                    btn.classList.remove('active');
+                    stat.innerText = 'WYŁ';
+                }
+            });
+
+            document.getElementById('v-val').innerText = `${(dps[20] / 10) || 230} V`;
+            document.getElementById('w-val').innerText = `${(dps[19] / 10) || 0} W`;
+
+        } catch (e) {
+            console.error("Sync error:", e);
+        }
+    }
+
+    /**
+     * Funkcja Toggle wysyłająca polecenie przez API serwera głównego (port 3000)
+     */
+    async function toggle(dp) {
+        const newValue = !currentDps[dp];
+        try {
+            // Zmieniono na ścieżkę z serv.js
+            await fetch('/api/power/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dp, value: newValue })
+            });
+            sync();
+        } catch (e) {
+            console.error("Toggle error:", e);
+        }
+    }
+
+    /**
+     * Funkcje Fullscreen
+     */
+    function requestFullscreenAggressive(){
+        const docElm = document.documentElement;
+        if(!document.fullscreenElement && !document.webkitFullscreenElement){
+            if (docElm.requestFullscreen) {
+                docElm.requestFullscreen();
+            } else if (docElm.webkitRequestFullscreen) {
+                docElm.webkitRequestFullscreen();
+            }
+        }
+    }
+
+    fsOverlay.onclick = () => {
+        requestFullscreenAggressive();
+    };
+
+    const handleFsChange = () => {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            fsOverlay.style.display = 'none';
+        } else {
+            fsOverlay.style.display = 'block';
+        }
+    };
+
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+
+    setInterval(sync, 3000);
+    sync();
+    requestFullscreenAggressive();
+</script>
+
+</body>
+</html>

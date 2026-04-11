@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Casino</title>
+  
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1hc3RlciBSb3VsZXR0ZSBQV0EiLAogICJzaG9ydF9uYW1lIjogIlJvdWxldHRlIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxYTFhMWEiLAogICJ0aGVtZV9jb2xvciIjogIiNlNzRjM2MiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8yNjI2LzI2MjYyMTIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
+  <meta name="theme-color" content="#e74c3c">
+
+  <style>
+    :root {
+      --casino-red: #e74c3c;
+      --casino-green: #27ae60;
+      --gold: #f1c40f;
+      --dark: #1a1a1a;
+      --white: #ecf0f1;
+    }
+
+    body {
+      margin-top:50px;
+      background-color: var(--dark);
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: top;
+      height: 100vh;
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    h1 { color: var(--gold); margin: 0; font-size: 2rem; text-transform: uppercase; }
+    p { color: #888; margin-bottom: 30px; }
+
+    /* --- RULETKA --- */
+    .wheel-container {
+       ;
+      position: relative;
+      width: 340px;
+      height: 340px;
+   left:-10px;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -10px;
+      left: 53%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 35px solid var(--gold);
+      z-index: 20;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      border: 10px solid #222;
+      transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .segment {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      transform-origin: 100% 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .segment span {
+      position: absolute;
+      transform-origin: center;
+      transform: rotate(22.5deg) translateY(-100px);
+      font-weight: 900;
+      font-size: 1.4rem;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .center-hub {align-items: center;
+
+      justify-content: center;
+      position: absolute;
+      top: 53%;
+      left: 53%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: #222;
+      border-radius: 50%;
+      border: 1px solid #111;
+      z-index: 15;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* --- PRZYCISK --- */
+    .spin-btn {
+        position: fixed;
+      top: 550px;
+     
+      background: linear-gradient(to bottom, var(--gold), #c49b09);
+      border: none;
+      padding: 15px 50px;
+      border-radius: 50px;
+      color: #000;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #967a06;
+      transition: all 0.1s;
+    }
+
+    .spin-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #967a06;
+    }
+
+    .spin-btn:disabled {
+        
+      background: #555;
+      box-shadow: 0 5px 0 #333;
+      color: #888;
+    }
+
+    /* --- TOAST --- */
+    #toast-container {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: 80%;
+    }
+
+    .toast {
+      background: rgba(255, 255, 255, 0.95);
+      color: #000;
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border-left: 5px solid var(--casino-green);
+      animation: slideDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28), fadeOut 0.5s 2.5s forwards;
+    }
+
+    @keyframes slideDown { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+    
+    .header-title {
+        font-size: 40px;
+        text-align: center;
+        color: #f1c40f;
+        margin-bottom: 20px;
+        font-style: italic;
+        text-shadow: 2px 2px 5px black;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+  <div class="header-title">Master Casino</div>
+
+<div class="wheel-container">
+  <div class="pointer"></div>
+  <div class="center-hub"></div>
+  <div id="wheel"></div>
+</div>
+
+<button class="spin-btn" onclick="spin()">ZAKRĘĆ TERAZ</button>
+
+<script>
+  // Wartości oparte na grafice
+  const VALUES = [50, 100, 20, 50, 40, 200, 10, 80]; 
+  const wheel = document.getElementById('wheel');
+  let currentRotation = 0;
+
+  function createWheel() {
+    VALUES.forEach((val, i) => {
+      const seg = document.createElement('div');
+      seg.className = 'segment';
+      // Czerwono-zielona kolorystyka
+      seg.style.backgroundColor = (i % 2 === 0) ? 'var(--casino-red)' : 'var(--casino-green)';
+      seg.style.transform = `rotate(${i * 45}deg) skewY(45deg)`;
+      
+      const text = document.createElement('span');
+      text.textContent = val;
+      text.style.transform = `skewY(-45deg) rotate(22.5deg) translateY(-90px)`;
+      
+      seg.appendChild(text);
+      wheel.appendChild(seg);
+    });
+  }
+
+  function showToast(msg) {
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function spin() {
+    const btn = document.querySelector('.spin-btn');
+    btn.disabled = true;
+
+    const randomExtra = Math.floor(Math.random() * 360);
+    const totalSpin = 1800 + randomExtra; 
+    currentRotation += totalSpin;
+
+    wheel.style.transform = `rotate(-${currentRotation}deg)`;
+
+    setTimeout(() => {
+      const actualAngle = currentRotation % 360;
+      const segmentIndex = Math.floor(actualAngle / 45);
+      const prize = VALUES[segmentIndex];
+
+      showToast(`WYGRANA: ${prize} PUNKTÓW!`);
+      btn.disabled = false;
+    }, 4000);
+  }
+
+  // Service Worker Registration for PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const blob = new Blob([`
+        self.addEventListener('fetch', (e) => {
+          e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+        });
+      `], { type: 'text/javascript' });
+      const url = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(url);
+    });
+  }
+
+  createWheel();
+</script>
+
+</body>
+</html>

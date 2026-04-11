@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Brylak - Fullscreen Edition</title>
+    <style>
+        body { margin: 0; background: #05050a; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        #ui { position: absolute; top: 20px; width: 100%; text-align: center; color: #fff; pointer-events: none; text-transform: uppercase; letter-spacing: 2px; }
+        #msg { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 32px; color: #ff4444; display: none; background: rgba(0,0,0,0.9);
+            padding: 30px; border-radius: 10px; border: 3px solid #ff4444; z-index: 10;
+        }
+        #touch-hint {
+            position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none;
+        }
+        #fs-btn {
+            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px; cursor: pointer; z-index: 100; display: flex;
+            align-items: center; justify-content: center; transition: background 0.3s;
+        }
+        #fs-btn:hover { background: rgba(255,255,255,0.2); }
+        #fs-btn svg { fill: white; width: 24px; height: 24px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1 style="margin:0">Brylak</h1>
+        <div id="lvl" style="margin-top:10px; font-weight: bold; color: #aaa;">Poziom: 1</div>
+    </div>
+
+    <div id="fs-btn" onclick="toggleFullscreen()">
+        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    </div>
+
+    <div id="msg">UPADEK!</div>
+    <div id="touch-hint"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <script>
+        const TILE_SIZE = 1;
+        const SPEED = 0.15; 
+
+        let scene, camera, renderer, blox, floorGroup, pivot;
+        let currentLevel = 0;
+        let isMoving = false;
+        let isBridgeActive = false; // Stan przełącznika
+        let tilesToRemove = []; // Lista kafelków do usunięcia (kruche)
+
+        // --- TEKSTURY ---
+
+        function createBloxTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 0, 256, 256);
+            for(let i=0; i<500; i++) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.2})`;
+                ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 40);
+            }
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, 256, 256);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createTileTexture(type = 1) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#222'; 
+            ctx.fillRect(0, 0, 128, 128);
+
+            if (type === 2) { // Cel
+                ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 8; ctx.strokeRect(10, 10, 108, 108);
+                ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(64, 64, 30, 0, Math.PI * 2); ctx.fill();
+            } else if (type === 3) { // Przełącznik
+                ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, 88, 88);
+                ctx.fillStyle = '#00aaff'; ctx.fillRect(44, 44, 40, 40);
+            } else if (type === 4) { // Kruchy
+                ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 4; ctx.strokeRect(10, 10, 108, 108);
+                ctx.fillStyle = '#442200'; ctx.fillRect(15, 15, 98, 98);
+            } else { // Normalny / Ukryty
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 4; ctx.strokeRect(0, 0, 128, 128);
+                ctx.fillStyle = type === 5 ? '#222' : '#333'; 
+                ctx.fillRect(10, 10, 108, 108);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const bloxTexture = createBloxTexture();
+
+        // --- POZIOMY ---
+        // Legend: 1: Normal, 2: Target, 3: Switch, 4: Fragile, 5: Hidden Bridge
+        const levels = [
+          {
+                map: [
+                    [1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1], 
+                    [1, 1, 1, 1, 2],
+                    [1, 1, 1, 1, 1], 
+                    [1, 1, 1, 1, 1]  
+                ], 
+                start: { x: 0, z: 0 } 
+            },
+            {               map: [
+                    [1, 1, 1, 1, 0],
+                    [1, 3, 1, 1, 0], 
+                    [1, 1, 1, 1, 0],
+                    [0, 5, 0, 0, 0], 
+                    [0, 4, 0, 0, 0],
+                    [0, 5, 0, 0, 0], 
+                    [0, 4, 0, 0, 0], 
+                    [0, 5, 0, 0, 0], 
+                    [0, 4, 0, 0, 0],
+                    [0, 5, 5, 5, 2], 
+                    [0, 5, 5, 5, 0]  
+                ], 
+                start: { x: 0, z: 0 } 
+            },
+          
+                        { 
+                map: [
+                    [1, 4, 4, 4, 4],
+                    [4, 4, 4, 4, 4], 
+                    [1, 1, 1, 1, 2],
+                    [1, 1, 1, 1, 1]  
+                ], 
+                start: { x: 0, z: 0 } 
+            },
+            { 
+                map: [
+                    [1, 4, 4, 4, 4],
+                    [4, 4, 4, 4, 4], 
+                    [4, 4, 4, 4, 4],
+                    [4, 4, 4, 4, 4],
+                    [4, 4, 3, 4, 4],
+                    [5, 5, 5, 0, 0],
+                 [4, 5, 4, 5, 5, 2], 
+                 [4, 5, 4, 5, 5, 4] 
+                ], 
+                start: { x: 0, z: 0 } 
+            },
+    { map: [
+  [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 0, 0, 3, 5, 5, 5],
+  [0, 0, 0, 1, 1, 1, 0, 0, 4, 0, 0, 5],
+  [0, 0, 0, 0, 1, 1, 1, 4, 4, 4, 0, 5],
+  [0, 0, 0, 0, 0, 1, 1, 4, 4, 4, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 5],
+  [0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 5],
+  [0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 0, 5],
+  [0, 0, 2, 1, 1, 4, 4, 4, 5, 5, 0, 5],
+  [0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+],
+                start: { x: 0, z: 0 } 
+            },
+          {  map: [
+  [5, 5, 4, 4, 1, 3, 3, 1, 4, 4, 5, 5],
+  [5, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 5],
+  [5, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 5],
+  [5, 4, 4, 1, 1, 1, 1, 1, 1, 4, 4, 5],
+  [5, 5, 4, 4, 1, 1, 1, 1, 4, 4, 5, 5],
+  [5, 5, 5, 4, 1, 1, 1, 1, 4, 5, 5, 5],
+  [5, 5, 5, 4, 1, 1, 1, 1, 4, 5, 5, 5],
+  [5, 4, 4, 4, 1, 1, 1, 1, 4, 4, 4, 5],
+  [4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4],
+  [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
+  [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
+  [4, 4, 1, 1, 1, 4, 4, 1, 1, 1, 4, 4],
+],     start: { x: 2, z: 2 } 
+            },
+            { 
+                map: [
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [1, 4, 4, 4, 4, 4, 1],
+                    [1, 4, 1, 1, 1, 4, 1],
+                    [1, 4, 1, 2, 1, 4, 1],
+                    [1, 4, 1, 1, 1, 4, 1],
+                    [1, 4, 4, 4, 4, 4, 1],
+                    [1, 1, 1, 1, 1, 1, 1]
+                ], 
+                start: { x: 0, z: 0 } 
+            }
+        ];
+
+        // Kopia zapasowa map do resetowania
+        const originalLevels = JSON.parse(JSON.stringify(levels));
+
+        let state = { x: 0, z: 0, type: 'standing' }; 
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x05050a);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(8, 10, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const light = new THREE.PointLight(0xffffff, 150);
+            light.position.set(5, 10, 5);
+            light.castShadow = true;
+            scene.add(light);
+
+            floorGroup = new THREE.Group();
+            scene.add(floorGroup);
+
+            pivot = new THREE.Object3D();
+            scene.add(pivot);
+
+            const geo = new THREE.BoxGeometry(TILE_SIZE, TILE_SIZE * 2, TILE_SIZE);
+            const mat = new THREE.MeshStandardMaterial({ map: bloxTexture, roughness: 0.4, metalness: 0.3 });
+            blox = new THREE.Mesh(geo, mat);
+            blox.castShadow = true;
+            scene.add(blox);
+
+            loadLevel(currentLevel);
+            setupControls();
+            animate();
+        }
+
+        // Przywraca stan mapy z kopii zapasowej (kruche kafelki i mosty)
+        function resetLevelData(idx) {
+            levels[idx].map = JSON.parse(JSON.stringify(originalLevels[idx].map));
+        }
+
+        function loadLevel(idx) {
+            resetLevelData(idx);
+            const level = levels[idx];
+            state = { x: level.start.x, z: level.start.z, type: 'standing' };
+            isBridgeActive = false;
+            tilesToRemove = [];
+            
+            renderFloor();
+            snapToGrid();
+            document.getElementById('lvl').innerText = `Poziom: ${idx + 1}`;
+        }
+
+        function renderFloor() {
+            while(floorGroup.children.length > 0) floorGroup.remove(floorGroup.children[0]);
+            const level = levels[currentLevel];
+
+            level.map.forEach((row, z) => {
+                row.forEach((type, x) => {
+                    if (type > 0) {
+                        if (type === 5 && !isBridgeActive) return;
+
+                        const tileGeo = new THREE.BoxGeometry(TILE_SIZE - 0.05, 0.2, TILE_SIZE - 0.05);
+                        const tileMat = new THREE.MeshStandardMaterial({ 
+                            map: createTileTexture(type),
+                            emissive: type === 2 ? 0x220000 : (type === 3 ? 0x002244 : 0x000000)
+                        });
+                        const tile = new THREE.Mesh(tileGeo, tileMat);
+                        tile.position.set(x * TILE_SIZE, -0.1, z * TILE_SIZE);
+                        tile.name = `tile_${x}_${z}`;
+                        tile.userData = { type: type };
+                        tile.receiveShadow = true;
+                        floorGroup.add(tile);
+                    }
+                });
+            });
+        }
+
+        function snapToGrid() {
+            scene.attach(blox);
+            blox.rotation.set(0, 0, 0);
+            if (state.type === 'standing') {
+                blox.position.set(state.x * TILE_SIZE, TILE_SIZE, state.z * TILE_SIZE);
+            } else if (state.type === 'lyingX') {
+                blox.position.set((state.x + 0.5) * TILE_SIZE, TILE_SIZE / 2, state.z * TILE_SIZE);
+                blox.rotation.z = Math.PI / 2;
+            } else if (state.type === 'lyingZ') {
+                blox.position.set(state.x * TILE_SIZE, TILE_SIZE / 2, (state.z + 0.5) * TILE_SIZE);
+                blox.rotation.x = -Math.PI / 2;
+            }
+        }
+
+        function setupControls() {
+            window.addEventListener('keydown', (e) => rotate(e.key));
+            let touchStartX = 0, touchStartY = 0;
+            window.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: false });
+            window.addEventListener('touchend', (e) => {
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                const dy = e.changedTouches[0].clientY - touchStartY;
+                if (Math.max(Math.abs(dx), Math.abs(dy)) > 30) {
+                    if (Math.abs(dx) > Math.abs(dy)) rotate(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+                    else rotate(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+                }
+            }, { passive: false });
+        }
+
+        function rotate(dir) {
+            if (isMoving || document.getElementById('msg').style.display === 'block') return;
+            isMoving = true;
+
+            let axis = new THREE.Vector3();
+            let pOffset = new THREE.Vector3();
+            let dx = 0, dz = 0;
+
+            if (dir === 'ArrowUp') { axis.set(-1, 0, 0); dz = -1; pOffset.set(0, -blox.position.y, (state.type === 'lyingZ' ? -TILE_SIZE : -TILE_SIZE / 2)); }
+            else if (dir === 'ArrowDown') { axis.set(1, 0, 0); dz = 1; pOffset.set(0, -blox.position.y, (state.type === 'lyingZ' ? TILE_SIZE : TILE_SIZE / 2)); }
+            else if (dir === 'ArrowLeft') { axis.set(0, 0, 1); dx = -1; pOffset.set((state.type === 'lyingX' ? -TILE_SIZE : -TILE_SIZE / 2), -blox.position.y, 0); }
+            else if (dir === 'ArrowRight') { axis.set(0, 0, -1); dx = 1; pOffset.set((state.type === 'lyingX' ? TILE_SIZE : TILE_SIZE / 2), -blox.position.y, 0); }
+            else { isMoving = false; return; }
+
+            processFragileTiles();
+
+            pivot.position.copy(blox.position).add(pOffset);
+            pivot.position.y = 0; 
+            pivot.rotation.set(0, 0, 0);
+            pivot.attach(blox);
+
+            updateLogicCoords(dx, dz);
+
+            let targetRot = Math.PI / 2;
+            let currentRot = 0;
+
+            function doAnim() {
+                currentRot += SPEED;
+                if (currentRot >= targetRot) {
+                    currentRot = targetRot;
+                    applyRotation(axis, currentRot);
+                    finalizeMove();
+                } else {
+                    applyRotation(axis, currentRot);
+                    requestAnimationFrame(doAnim);
+                }
+            }
+            doAnim();
+        }
+
+        function applyRotation(axis, angle) {
+            pivot.rotation.set(0, 0, 0);
+            if (axis.x !== 0) pivot.rotation.x = angle * Math.sign(axis.x);
+            if (axis.z !== 0) pivot.rotation.z = angle * Math.sign(axis.z);
+        }
+
+        function updateLogicCoords(dx, dz) {
+            if (state.type === 'standing') {
+                if (dx !== 0) { state.type = 'lyingX'; state.x += (dx > 0 ? 1 : -2); }
+                else { state.type = 'lyingZ'; state.z += (dz > 0 ? 1 : -2); }
+            } else if (state.type === 'lyingX') {
+                if (dx !== 0) { state.type = 'standing'; state.x += (dx > 0 ? 2 : -1); }
+                else { state.z += dz; }
+            } else if (state.type === 'lyingZ') {
+                if (dz !== 0) { state.type = 'standing'; state.z += (dz > 0 ? 2 : -1); }
+                else { state.x += dx; }
+            }
+        }
+
+        function finalizeMove() {
+            snapToGrid();
+            isMoving = false;
+            checkCollision();
+        }
+
+        function processFragileTiles() {
+            tilesToRemove.forEach(pos => {
+                const tile = floorGroup.getObjectByName(`tile_${pos.x}_${pos.z}`);
+                if (tile) {
+                    const fall = () => {
+                        tile.position.y -= 0.1;
+                        if (tile.position.y > -5) requestAnimationFrame(fall);
+                        else floorGroup.remove(tile);
+                    };
+                    fall();
+                    // Zmiana typu na 0 w tablicy logicznej, aby wykrywać upadek
+                    levels[currentLevel].map[pos.z][pos.x] = 0;
+                }
+            });
+            tilesToRemove = [];
+        }
+
+        function checkCollision() {
+            const level = levels[currentLevel];
+            const occupied = [{x: state.x, z: state.z}];
+            if (state.type === 'lyingX') occupied.push({x: state.x + 1, z: state.z});
+            if (state.type === 'lyingZ') occupied.push({x: state.x, z: state.z + 1});
+
+            const onMap = occupied.every(t => {
+                const type = level.map[t.z] ? level.map[t.z][t.x] : 0;
+                if (type === 5 && !isBridgeActive) return false;
+                return type > 0;
+            });
+
+            if (!onMap) {
+                fail();
+            } else {
+                occupied.forEach(t => {
+                    const type = level.map[t.z][t.x];
+                    
+                    if (type === 3 && state.type === 'standing') {
+                        if (!isBridgeActive) {
+                            isBridgeActive = true;
+                            renderFloor();
+                        }
+                    }
+
+                    if (type === 4) {
+                        if (!tilesToRemove.find(p => p.x === t.x && p.z === t.z)) {
+                            tilesToRemove.push({x: t.x, z: t.z});
+                        }
+                    }
+                });
+
+                if (state.type === 'standing' && level.map[state.z][state.x] === 2) {
+                    currentLevel = (currentLevel + 1) % levels.length;
+                    setTimeout(() => loadLevel(currentLevel), 300);
+                }
+            }
+        }
+
+        function fail() {
+            document.getElementById('msg').style.display = 'block';
+            const fall = () => {
+                blox.position.y -= 0.2;
+                if (blox.position.y > -5) requestAnimationFrame(fall);
+            }
+            fall();
+            setTimeout(() => {
+                document.getElementById('msg').style.display = 'none';
+                loadLevel(currentLevel);
+            }, 1000);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            camera.position.lerp(new THREE.Vector3(state.x + 2, 8, state.z + 8), 0.05);
+            camera.lookAt(state.x, 0, state.z);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>

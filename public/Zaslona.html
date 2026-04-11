@@ -1,0 +1,555 @@
+﻿
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Manifest i Service Worker -->
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+   user-select: none;
+      margin: 0;
+    background: url('1.jpg');
+      background-size: cover;              /* Dopasuj do ekranu */
+      background-repeat: no-repeat;        /* Nie powtarzaj */
+      background-position: center center;  /* Wyśrodkuj */
+      background-attachment: fixed;    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+.phone-frame {
+      margin-top: 100PX;
+      width: 400px;
+      height: 820px;
+
+      overflow: hidden;
+      position: relative;
+        font-size: 20px;
+
+    }
+
+/* Powiększanie widgetu i okien przy najechaniu kursorem */
+.widget:hover, .window:hover, .window-2:hover {
+  transform: scale(1.03); /* Powiększenie o 20% */
+  z-index: 10; /* Podnosi element nad inne */
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+
+/* Zachowanie dla widgetu (dodanie przestrzeni na dole w celu uniknięcia zasłonięcia tekstu) */
+.widget {
+  margin-top: 40px;
+  width: 100%;
+  height: 21%;
+  background: #5559;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+  position: relative;
+  padding-bottom: 60px; /* Dodajemy przestrzeń na dole */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Powiększanie okien */
+.window {
+  background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+
+    .window i {
+          font-size: 50px;
+          color:#333;
+        }
+        .window p {
+          margin-top: 10px;
+          font-size: 20px;
+                      color:#ccc;
+
+    }
+.window-2 {
+  background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+  color:#eeee;
+}
+        .window-2 i {
+          font-size: 50px;
+        }
+       .window-2 p {
+          margin-top: 10px;
+          font-size: 20px;
+    }
+.clock {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 0; /* Usuwamy margines na dole */
+}
+
+.clock-part {
+   margin-top: -60px;
+  background: white;
+  color: black;
+  font-size: 60px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
+}
+
+.date {
+  text-align: right;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+
+    .below-clock {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+
+    .left-info .location {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .left-info .desc {
+      font-size: 16px;
+    }
+
+    .right-info {
+      text-align: right;
+    }
+
+    .right-info .temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .right-info .range {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .weather-icon {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 50px;
+      color: #FFD700;
+    }
+
+
+    .container {
+      padding: 20px;
+    }
+
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+    }
+
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1,1); /* cień dla toolbaru */
+      border-radius: 20px;
+    }
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+    border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 3); /* cień przycisku */
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2); /* cień po najechaniu */
+      transform: scale(1.05);
+    }
+
+        h2 {
+                    text-align: center;
+
+
+      color: #f0f0f0;
+    }
+
+    .window-container {
+
+
+      width: 320px;
+      margin: 0 auto;
+      border: 3px solid #5552;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #2b2b2b;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    .window-header {
+      background: linear-gradient(to bottom, #444, #222);
+      height: 30px;
+      line-height: 30px;
+      color: #ccc;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      border-bottom: 2px solid #111;
+    }
+
+    .blind-visual {
+      position: relative;
+      width: 100%;
+      height: 300px;
+
+        background: linear-gradient(to bottom, #159, #999);
+      transition: height 0.5s ease;
+    }
+
+    .blind-fill {
+      position: absolute;
+      left:0;
+      heigth:100%;
+      width: 100%;
+        background: linear-gradient(to left, #111,#444);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+      transition: width 0.5s ease-out; /* Dodajemy płynne przejście dla szerokości */
+    }
+
+    .window-parapet {
+      background: linear-gradient(to top, #555, #444);
+      height: 25px;
+      line-height: 25px;
+      color: #ccc;
+      font-weight: bold;
+      border-top: 3px solid #111;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .control-panel {      text-align: center;
+color: gray;
+      margin-top: 20px;
+    }
+
+    button {
+
+      font-size: 12px;
+      margin: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: linear-gradient(to bottom, #444, #222);
+      color: #eee;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    button:hover {
+      background: linear-gradient(to bottom, #555, #333);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .slider-panel {
+      margin-top: 20px;
+      text-align: center;
+
+      color: white;
+
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 70%;
+      height: 6px;
+      background: #444;
+      border-radius: 4px;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+      border: 2px solid #222;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+      border: 2px solid #222;
+    }
+
+    #positionDisplay {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+                                                   
+<body class="h-screen animate__animated animate__bounceIn" id="body"> <!-- Przeiscia-->
+<script>    
+  function animateExit(event, targetHref) {
+    event.preventDefault();
+    const body = document.getElementById('body');
+
+    body.classList.remove('animate__bounceIn');
+    void body.offsetWidth; // wymuszenie przeliczenia, by animacja się uruchomiła
+    body.classList.add('animate__bounceOut');
+
+    body.addEventListener('animationend', () => {
+      window.location.href = targetHref;
+    }, { once: true });
+  }
+    </script>  
+
+<div class="phone-frame">
+
+<br>
+  <h2 class="text-4xl">Sterowanie Zasłoną</h2>
+<br>
+  <div class="window-container" button id="fullscreenBtn">
+    <div class="window-header"></div>
+    <div class="blind-visual">
+      <div class="blind-fill" id="blindFill" style="height: 99.9%;"></div>
+    </div>
+    <div class="window-parapet"></div>
+  </div>
+
+  <div class="control-panel">
+    <button onclick="setPosition(0)">Otwórz</button>
+    <button onclick="sendCommand('stop')">Zatrzymaj</button>
+    <button onclick="setPosition(100)">Zamknij</button>
+  </div>
+
+  <div class="slider-panel">
+    <p>Ustaw pozycję:</p>
+    <input type="range" min="0" max="100" value="50" id="positionSlider" oninput="debouncedUpdatePosition(this.value)">
+    <div id="positionDisplay">Pozycja: 50%</div>
+  </div>
+  <br>
+
+    <div class="flex justify-center mt-4">
+      <button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+        <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  <div id="toolbar" class="transition-all duration-300">
+      <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+              <!-- Strzałka -->
+        <button title="Powrót" onclick="animateExit(event, 'SmartHome.html')">
+          <i class="fas fa-undo  text-xl"></i>
+        </button>
+        <!-- Domek --> 
+        <button title="Home"onclick="animateExit(event, 'SmartHome.html')">
+    <i  class="fas fa-home text-xl"></i>
+        </button>
+        <!-- Ustawienia-->
+        <button title="Zegar" onclick="animateExit(event, 'Settings.html')">
+          <i class="fas fa-cogs text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+                              
+document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+});
+
+
+    function toggleToolbar() {
+      const toolbar = document.getElementById('toolbar');
+      const icon = document.getElementById('toggleIcon');
+      const iconPath = document.getElementById('iconPath');
+      const isOpen = toolbar.classList.contains('max-h-40');
+
+      if (isOpen) {
+        toolbar.classList.remove('max-h-40');
+        icon.classList.remove('rotate-180');
+        iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+      } else {
+        toolbar.classList.add('max-h-40');
+        icon.classList.add('rotate-180');
+        iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+      }
+    }
+
+    function updateClockAndDate() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      // Sprawdzamy, czy elementy istnieją przed próbą ustawienia innerText
+      const hoursElement = document.getElementById("hours");
+      const minutesElement = document.getElementById("minutes");
+      const dateElement = document.getElementById("date");
+
+      if (hoursElement) hoursElement.innerText = hours;
+      if (minutesElement) minutesElement.innerText = minutes;
+
+      if (dateElement) {
+        const dni = ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."];
+        const mies = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+        const dzien = dni[now.getDay()];
+        const miesiac = mies[now.getMonth()];
+        const data = `${dzien} ${miesiac} ${now.getDate()}`;
+        dateElement.innerText = data;
+      }
+    }
+
+    setInterval(updateClockAndDate, 1000);
+    updateClockAndDate();
+
+    let locked = false;
+
+    function toggleLock() {
+      const iconContainer = document.getElementById("lockIcon");
+      if (locked) {
+        iconContainer.innerHTML = `
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11V6a3 3 0 00-6 0m-4 5h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      } else {
+        iconContainer.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2 .896 2 2v1H10v-1c0-1.104.896-2 2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11V8a5 5 0 00-10 0v3M5 11h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      }
+      locked = !locked;
+    }
+
+
+    // Nowe funkcje dla opóźnienia suwaka
+    let timeoutId;
+    const DELAY_MS = 300; // Opóźnienie w milisekundach
+
+    function sendCommand(cmd) {
+      console.log("Wysyłanie polecenia:", cmd);
+      // fetch(`/api/roleta?cmd=${cmd}`);
+    }
+
+    function setPosition(value) {
+      document.getElementById('positionSlider').value = value;
+      // Natychmiastowa aktualizacja wizualizacji przycisków "Otwórz"/"Zamknij"
+      updatePositionVisual(value);
+      // Wysyłanie komendy z opóźnieniem, jakby z suwaka
+      debouncedUpdatePosition(value);
+    }
+
+    // Funkcja aktualizująca tylko wyświetlacz tekstu i wizualizację rolety
+    function updatePositionVisual(value) {
+        const position = parseInt(value);
+        document.getElementById('positionDisplay').innerText = `Pozycja: ${position}%`;
+        document.getElementById('blindFill').style.width = `${position}%`;
+    }
+
+    // Funkcja, która opóźnia wysłanie komendy i aktualizację wizualizacji
+    function debouncedUpdatePosition(value) {
+      clearTimeout(timeoutId); // Wyczyść poprzednie opóźnienie
+      
+      // Aktualizuj tekst pozycji od razu podczas przesuwania suwaka
+      document.getElementById('positionDisplay').innerText = `Pozycja: ${parseInt(value)}%`;
+
+      timeoutId = setTimeout(() => {
+        const position = parseInt(value);
+        updatePositionVisual(position); // Aktualizuj wizualizację po opóźnieniu
+        console.log(`Wysyłanie pozycji do serwera: ${position}%`);
+        // fetch(`/api/pozycja?value=${position}`); // Odkomentuj to, gdy będziesz mieć backend
+      }, DELAY_MS);
+    }
+
+    // Dodano do CSS: transition: width 0.5s ease-out; do .blind-fill
+  </script>
+</body>
+</html>

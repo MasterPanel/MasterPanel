@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Master Remote</title>
+
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --btn: #252525;
+            --accent: #d32f2f;
+            --text: #e0e0e0;
+            --status-off: #ff4444;
+            --status-on: #00c851;
+        }
+
+        body {
+            padding: calc(20px + env(safe-area-inset-top)) 
+                    calc(20px + env(safe-area-inset-right)) 
+                    calc(20px + env(safe-area-inset-bottom)) 
+                    calc(20px + env(safe-area-inset-left)); 
+            margin: 0;
+            background: url('7.jpg') center/cover no-repeat;
+            position: relative; 
+            overflow: hidden;
+            background-attachment: fixed;
+            background-size: cover;
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            touch-action: manipulation;
+        }
+
+        /* Overlay służący jako detektor kliknięcia w tło */
+        #fullscreen-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 1; /* Pod elementami pilota, ale nad tłem body */
+            cursor: pointer;
+            background: rgba(0,0,0,0.01); 
+        }
+
+        .phone-frame {
+            width: 320px;
+            height: 720px;
+            background: #1a1a1a;
+            border-radius: 30px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 2px solid #333;
+            box-sizing: border-box;
+            z-index: 10; /* Nad overlayem */
+        } 
+
+        header {
+            padding: 10px 0;
+            text-align: center;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            border-bottom: 1px solid #222;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--status-off);
+            box-shadow: 0 0 5px var(--status-off);
+            transition: all 0.3s;
+        }
+
+        .status-dot.online {
+            background-color: var(--status-on);
+            box-shadow: 0 0 8px var(--status-on);
+        }
+
+        .remote-grid {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .btn {
+            background-color: var(--btn);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 55px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #000;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #000;
+            background-color: #333;
+        }
+
+        .btn-power { background-color: var(--accent); width: 60px; height: 40px; }
+        .btn-yt { background-color: #ff0000; font-size: 11px; }
+        .btn-home { background-color: #444; }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 75px);
+            grid-template-rows: repeat(3, 75px);
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .btn-ok { background-color: #383838; border-radius: 50%; font-size: 16px; }
+
+        .homeyt, .vol-group {
+            display: flex;
+            flex-direction: column;
+            background: #222;
+            border-radius: 20px;
+            padding: 12px;
+            gap: 15px;
+        }
+
+        .messenger, .url-bar {
+            background: #111;
+            padding: 10px;
+            border-radius: 15px;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            border: 1px solid #222;
+        }
+
+        input {
+            flex: 1;
+            background: #000;
+            border: 1px solid #333;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 12px;
+        }
+
+        .btn-send { background: #2e7d32; border: none; border-radius: 8px; color: white; min-width: 40px; }
+        .spacer { visibility: hidden; }
+    </style>
+</head>
+<body>
+    <div id="fullscreen-overlay"></div>
+
+    <div class="phone-frame">
+        <header>
+            <div id="statusDot" class="status-dot"></div>
+            Master Remote
+        </header>
+        <div class="remote-grid">
+            <div class="row">
+                <button class="btn btn-power" onclick="send('POWER')">OFF</button>
+            </div>
+            <div class="row">
+                <div class="homeyt">
+                    <button class="btn btn-home" onclick="send('HOME')">HOME</button>
+                    <button class="btn btn-yt" onclick="send('YOUTUBE')">YT</button>
+                </div>
+                <div class="vol-group">
+                    <button class="btn" onclick="send('VOL_UP')">+</button>
+                    <div style="text-align:center; font-size:10px; color: #888;">VOL</div>
+                    <button class="btn" onclick="send('VOL_DOWN')">-</button>
+                </div>
+            </div>
+            <div class="dpad-container">
+                <div class="spacer"></div>
+                <button class="btn" onclick="send('UP')">▲</button>
+                <div class="spacer"></div>
+                <button class="btn" onclick="send('LEFT')">◀</button>
+                <button class="btn btn-ok" onclick="send('ENTER')">OK</button>
+                <button class="btn" onclick="send('RIGHT')">▶</button>
+                <div class="spacer"></div>
+                <button class="btn" onclick="send('DOWN')">▼</button>
+                <div class="spacer"></div>
+            </div>
+            <div class="messenger">
+                <input type="text" id="toastMsg" placeholder="Wiadomość...">
+                <button class="btn-send" onclick="sendToast()">➔</button>
+            </div>
+            <div class="url-bar">
+                <input type="text" id="urlInput" placeholder="https://..." value="https://google.com">
+                <button class="btn-send" onclick="openKiosk()" style="background: var(--accent);">➔</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const fsOverlay = document.getElementById('fullscreen-overlay');
+
+    // Funkcja przełączająca tryb pełnoekranowy (wejście/wyjście)
+    function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // Wejście w Fullscreen
+            const docElm = document.documentElement;
+            if (docElm.requestFullscreen) {
+                docElm.requestFullscreen();
+            } else if (docElm.webkitRequestFullscreen) {
+                docElm.webkitRequestFullscreen();
+            }
+        } else {
+            // Wyjście z Fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    }
+
+    // Obsługa kliknięcia w tło (overlay)
+    fsOverlay.onclick = () => {
+        toggleFullscreen();
+    };
+
+    // Funkcja wysyłająca komendy do TV
+    async function send(command) {
+        if (navigator.vibrate) navigator.vibrate(40);
+        
+        fetch(`/api/tv/${command}`)
+            .then(res => res.json())
+            .catch(err => console.error("Błąd pilota:", err));
+    }
+
+    // Funkcja wysyłająca powiadomienia tekstowe
+    async function sendToast() {
+        const val = document.getElementById('toastMsg').value;
+        if(!val) return;
+        
+        fetch(`/api/tv/toast?msg=${encodeURIComponent(val)}`)
+            .then(res => res.json())
+            .catch(err => console.error("Błąd toast:", err));
+            
+        document.getElementById('toastMsg').value = '';
+    }
+
+    // Funkcja otwierająca adresy URL
+    async function openKiosk() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return;
+        
+        fetch(`/api/tv/open-url?url=${btoa(url)}`)
+            .then(res => res.json())
+            .catch(err => console.error("Błąd otwierania URL:", err));
+    }
+
+    // Sprawdzanie statusu TV co 3 sekundy
+    async function updateStatus() {
+        try {
+            const res = await fetch('/api/tv/status');
+            const data = await res.json();
+            const dot = document.getElementById('statusDot');
+            
+            if (data && data.online) {
+                dot.classList.add('online');
+            } else {
+                dot.classList.remove('online');
+            }
+        } catch (e) {
+            document.getElementById('statusDot').classList.remove('online');
+        }
+    }
+
+    setInterval(updateStatus, 3000);
+    updateStatus();
+</script>
+</body>
+</html>

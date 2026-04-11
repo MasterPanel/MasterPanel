@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+  
+  <style>
+      :fullscreen body {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Ukrycie kursora przy braku ruchu (opcjonalnie, dla efektu kiosku) */
+body.fullscreen-active {
+  cursor: none;
+}
+    body { display: flex; justify-content: center; align-items: center;margin: 0; background: url('https://i.ibb.co/jvFRcg13/HD-wallpaper-dark-nebula-cloud-cosmic-cosmos-galaxy-sci-fi-scifi-space-stars-universe.jpg');
+                    background-size: cover;              
+        user-select: none;
+
+            background-repeat: no-repeat;        
+
+            background-position: center center;  
+
+            background-attachment: fixed;   font-family: 'Inter', sans-serif; overflow: hidden; }
+    .phone-frame {      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 20px 10px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);   justify-content:center; width: 400px; height: 900px; display: flex; flex-direction: column; }
+    
+    .room-container {
+/* Główny kontener glassmorphic */
+    flex: 1;
+      position: relative;
+      overflow: hidden;   border-radius: 2px;
+    }
+
+    /* Slider dla każdego pokoju */
+    .swipe-wrapper {
+      display: flex;
+      width: 200%; /* Dwa widoki: kołowy i liniowy */
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .view-circles, .view-lines {
+      width: 50%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 10px;
+    }
+
+    .chart-box-small { width: 100px; height: 100px; position: relative; }
+    .chart-box-large { width: 90%; height: 80%; }
+
+    .value-label {
+      position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+      font-weight: bold; font-size: 25px;
+    }
+
+    .room-header {
+      padding: 10px 20px; font-size: 0.7rem; font-weight: 900;
+      text-transform: uppercase; color: WHITE; background: #2228;
+      display: flex; justify-content: space-between;
+    }
+    
+    .indicator { font-size: 10px; color:WHITE; }
+      /* Ukrywanie scrollbara */
+    #master-list::-webkit-scrollbar { display: none; }
+    #master-list { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+
+<div class="phone-frame">
+ <br>
+<h2 class="text-3xl text-center font-light text-white">Analizer <span class="font-bold text-sky-400">Master</span></h2>
+  <div id="master-list" class="flex-1 overflow-y-auto">
+    </div>
+</div>
+
+<script>
+    function activateFullscreen() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { /* Safari */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE11 */
+    elem.msRequestFullscreen();
+  }
+  
+  // Blokada orientacji pionowej (opcjonalnie, jeśli to na telefon)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(err => console.log("Orientation lock ignored"));
+  }
+}
+
+// "Agresywne" wymuszenie przy każdej próbie interakcji, dopóki nie wejdzie w fullscreen
+document.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    activateFullscreen();
+  }
+}, { once: false }); // False, aby ponawiać próbę jeśli użytkownik wyjdzie z trybu
+  const API_URL = "api/dht";
+  const rooms = [
+    { id: 'salon', name: 'Salon' },
+    { id: 'sypialnia', name: 'Sypialnia' },
+    { id: 'kuchnia', name: 'Kuchnia' },
+    { id: 'lena', name: 'Lena' }
+  ];
+  
+  const charts = { circles: {}, lines: {} };
+  const history = { salon: [], sypialnia: [], lazienka: [], lena: [] };
+
+  function init() {
+    const list = document.getElementById('master-list');
+    
+    rooms.forEach(room => {
+      const section = document.createElement('div');
+      section.className = 'room-container';
+      section.innerHTML = `
+        <div class="room-header">
+          <span>${room.name}</span>
+          <span class="indicator"> Temperatura     -&-     Wilgotność</span>
+        </div>
+        <div class="swipe-wrapper" id="wrapper-${room.id}">
+          <div class="view-circles">
+            <div class="chart-box-small">
+              <canvas id="circle-${room.id}-temp"></canvas>
+              <div class="value-label text-red-500" id="val-${room.id}-temp">--</div>
+            </div>
+            <div class="chart-box-small">
+              <canvas id="circle-${room.id}-hum"></canvas>
+              <div class="value-label text-blue-500" id="val-${room.id}-hum">--</div>
+            </div>
+          </div>
+          <div class="view-lines">
+            <div class="chart-box-large">
+              <canvas id="line-${room.id}"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(section);
+
+      // Inicjalizacja Hammer.js dla gestów
+      const wrapper = document.getElementById(`wrapper-${room.id}`);
+      const mc = new Hammer(wrapper);
+      mc.on("swipeleft", () => wrapper.style.transform = "translateX(-50%)");
+      mc.on("swiperight", () => wrapper.style.transform = "translateX(0%)");
+
+      // Inicjalizacja Wykresów Kołowych
+      charts.circles[`${room.id}-temp`] = createCircle(room.id, 'temp', '#ef4444');
+      charts.circles[`${room.id}-hum`] = createCircle(room.id, 'hum', '#3b82f6');
+      
+      // Inicjalizacja Wykresu Liniowego
+      charts.lines[room.id] = createLine(room.id);
+    });
+  }
+
+  function createCircle(rid, type, color) {
+    return new Chart(document.getElementById(`circle-${rid}-${type}`), {
+      type: 'doughnut',
+      data: { datasets: [{ data: [0, 100], backgroundColor: [color, '#000'], borderWidth: 0 }] },
+      options: { cutout: '85%', plugins: { tooltip: false } }
+    });
+  }
+
+  function createLine(rid) {
+    return new Chart(document.getElementById(`line-${rid}`), {
+      type: 'line',
+      data: { labels: [], datasets: [
+        { label: 'T', borderColor: '#ef4444', data: [], tension: 0.4, pointRadius: 0 },
+        { label: 'H', borderColor: '#3b82f6', data: [], tension: 0.4, pointRadius: 0 }
+      ]},
+      options: { 
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { display: false }, y: { grid: { color: '#000' } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  async function update() {
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      rooms.forEach(room => {
+        const d = data[room.id];
+        if (!d) return;
+
+        // Update Kołowe
+        document.getElementById(`val-${room.id}-temp`).innerText = d.temp + '°';
+        document.getElementById(`val-${room.id}-hum`).innerText = d.hum + '%';
+        charts.circles[`${room.id}-temp`].data.datasets[0].data = [d.temp, 40 - d.temp];
+        charts.circles[`${room.id}-hum`].data.datasets[0].data = [d.hum, 100 - d.hum];
+        charts.circles[`${room.id}-temp`].update();
+        charts.circles[`${room.id}-hum`].update();
+
+        // Update Liniowe (Historia)
+        const lChart = charts.lines[room.id];
+        lChart.data.labels.push(time);
+        lChart.data.datasets[0].data.push(d.temp);
+        lChart.data.datasets[1].data.push(d.hum);
+        if (lChart.data.labels.length > 15) {
+          lChart.data.labels.shift();
+          lChart.data.datasets.forEach(ds => ds.data.shift());
+        }
+        lChart.update();
+      });
+    } catch (e) {}
+  }
+
+  init();
+  update();
+  setInterval(update, 5000);
+</script>
+</body>
+</html>

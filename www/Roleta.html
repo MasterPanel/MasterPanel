@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+
+  <style>
+    body {
+      user-select: none;
+      margin: 0;
+      background: url('1.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .phone-frame {
+      margin-top: 100px;
+      width: 400px;
+      height: 820px;
+      overflow: hidden;
+      position: relative;
+      font-size: 20px;
+    }
+
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1,1);
+      border-radius: 20px;
+    }
+
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 0.3);
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    h2 {
+      text-align: center;
+      color: #f0f0f0;
+    }
+
+    .window-container {
+      width: 240px;
+      margin: 0 auto;
+      border: 3px solid #5552;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #2b2b2b;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+
+    .window-header {
+      background: linear-gradient(to bottom, #444, #222);
+      height: 30px;
+      line-height: 30px;
+      color: #ccc;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      border-bottom: 2px solid #111;
+    }
+
+    .blind-visual {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      background: linear-gradient(to top, #111,#444);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    .blind-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(to bottom, #159, #999);
+      transition: height 0.5s ease;
+      border-top: 2px solid #111;
+    }
+
+    .window-parapet {
+      background: linear-gradient(to top, #555, #444);
+      height: 25px;
+      line-height: 25px;
+      color: #ccc;
+      font-weight: bold;
+      border-top: 3px solid #111;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .control-panel {
+      text-align: center;
+      color: gray;
+      margin-top: 20px;
+    }
+
+    button {
+      font-size: 12px;
+      margin: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: linear-gradient(to bottom, #444, #222);
+      color: #eee;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    button:hover {
+      background: linear-gradient(to bottom, #555, #333);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .slider-panel {
+      margin-top: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 70%;
+      height: 6px;
+      background: #444;
+      border-radius: 4px;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+      border: 2px solid #222;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+      border: 2px solid #222;
+    }
+
+    #positionDisplay {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body class="h-screen animate__animated animate__bounceIn" id="body">
+
+<script>
+  function animateExit(event, link) {
+    event.preventDefault();
+    const body = document.getElementById('body');
+    body.classList.remove('animate__bounceIn');
+    body.classList.add('animate__bounceOut');
+    setTimeout(() => {
+      window.location.href = link;
+    }, 700);
+  }
+
+  function animateExitBack(event) {
+    event.preventDefault();
+    const body = document.getElementById('body');
+    body.classList.remove('animate__bounceIn');
+    body.classList.add('animate__bounceOut');
+    setTimeout(() => {
+      history.back();
+    }, 700);
+  }
+</script>
+
+<div class="phone-frame">
+  <br>
+  <h2 class="text-4xl">Sterowanie Roletą</h2>
+  <br>
+
+  <div class="window-container" id="fullscreenBtn">
+    <div class="window-header"></div>
+    <div class="blind-visual">
+      <div class="blind-fill" id="blindFill" style="height: 50%;"></div>
+    </div>
+    <div class="window-parapet"></div>
+  </div>
+
+  <div class="control-panel">
+    <button onclick="setPosition(100); sendCommand('open')">Otwórz</button>
+    <button onclick="sendCommand('stop')">Zatrzymaj</button>
+    <button onclick="setPosition(0); sendCommand('close')">Zamknij</button>
+  </div>
+
+  <div class="slider-panel">
+    <p>Ustaw pozycję:</p>
+    <input type="range" min="0" max="100" value="50" id="positionSlider" oninput="updatePosition(this.value)">
+    <div id="positionDisplay">Pozycja: 50%</div>
+  </div>
+
+  <br>
+  <div class="flex justify-center mt-4">
+    <button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+      <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+  <br>
+
+  <div id="toolbar" class="transition-all duration-300">
+    <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+      <button title="Powrót" onclick="animateExitBack(event)">
+        <i class="fas fa-undo text-xl"></i>
+      </button>
+      <button title="Home" onclick="animateExit(event, 'SmartHome.html')">
+        <i class="fas fa-home text-xl"></i>
+      </button>
+      <button title="Zegar" onclick="animateExit(event, 'Settings.html')">
+        <i class="fas fa-cogs text-xl"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function sendCommand(cmd) {
+    console.log("Wysyłanie polecenia:", cmd);
+    fetch('/api/Roleta', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cmd: cmd })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('API response:', data);
+    })
+    .catch(error => {
+      console.error('There was a problem with the fetch operation:', error);
+    });
+  }
+
+  function setPosition(value) {
+    document.getElementById('positionSlider').value = value;
+    updatePosition(value);
+  }
+
+  function updatePosition(value) {
+    const position = parseInt(value);
+    document.getElementById('positionDisplay').innerText = `Pozycja: ${position}%`;
+    document.getElementById('blindFill').style.height = `${position}%`;
+  }
+
+  // fullscreen toggle po kliknięciu okna
+  document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  });
+
+  function toggleToolbar() {
+    const toolbar = document.getElementById('toolbar');
+    const icon = document.getElementById('toggleIcon');
+    const iconPath = document.getElementById('iconPath');
+    const isOpen = toolbar.classList.contains('max-h-40');
+
+    if (isOpen) {
+      toolbar.classList.remove('max-h-40');
+      icon.classList.remove('rotate-180');
+      iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+    } else {
+      toolbar.classList.add('max-h-40');
+      icon.classList.add('rotate-180');
+      iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+    }
+  }
+</script>
+</body>
+</html>

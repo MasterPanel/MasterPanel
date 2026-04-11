@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="fullscreen" content="yes">
+<meta name="screen-orientation" content="any">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #000;
+}
+body {
+	        user-select: none;
+
+margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #87ceeb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-text-size-adjust: none;
+}
+canvas {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+display: block;
+}
+
+#joystick {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 60px;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    touch-action: none;
+    display: none;
+    z-index: 50;
+}
+#stick {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 25px;
+    border: 3px solid rgba(0, 0, 0, 0.3);
+    top: 35px;
+    left: 35px;
+    touch-action: none;
+}
+#info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    z-index: 20;
+}
+#fileInput {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 20;
+    background: white;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+<input id="fileInput" type="file" accept="image/*">
+<div id="joystick">
+    <div id="stick"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+	
+// ========== KONFIGURACJA ==========
+const LEGEND = {
+    "#228B22": "grass",
+    "#8B4513": "building",
+    "#444444": "dark_building",
+    "#FFA500": "field",
+    "#006400": "tree",
+    "#808080": "silo",
+    "#D2691E": "path",
+    "#FF0000": "fence",
+    "#FFD700": "haybale",
+    "#1E90FF": "water",
+    "#000000": "tower",
+    "#000080": "wall",
+    "#FFFFFF": "white_building" // NOWOŚĆ: Biały budynek
+};
+const CELL_SIZE = 4;
+const BUILDING_HEIGHT = 5;
+const SILO_HEIGHT = 6; // Stała dla wysokości silosa i białego budynku
+const ROOF_HEIGHT = 2.5;
+const PLAYER_SPEED = 0.1;
+
+// ========== ZMIENNE GLOBALNE ==========
+let scene, camera, renderer, player;
+let joystickActive = false;
+let joystickVector = {x: 0, y: 0};
+let collisionObjects = [];
+let npcs = [];
+let animals = [];
+let mapWidth = 20;
+let mapHeight = 20;
+let walkTime = 0;
+
+// ========== MATERIAŁY ==========
+const matGrass = new THREE.MeshLambertMaterial({color: 0x228B22});
+const matBrown = new THREE.MeshLambertMaterial({color: 0x8B4513});
+const matDarkBuilding = new THREE.MeshLambertMaterial({color: 0x444444});
+const matWhiteBuilding = new THREE.MeshLambertMaterial({color: 0xEEEEEE}); // Jasnoszary/Biały
+const matFieldBrown = new THREE.MeshLambertMaterial({color: 0x8B4513});
+const matFieldGreen = new THREE.MeshLambertMaterial({color: 0x006400});
+const matRoof = new THREE.MeshLambertMaterial({color: 0xA0522D});
+const matSilo = new THREE.MeshLambertMaterial({color: 0x808080});
+const matPath = new THREE.MeshLambertMaterial({color: 0xD2691E});
+const matFence = new THREE.MeshLambertMaterial({color: 0xFF0000});
+const matHayBale = new THREE.MeshLambertMaterial({color: 0xFFD700});
+const matWater = new THREE.MeshLambertMaterial({color: 0x1E90FF, transparent: true, opacity: 0.8});
+const matWood = new THREE.MeshLambertMaterial({color: 0x654321});
+const matTower = new THREE.MeshLambertMaterial({color: 0x333344});
+const matWall = new THREE.MeshLambertMaterial({color: 0x333344});
+
+// ========== INICJALIZACJA SCENY ==========
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.Fog(0x87ceeb, 30, 200);
+
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(40, 80, 80);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+    document.body.appendChild(renderer.domElement);
+
+    const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x00aa00, 0.7);
+    scene.add(hemiLight);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
+    sun.position.set(80, 120, 60);
+    sun.castShadow = true;
+    
+    sun.shadow.camera.left = -100;
+    sun.shadow.camera.right = 100;
+    sun.shadow.camera.top = 100;
+    sun.shadow.camera.bottom = -100;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 300;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    
+    scene.add(sun);
+
+    window.addEventListener('resize', onWindowResize);
+}
+
+// ========== FUNKCJE POMOCNICZE ==========
+function rgbToHex(r, g, b) {
+    return ("#" + ((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1)).toUpperCase();
+}
+
+function findComponents(typeMap, width, height, targetType) {
+    const seen = new Uint8Array(width * height);
+    const comps = [];
+    const idx = (x, y) => y * width + x;
+    const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
+    
+    for(let y = 0; y < height; y++) {
+        for(let x = 0; x < width; x++) {
+            if(seen[idx(x, y)]) continue;
+            if(typeMap[y][x] !== targetType) {
+                seen[idx(x, y)] = 1;
+                continue;
+            }
+            
+            const queue = [[x, y]];
+            seen[idx(x, y)] = 1;
+            let minX = x, maxX = x, minY = y, maxY = y;
+            
+            for(let qi = 0; qi < queue.length; qi++) {
+                const [cx, cy] = queue[qi];
+                minX = Math.min(minX, cx);
+                maxX = Math.max(maxX, cx);
+                minY = Math.min(minY, cy);
+                maxY = Math.max(maxY, cy);
+                
+                for(const d of dirs) {
+                    const nx = cx + d[0], ny = cy + d[1];
+                    if(nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+                    if(seen[idx(nx, ny)]) continue;
+                    if(typeMap[ny][nx] === targetType) {
+                        seen[idx(nx, ny)] = 1;
+                        queue.push([nx, ny]);
+                    }
+                }
+            }
+            comps.push({minX, maxX, minY, maxY, cells: queue});
+        }
+    }
+    return comps;
+}
+
+// ========== DODAWANIE OBIEKTÓW ==========
+function addGrass(x, z) {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE), matGrass);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, 0, z);
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+}
+
+function addBuildingCell(x, z, material, height = BUILDING_HEIGHT) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE, height, CELL_SIZE), material);
+    mesh.position.set(x, height / 2, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+}
+
+function addGableRoof(centerX, centerZ, width, depth, orientation) {
+    const halfW = (orientation === "X") ? width / 2 : depth / 2;
+    const fullDepth = (orientation === "X") ? depth : width;
+    const shape = new THREE.Shape();
+    shape.moveTo(-halfW, 0);
+    shape.lineTo(halfW, 0);
+    shape.lineTo(0, ROOF_HEIGHT);
+    shape.lineTo(-halfW, 0);
+    const extrudeSettings = {depth: fullDepth, bevelEnabled: false, steps: 1};
+    const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geom.translate(0, 0, -fullDepth / 2);
+    const mesh = new THREE.Mesh(geom, matRoof);
+    if(orientation === "X") {
+        mesh.rotation.y = 0;
+        mesh.position.set(centerX, BUILDING_HEIGHT + 0.01, centerZ);
+    } else {
+        mesh.rotation.y = Math.PI / 2;
+        mesh.position.set(centerX, BUILDING_HEIGHT + 0.01, centerZ);
+    }
+    mesh.castShadow = true;
+    scene.add(mesh);
+}
+
+// Funkcja dodająca dach czterospadowy (ostrosłup)
+function addHipRoof(centerX, centerZ, width, depth, baseHeight) {
+    const roofH = baseHeight / 4;
+    // CylinderGeometry z 4 segmentami tworzy ostrosłup o podstawie kwadratu/prostokąta
+    // Promień góry 0, promień dołu dopasowany do przekątnej
+    const radius = Math.sqrt(Math.pow(width/2, 2) + Math.pow(depth/2, 2));
+    const geom = new THREE.CylinderGeometry(0, radius, roofH, 4);
+    geom.rotateY(Math.PI / 4); // Obrót, aby krawędzie pasowały do ścian
+    const mesh = new THREE.Mesh(geom, matRoof);
+    mesh.position.set(centerX, baseHeight + roofH / 2, centerZ);
+    mesh.castShadow = true;
+    scene.add(mesh);
+}
+
+function addSilo(x, z) {
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 6, 16), matSilo);
+    cyl.position.set(x, 3, z);
+    cyl.castShadow = true;
+    scene.add(cyl);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), matSilo);
+    dome.position.set(x, 6, z);
+    dome.castShadow = true;
+    scene.add(dome);
+    
+    collisionObjects.push({x, z, width: 3, depth: 3, type: 'silo'});
+}
+
+function addTree(x, z) {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3, 8), matBrown);
+    trunk.position.set(x, 1.5, z);
+    trunk.castShadow = true;
+    scene.add(trunk);
+    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), matFieldGreen);
+    leaves.position.set(x, 3.8, z);
+    leaves.castShadow = true;
+    scene.add(leaves);
+    
+    collisionObjects.push({x, z, width: 1.2, depth: 1.2, type: 'tree'});
+}
+
+function addPath(x, z) {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE), matPath);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, 0.01, z);
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+}
+
+function addFence(x, z, orientation = 'X') {
+    const group = new THREE.Group();
+    const postGeo = new THREE.BoxGeometry(0.2, 1.5, 0.2);
+    const postMat = new THREE.MeshLambertMaterial({color: 0x654321});
+    const beamMat = matFence;
+    
+    const beamGeoX = new THREE.BoxGeometry(3.2, 0.15, 0.15);
+
+    const post1 = new THREE.Mesh(postGeo, postMat);
+    post1.position.set(-1.5, 0.75, 0);
+    post1.castShadow = true;
+    group.add(post1);
+    
+    const post2 = new THREE.Mesh(postGeo, postMat);
+    post2.position.set(1.5, 0.75, 0);
+    post2.castShadow = true;
+    group.add(post2);
+    
+    const beam1 = new THREE.Mesh(beamGeoX, beamMat);
+    beam1.position.set(0, 0.5, 0);
+    beam1.castShadow = true;
+    group.add(beam1);
+    
+    const beam2 = new THREE.Mesh(beamGeoX, beamMat);
+    beam2.position.set(0, 1.0, 0);
+    beam2.castShadow = true;
+    group.add(beam2);
+    
+    const beam3 = new THREE.Mesh(beamGeoX, beamMat);
+    beam3.position.set(0, 1.4, 0);
+    beam3.castShadow = true;
+    group.add(beam3);
+    
+    if (orientation === 'Z') {
+        group.rotation.y = Math.PI / 2;
+        collisionObjects.push({x, z, width: 0.5, depth: 3.5, type: 'fence'});
+    } else {
+        collisionObjects.push({x, z, width: 3.5, depth: 0.5, type: 'fence'});
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+}
+
+function addHayBale(x, z) {
+    const baleGeo = new THREE.CylinderGeometry(0.8, 0.8, 1.2, 12);
+    const bale = new THREE.Mesh(baleGeo, matHayBale);
+    bale.rotation.z = Math.PI / 2;
+    bale.position.set(x, 0.6, z);
+    bale.castShadow = true;
+    scene.add(bale);
+    
+    for(let i = 0; i < 3; i++) {
+        const strapGeo = new THREE.BoxGeometry(1.7, 0.1, 0.1);
+        const strapMat = new THREE.MeshLambertMaterial({color: 0xCD853F});
+        const strap = new THREE.Mesh(strapGeo, strapMat);
+        strap.rotation.z = Math.PI / 2;
+        strap.position.set(x, 0.6, z - 0.6 + i * 0.6);
+        strap.castShadow = true;
+        scene.add(strap);
+    }
+    
+    collisionObjects.push({x, z, width: 1.6, depth: 1.6, type: 'haybale'});
+}
+
+function addFieldArea(minX, maxX, minY, maxY, imgWidth, imgHeight) {
+    const wCells = maxX - minX + 1;
+    const hCells = maxY - minY + 1;
+    const longAxis = (wCells >= hCells) ? "X" : "Z";
+    
+    for(let yy = minY; yy <= maxY; yy++) {
+        for(let xx = minX; xx <= maxX; xx++) {
+            const posX = (xx - imgWidth / 2) * CELL_SIZE;
+            const posZ = (yy - imgHeight / 2) * CELL_SIZE;
+            const base = new THREE.Mesh(new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE), matFieldBrown);
+            base.rotation.x = -Math.PI / 2;
+            base.position.set(posX, 0.01, posZ);
+            base.receiveShadow = true;
+            scene.add(base);
+        }
+    }
+    
+    const rowThickness = 0.4;
+    const numRowsPerCell = 4;
+    const spacing = CELL_SIZE / numRowsPerCell;
+
+    if(longAxis === "X") {
+        for(let yy = minY; yy <= maxY; yy++) {
+            for(let xx = minX; xx <= maxX; xx++) {
+                const cellPosX = (xx - imgWidth / 2) * CELL_SIZE;
+                const cellPosZ = (yy - imgHeight / 2) * CELL_SIZE;
+
+                for(let i = 0; i < numRowsPerCell; i++) {
+                    const rowGeo = new THREE.BoxGeometry(CELL_SIZE, 0.4, rowThickness);
+                    const rowMesh = new THREE.Mesh(rowGeo, matFieldGreen);
+                    
+                    const rowOffsetZ = -CELL_SIZE / 2 + spacing / 2 + i * spacing;
+
+                    rowMesh.position.set(cellPosX, 0.2, cellPosZ + rowOffsetZ);
+                    rowMesh.castShadow = true;
+                    scene.add(rowMesh);
+                }
+            }
+        }
+    } else {
+        for(let col = minX; col <= maxX; col++) {
+            for(let yy = minY; yy <= maxY; yy++) {
+                const cellPosX = (col - imgWidth / 2) * CELL_SIZE;
+                const cellPosZ = (yy - imgHeight / 2) * CELL_SIZE;
+                
+                for(let i = 0; i < numRowsPerCell; i++) {
+                    const rowGeo = new THREE.BoxGeometry(rowThickness, 0.4, CELL_SIZE);
+                    const rowMesh = new THREE.Mesh(rowGeo, matFieldGreen);
+                    
+                    const rowOffsetX = -CELL_SIZE / 2 + spacing / 2 + i * spacing;
+
+                    rowMesh.position.set(cellPosX + rowOffsetX, 0.2, cellPosZ);
+                    rowMesh.castShadow = true;
+                    scene.add(rowMesh);
+                }
+            }
+        }
+    }
+}
+
+function addWater(x, z) {
+    const group = new THREE.Group();
+    
+    const waterRadius = CELL_SIZE * 0.4;
+    const waterDepth = 0.5;
+    const waterMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(waterRadius, waterRadius, waterDepth, 16), 
+        matWater
+    );
+    waterMesh.position.y = -waterDepth / 2;
+    waterMesh.receiveShadow = true;
+    group.add(waterMesh);
+    
+    const poleGeo = new THREE.BoxGeometry(0.2, 1.5, 0.2);
+    const poleRadius = waterRadius + 0.3;
+
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const pole = new THREE.Mesh(poleGeo, matWood);
+        pole.position.set(
+            Math.cos(angle) * poleRadius, 
+            0.75, 
+            Math.sin(angle) * poleRadius
+        );
+        pole.castShadow = true;
+        group.add(pole);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    collisionObjects.push({x, z, width: CELL_SIZE * 0.9, depth: CELL_SIZE * 0.9, type: 'water'}); 
+}
+
+function addTower(x, z) {
+    const height = 8;
+    const radius = 2;
+    
+    const towerGeo = new THREE.CylinderGeometry(radius, radius, height, 12);
+    const towerMesh = new THREE.Mesh(towerGeo, matTower);
+    towerMesh.position.set(x, height / 2, z);
+    towerMesh.castShadow = true;
+    scene.add(towerMesh);
+    
+    const roofHeight = 4;
+    const roofGeo = new THREE.ConeGeometry(radius * 1.2, roofHeight, 12);
+    const roofMesh = new THREE.Mesh(roofGeo, matRoof);
+    roofMesh.position.set(x, height + roofHeight / 2, z);
+    roofMesh.castShadow = true;
+    scene.add(roofMesh);
+
+    collisionObjects.push({x, z, width: radius * 2, depth: radius * 2, type: 'tower'});
+}
+
+function addWall(x, z, orientation = 'X') {
+    const group = new THREE.Group();
+    const wallHeight = 5;
+    const wallThickness = 1.2; 
+    
+    let wallGeo, collisionWidth, collisionDepth;
+    
+    if (orientation === 'Z') {
+        wallGeo = new THREE.BoxGeometry(wallThickness, wallHeight, CELL_SIZE);
+        collisionWidth = wallThickness;
+        collisionDepth = CELL_SIZE;
+    } else {
+        wallGeo = new THREE.BoxGeometry(CELL_SIZE, wallHeight, wallThickness);
+        collisionWidth = CELL_SIZE;
+        collisionDepth = wallThickness;
+    }
+    
+    const wallMesh = new THREE.Mesh(wallGeo, matWall);
+    wallMesh.position.y = wallHeight / 2;
+    wallMesh.castShadow = true;
+    group.add(wallMesh);
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    collisionObjects.push({x, z, width: collisionWidth, depth: collisionDepth, type: 'wall'});
+}
+
+
+// ========== TWORZENIE ZWIERZĄT ==========
+function createSheep(x, z) {
+    const group = new THREE.Group();
+    
+    const bodyGeo = new THREE.BoxGeometry(1.2, 0.8, 0.7);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.7;
+    body.castShadow = true;
+    group.add(body);
+    
+    const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const headMat = new THREE.MeshLambertMaterial({color: 0xE8E8E8});
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(0.7, 0.7, 0);
+    head.castShadow = true;
+    group.add(head);
+    
+    const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6);
+    const legMat = new THREE.MeshLambertMaterial({color: 0x000000});
+    
+    const legs = [];
+    for(let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(i < 2 ? 0.4 : -0.4, 0.25, i % 2 === 0 ? -0.3 : 0.3);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const animalData = {
+        mesh: group,
+        legs: legs,
+        type: 'sheep',
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.02,
+        time: 0,
+        turnTimer: 0
+    };
+    
+    animals.push(animalData);
+    collisionObjects.push({x, z, width: 1.5, depth: 1, type: 'animal', ref: animalData});
+    
+    return animalData;
+}
+
+function createPig(x, z) {
+    const group = new THREE.Group();
+    
+    const bodyGeo = new THREE.BoxGeometry(1.1, 0.7, 0.6);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0xFFB6C1});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.6;
+    body.castShadow = true;
+    group.add(body);
+    
+    const headGeo = new THREE.BoxGeometry(0.6, 0.5, 0.5);
+    const head = new THREE.Mesh(headGeo, bodyMat);
+    head.position.set(0.7, 0.6, 0);
+    head.castShadow = true;
+    group.add(head);
+    
+    const snoutGeo = new THREE.BoxGeometry(0.4, 0.3, 0.3);
+    const snoutMat = new THREE.MeshLambertMaterial({color: 0xFF69B4});
+    const snout = new THREE.Mesh(snoutGeo, snoutMat);
+    snout.position.set(1.1, 0.6, 0);
+    snout.castShadow = true;
+    group.add(snout);
+    
+    const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.5, 6);
+    const legMat = new THREE.MeshLambertMaterial({color: 0xFFB6C1});
+    
+    const legs = [];
+    for(let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(i < 2 ? 0.4 : -0.4, 0.25, i % 2 === 0 ? -0.25 : 0.25);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const animalData = {
+        mesh: group,
+        legs: legs,
+        type: 'pig',
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.025,
+        time: 0,
+        turnTimer: 0
+    };
+    
+    animals.push(animalData);
+    collisionObjects.push({x, z, width: 1.4, depth: 0.8, type: 'animal', ref: animalData});
+    
+    return animalData;
+}
+
+function createCow(x, z) {
+    const group = new THREE.Group();
+    
+    const bodyGeo = new THREE.BoxGeometry(1.4, 1, 0.8);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.8;
+    body.castShadow = true;
+    group.add(body);
+    
+    for(let i = 0; i < 4; i++) {
+        const spotGeo = new THREE.BoxGeometry(0.3, 0.3, 0.05);
+        const spotMat = new THREE.MeshLambertMaterial({color: 0x000000});
+        const spot = new THREE.Mesh(spotGeo, spotMat);
+        spot.position.set(Math.random() * 0.6 - 0.3, 0.8 + Math.random() * 0.4, 0.41);
+        spot.castShadow = true;
+        group.add(spot);
+    }
+    
+    const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+    const headMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(0.9, 0.9, 0);
+    head.castShadow = true;
+    group.add(head);
+    
+    const hornGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.3, 6);
+    const hornMat = new THREE.MeshLambertMaterial({color: 0xD2B48C});
+    
+    const hornL = new THREE.Mesh(hornGeo, hornMat);
+    hornL.position.set(0.9, 1.35, -0.25);
+    hornL.rotation.z = 0.3;
+    hornL.castShadow = true;
+    group.add(hornL);
+    
+    const hornR = new THREE.Mesh(hornGeo, hornMat);
+    hornR.position.set(0.9, 1.35, 0.25);
+    hornR.rotation.z = -0.3;
+    hornR.castShadow = true;
+    group.add(hornR);
+    
+    const legGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.7, 6);
+    const legMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+    
+    const legs = [];
+    for(let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(i < 2 ? 0.5 : -0.5, 0.35, i % 2 === 0 ? -0.35 : 0.35);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const animalData = {
+        mesh: group,
+        legs: legs,
+        type: 'cow',
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.018,
+        time: 0,
+        turnTimer: 0
+    };
+    
+    animals.push(animalData);
+    collisionObjects.push({x, z, width: 1.6, depth: 1, type: 'animal', ref: animalData});
+    
+    return animalData;
+}
+
+function createChicken(x, z) {
+    const group = new THREE.Group();
+    
+    const bodyGeo = new THREE.BoxGeometry(0.5, 0.6, 0.4);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.4;
+    body.castShadow = true;
+    group.add(body);
+    
+    const headGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const head = new THREE.Mesh(headGeo, bodyMat);
+    head.position.set(0.35, 0.65, 0);
+    head.castShadow = true;
+    group.add(head);
+    
+    const beakGeo = new THREE.BoxGeometry(0.15, 0.1, 0.1);
+    const beakMat = new THREE.MeshLambertMaterial({color: 0xFFA500});
+    const beak = new THREE.Mesh(beakGeo, beakMat);
+    beak.position.set(0.55, 0.65, 0);
+    beak.castShadow = true;
+    group.add(beak);
+    
+    const combGeo = new THREE.BoxGeometry(0.2, 0.15, 0.05);
+    const combMat = new THREE.MeshLambertMaterial({color: 0xFF0000});
+    const comb = new THREE.Mesh(combGeo, combMat);
+    comb.position.set(0.35, 0.85, 0);
+    comb.castShadow = true;
+    group.add(comb);
+    
+    const legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 6);
+    const legMat = new THREE.MeshLambertMaterial({color: 0xFFA500});
+    
+    const legs = [];
+    for(let i = 0; i < 2; i++) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(0, 0.15, i === 0 ? -0.15 : 0.15);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const animalData = {
+        mesh: group,
+        legs: legs,
+        type: 'chicken',
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.035,
+        time: 0,
+        turnTimer: 0
+    };
+    
+    animals.push(animalData);
+    collisionObjects.push({x, z, width: 0.7, depth: 0.6, type: 'animal', ref: animalData});
+    
+    return animalData;
+}
+
+function createHorse(x, z) {
+    const group = new THREE.Group();
+    
+    const bodyGeo = new THREE.BoxGeometry(1.5, 0.9, 0.7);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0x8B4513});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 1;
+    body.castShadow = true;
+    group.add(body);
+    
+    const neckGeo = new THREE.BoxGeometry(0.4, 0.8, 0.4);
+    const neck = new THREE.Mesh(neckGeo, bodyMat);
+    neck.position.set(0.8, 1.3, 0);
+    neck.rotation.z = -0.3;
+    neck.castShadow = true;
+    group.add(neck);
+    
+    const headGeo = new THREE.BoxGeometry(0.6, 0.5, 0.4);
+    const head = new THREE.Mesh(headGeo, bodyMat);
+    head.position.set(1.1, 1.7, 0);
+    head.castShadow = true;
+    group.add(head);
+    
+    const maneGeo = new THREE.BoxGeometry(0.3, 0.6, 0.1);
+    const maneMat = new THREE.MeshLambertMaterial({color: 0x654321});
+    const mane = new THREE.Mesh(maneGeo, maneMat);
+    mane.position.set(0.9, 1.5, 0);
+    mane.castShadow = true;
+    group.add(mane);
+    
+    const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.9, 6);
+    const legMat = new THREE.MeshLambertMaterial({color: 0x8B4513});
+    
+    const legs = [];
+    for(let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(i < 2 ? 0.5 : -0.5, 0.45, i % 2 === 0 ? -0.3 : 0.3);
+        leg.castShadow = true;
+        group.add(leg);
+        legs.push(leg);
+    }
+    
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const animalData = {
+        mesh: group,
+        legs: legs,
+        type: 'horse',
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.022,
+        time: 0,
+        turnTimer: 0
+    };
+    
+    animals.push(animalData);
+    collisionObjects.push({x, z, width: 1.7, depth: 0.9, type: 'animal', ref: animalData});
+    
+    return animalData;
+}
+
+
+// ========== TWORZENIE NPC I GRACZA ==========
+function createNPC(x, z, bodyColor, headColor) {
+    const group = new THREE.Group();
+
+    const bodyGeo = new THREE.BoxGeometry(0.8, 1.2, 0.4);
+    const bodyMat = new THREE.MeshLambertMaterial({color: bodyColor});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 1;
+    body.castShadow = true;
+    group.add(body);
+
+    const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+    const headMat = new THREE.MeshLambertMaterial({color: headColor});
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.9;
+    head.castShadow = true;
+    group.add(head);
+
+    const legGeo = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+    const legMat = new THREE.MeshLambertMaterial({color: bodyColor});
+    const legLeft = new THREE.Mesh(legGeo, legMat);
+    legLeft.position.set(-0.2, 0.4, 0);
+    legLeft.castShadow = true;
+    group.add(legLeft);
+
+    const legRight = new THREE.Mesh(legGeo, legMat);
+    legRight.position.set(0.2, 0.4, 0);
+    legRight.castShadow = true;
+    group.add(legRight);
+
+    const armGeo = new THREE.BoxGeometry(0.3, 1, 0.3);
+    const armMat = new THREE.MeshLambertMaterial({color: headColor});
+    const armLeft = new THREE.Mesh(armGeo, armMat);
+    armLeft.position.set(-0.55, 1, 0);
+    armLeft.castShadow = true;
+    group.add(armLeft);
+
+    const armRight = new THREE.Mesh(armGeo, armMat);
+    armRight.position.set(0.55, 1, 0);
+    armRight.castShadow = true;
+    group.add(armRight);
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+    
+    const npcData = {
+        mesh: group,
+        legLeft: legLeft,
+        legRight: legRight,
+        armLeft: armLeft,
+        armRight: armRight,
+        startX: x,
+        startZ: z,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.025,
+        id: 'npc_' + npcs.length,
+        walkTime: 0,
+        turnTimer: 0
+    };
+    
+    npcs.push(npcData);
+
+    collisionObjects.push({
+        x: x,
+        z: z,
+        width: 1,
+        depth: 1,
+        type: 'npc',
+        ref: npcData
+    });
+}
+
+function createPlayer() {
+    const group = new THREE.Group();
+
+    const bodyGeo = new THREE.BoxGeometry(0.8, 1.2, 0.4);
+    const bodyMat = new THREE.MeshLambertMaterial({color: 0x0000ff});
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 1;
+    body.castShadow = true;
+    group.add(body);
+
+    const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+    const headMat = new THREE.MeshLambertMaterial({color: 0xffdbac});
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.9;
+    head.castShadow = true;
+    group.add(head);
+
+    const legGeo = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+    const legMat = new THREE.MeshLambertMaterial({color: 0x000080});
+    const legLeft = new THREE.Mesh(legGeo, legMat);
+    legLeft.position.set(-0.2, 0.4, 0);
+    legLeft.castShadow = true;
+    group.add(legLeft);
+
+    const legRight = new THREE.Mesh(legGeo, legMat);
+    legRight.position.set(0.2, 0.4, 0);
+    legRight.castShadow = true;
+    group.add(legRight);
+
+    const armGeo = new THREE.BoxGeometry(0.3, 1, 0.3);
+    const armMat = new THREE.MeshLambertMaterial({color: 0xffdbac});
+    const armLeft = new THREE.Mesh(armGeo, armMat);
+    armLeft.position.set(-0.55, 1, 0);
+    armLeft.castShadow = true;
+    group.add(armLeft);
+
+    const armRight = new THREE.Mesh(armGeo, armMat);
+    armRight.position.set(0.55, 1, 0);
+    armRight.castShadow = true;
+    group.add(armRight);
+
+    player = group;
+    player.legLeft = legLeft;
+    player.legRight = legRight;
+    player.armLeft = armLeft;
+    player.armRight = armRight;
+    scene.add(player);
+
+    setupJoystick();
+}
+
+// Reusable function to generate connected building components
+function generateBuildings(type, material, typeMap, imgWidth, imgHeight) {
+    const buildingComps = findComponents(typeMap, imgWidth, imgHeight, type);
+    for(const comp of buildingComps) {
+        const minX = comp.minX, maxX = comp.maxX, minY = comp.minY, maxY = comp.maxY;
+        const wCells = maxX - minX + 1;
+        const hCells = maxY - minY + 1;
+        
+        for(let yy = minY; yy <= maxY; yy++) {
+            for(let xx = minX; xx <= maxX; xx++) {
+                const posX = (xx - imgWidth / 2) * CELL_SIZE;
+                const posZ = (yy - imgHeight / 2) * CELL_SIZE;
+                addBuildingCell(posX, posZ, material);
+            }
+        }
+        
+        const centerX = ((minX + maxX) / 2 - imgWidth / 2) * CELL_SIZE;
+        const centerZ = ((minY + maxY) / 2 - imgHeight / 2) * CELL_SIZE;
+        const widthUnits = wCells * CELL_SIZE;
+        const depthUnits = hCells * CELL_SIZE;
+        
+        collisionObjects.push({
+            x: centerX,
+            z: centerZ,
+            width: widthUnits,
+            depth: depthUnits,
+            type: type
+        });
+        
+        const orient = (wCells >= hCells) ? "X" : "Z";
+        addGableRoof(centerX, centerZ, widthUnits, depthUnits, orient);
+    }
+}
+
+// NOWOŚĆ: Funkcja generująca białe budynki z dachem czterospadowym
+function generateWhiteBuildings(typeMap, imgWidth, imgHeight) {
+    const comps = findComponents(typeMap, imgWidth, imgHeight, "white_building");
+    for(const comp of comps) {
+        const minX = comp.minX, maxX = comp.maxX, minY = comp.minY, maxY = comp.maxY;
+        const wCells = maxX - minX + 1;
+        const hCells = maxY - minY + 1;
+        
+        for(let yy = minY; yy <= maxY; yy++) {
+            for(let xx = minX; xx <= maxX; xx++) {
+                const posX = (xx - imgWidth / 2) * CELL_SIZE;
+                const posZ = (yy - imgHeight / 2) * CELL_SIZE;
+                addBuildingCell(posX, posZ, matWhiteBuilding, SILO_HEIGHT);
+            }
+        }
+        
+        const centerX = ((minX + maxX) / 2 - imgWidth / 2) * CELL_SIZE;
+        const centerZ = ((minY + maxY) / 2 - imgHeight / 2) * CELL_SIZE;
+        const widthUnits = wCells * CELL_SIZE;
+        const depthUnits = hCells * CELL_SIZE;
+        
+        collisionObjects.push({
+            x: centerX,
+            z: centerZ,
+            width: widthUnits,
+            depth: depthUnits,
+            type: "white_building"
+        });
+        
+        addHipRoof(centerX, centerZ, widthUnits, depthUnits, SILO_HEIGHT);
+    }
+}
+
+// ========== GENERACJA MAPY Z OBRAZU ==========
+function generateMapFromImage(img) {
+    while(scene.children.length > 2) {
+        scene.remove(scene.children[2]);
+    }
+    collisionObjects = [];
+    npcs = [];
+    animals = [];
+    player = null;
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, img.width, img.height).data;
+    
+    mapWidth = img.width;
+    mapHeight = img.height;
+    
+    const typeMap = [];
+    
+    for(let y = 0; y < img.height; y++) {
+        typeMap[y] = [];
+        for(let x = 0; x < img.width; x++) {
+            const i = (y * img.width + x) * 4;
+            const hex = rgbToHex(data[i], data[i + 1], data[i + 2]);
+            const type = LEGEND[hex] || null;
+            typeMap[y][x] = type;
+        }
+    }
+    
+    for(let y = 0; y < img.height; y++) {
+        for(let x = 0; x < img.width; x++) {
+            const posX = (x - img.width / 2) * CELL_SIZE;
+            const posZ = (y - img.height / 2) * CELL_SIZE;
+            addGrass(posX, posZ);
+        }
+    }
+    
+    const fieldComps = findComponents(typeMap, img.width, img.height, "field");
+    for(const comp of fieldComps) {
+        addFieldArea(comp.minX, comp.maxX, comp.minY, comp.maxY, img.width, img.height);
+    }
+    
+    generateBuildings("building", matBrown, typeMap, img.width, img.height);
+    generateBuildings("dark_building", matDarkBuilding, typeMap, img.width, img.height);
+    generateWhiteBuildings(typeMap, img.width, img.height); // NOWOŚĆ: Generowanie białych budynków
+    
+    for(let y = 0; y < img.height; y++) {
+        for(let x = 0; x < img.width; x++) {
+            const t = typeMap[y][x];
+            const posX = (x - img.width / 2) * CELL_SIZE;
+            const posZ = (y - img.height / 2) * CELL_SIZE;
+            
+            if(t === "tree") addTree(posX, posZ);
+            else if(t === "silo") addSilo(posX, posZ);
+            else if(t === "path") addPath(posX, posZ);
+            else if(t === "fence") {
+                const hasFenceX = (x > 0 && typeMap[y][x-1] === "fence") || (x < img.width - 1 && typeMap[y][x+1] === "fence");
+                const hasFenceZ = (y > 0 && typeMap[y-1][x] === "fence") || (y < img.height - 1 && typeMap[y+1][x] === "fence");
+                
+                let orientation = 'X';
+                if (hasFenceZ && !hasFenceX) orientation = 'Z';
+                addFence(posX, posZ, orientation);
+            }
+            else if(t === "haybale") addHayBale(posX, posZ);
+            else if(t === "water") addWater(posX, posZ);
+            else if(t === "tower") addTower(posX, posZ); 
+            else if(t === "wall") {
+                const hasWallX = (x > 0 && typeMap[y][x-1] === "wall") || (x < img.width - 1 && typeMap[y][x+1] === "wall");
+                const hasWallZ = (y > 0 && typeMap[y-1][x] === "wall") || (y < img.height - 1 && typeMap[y+1][x] === "wall");
+                
+                let orientation = 'X';
+                if (hasWallZ && !hasWallX) orientation = 'Z';
+                addWall(posX, posZ, orientation);
+            }
+        }
+    }
+    
+    const npcColors = [
+        [0xff6b6b, 0xffdbac],
+        [0x4ecdc4, 0xffe4c4],
+        [0x95e1d3, 0xf5deb3],
+        [0xf38181, 0xffdbac],
+        [0xaa96da, 0xffe4c4]
+    ];
+    
+    const npcCount = 2 + Math.floor(Math.random() * 2);
+    for(let i = 0; i < npcCount; i++) {
+        let placed = false;
+        for(let attempt = 0; attempt < 50 && !placed; attempt++) {
+            const rx = (Math.random() - 0.5) * img.width * CELL_SIZE * 0.7;
+            const rz = (Math.random() - 0.5) * img.height * CELL_SIZE * 0.7;
+            if(!checkCollision(rx, rz)) {
+                const colorIndex = i % npcColors.length;
+                createNPC(rx, rz, npcColors[colorIndex][0], npcColors[colorIndex][1]);
+                placed = true;
+            }
+        }
+    }
+    
+    const animalTypes = ['sheep', 'pig', 'cow', 'chicken', 'horse'];
+    const animalCount = 8 + Math.floor(Math.random() * 5);
+    
+    for(let i = 0; i < animalCount; i++) {
+        let placed = false;
+        const animalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+        
+        for(let attempt = 0; attempt < 50 && !placed; attempt++) {
+            const rx = (Math.random() - 0.5) * img.width * CELL_SIZE * 0.8;
+            const rz = (Math.random() - 0.5) * img.height * CELL_SIZE * 0.8;
+            
+            if(!checkCollision(rx, rz)) {
+                if(animalType === 'sheep') createSheep(rx, rz);
+                else if(animalType === 'pig') createPig(rx, rz);
+                else if(animalType === 'cow') createCow(rx, rz);
+                else if(animalType === 'chicken') createChicken(rx, rz);
+                else if(animalType === 'horse') createHorse(rx, rz);
+                placed = true;
+            }
+        }
+    }
+    
+    let playerPlaced = false;
+    for(let attempt = 0; attempt < 100 && !playerPlaced; attempt++) {
+        const rx = (Math.random() - 0.5) * img.width * CELL_SIZE * 0.6;
+        const rz = (Math.random() - 0.5) * img.height * CELL_SIZE * 0.6;
+        
+        const gridX = Math.floor(rx / CELL_SIZE + img.width / 2);
+        const gridZ = Math.floor(rz / CELL_SIZE + img.height / 2);
+        
+        if(gridX >= 0 && gridX < img.width && gridZ >= 0 && gridZ < img.height) {
+            const cellType = typeMap[gridZ][gridX];
+            const safeCellTypes = ["grass", "path", "field"]; 
+            if(safeCellTypes.includes(cellType) && !checkCollision(rx, rz)) {
+                createPlayer();
+                player.position.set(rx, 0, rz);
+                playerPlaced = true;
+                camera.position.set(rx, 30, rz + 25);
+                camera.lookAt(rx, 0, rz);
+            }
+        }
+    }
+    
+    if(!playerPlaced) {
+        createPlayer();
+        camera.position.set(0, 30, 25);
+        camera.lookAt(0, 0, 0);
+    }
+async function enableImmersiveFullscreen() {
+    const elem = document.documentElement;
+    try {
+        if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) await elem.requestFullscreen({navigationUI: "hide"});
+            else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('portrait');
+        }
+        window.scrollTo(0, 1);
+    } catch(e) {
+        console.warn('Fullscreen/Orientation error:', e);
+    }
+}
+const joy = document.getElementById('joystick');
+joy.style.display = 'block';
+joy.style.opacity = '1';
+joy.style.transition = 'opacity 0.3s ease';
+
+setTimeout(() => {
+    enableImmersiveFullscreen();
+}, 500);
+}
+// ========== JOYSTICK ==========
+function setupJoystick() {
+    const joystick = document.getElementById('joystick');
+    const stick = document.getElementById('stick');
+    const maxDistance = 35;
+
+    function handleStart(e) {
+        e.preventDefault();
+        joystickActive = true;
+    }
+
+    function handleMove(e) {
+        if(!joystickActive) return;
+        e.preventDefault();
+
+        const rect = joystick.getBoundingClientRect();
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        let clientX, clientY;
+        if(e.touches) {
+            clientX = e.touches[0].clientX - rect.left;
+            clientY = e.touches[0].clientY - rect.top;
+        } else {
+            clientX = e.clientX - rect.left;
+            clientY = e.clientY - rect.top;
+        }
+
+        let deltaX = clientX - centerX;
+        let deltaY = clientY - centerY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if(distance > maxDistance) {
+            deltaX = (deltaX / distance) * maxDistance;
+            deltaY = (deltaY / distance) * maxDistance;
+        }
+
+        stick.style.left = (centerX + deltaX - 25) + 'px';
+        stick.style.top = (centerY + deltaY - 25) + 'px';
+
+        joystickVector.x = deltaX / maxDistance;
+        joystickVector.y = deltaY / maxDistance;
+    }
+
+    function handleEnd(e) {
+        e.preventDefault();
+        joystickActive = false;
+        stick.style.left = '35px';
+        stick.style.top = '35px';
+        joystickVector.x = 0;
+        joystickVector.y = 0;
+    }
+
+    joystick.addEventListener('mousedown', handleStart);
+    joystick.addEventListener('touchstart', handleStart);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
+}
+
+// ========== KOLIZJE ==========
+function checkCollision(x, z, ignoreType = null) {
+    for(let obj of collisionObjects) {
+        if(ignoreType && obj.type === ignoreType) continue;
+        if(obj.type === 'water') continue; 
+        const dx = Math.abs(x - obj.x);
+        const dz = Math.abs(z - obj.z);
+        if(dx < (obj.width / 2 + 0.6) && dz < (obj.depth / 2 + 0.6)) return true;
+    }
+    return false;
+}
+
+function checkCollisionExcept(x, z, exceptObj) {
+    for(let obj of collisionObjects) {
+        if(obj.ref === exceptObj) continue;
+        if(obj.type === 'water') continue; 
+        const dx = Math.abs(x - obj.x);
+        const dz = Math.abs(z - obj.z);
+        if(dx < (obj.width / 2 + 0.6) && dz < (obj.depth / 2 + 0.6)) return true;
+    }
+    return false;
+}
+
+// ========== UPDATE GRACZA ==========
+function updatePlayer() {
+    if(!player) return;
+    
+    let inWater = false;
+    const playerX = player.position.x;
+    const playerZ = player.position.z;
+    for(let obj of collisionObjects) {
+        if(obj.type === 'water') {
+            const dx = Math.abs(playerX - obj.x);
+            const dz = Math.abs(playerZ - obj.z);
+            if(dx < (obj.width / 2) && dz < (obj.depth / 2)) {
+                inWater = true;
+                break;
+            }
+        }
+    }
+    
+    const currentSpeed = inWater ? PLAYER_SPEED * 0.4 : PLAYER_SPEED;
+    
+    if(joystickVector.x !== 0 || joystickVector.y !== 0) {
+        walkTime += 0.15;
+        const newX = player.position.x + joystickVector.x * currentSpeed;
+        const newZ = player.position.z + joystickVector.y * currentSpeed;
+
+        if(!checkCollision(newX, newZ)) {
+            player.position.x = newX;
+            player.position.z = newZ;
+            const halfMap = (mapWidth * CELL_SIZE) / 2;
+            player.position.x = Math.max(-halfMap + 2, Math.min(halfMap - 2, player.position.x));
+            player.position.z = Math.max(-halfMap + 2, Math.min(halfMap - 2, player.position.z));
+            const angle = Math.atan2(joystickVector.x, joystickVector.y);
+            player.rotation.y = angle;
+            player.legLeft.rotation.x = Math.sin(walkTime) * 0.5;
+            player.legRight.rotation.x = Math.sin(walkTime + Math.PI) * 0.5;
+            player.armLeft.rotation.x = Math.sin(walkTime + Math.PI) * 0.3;
+            player.armRight.rotation.x = Math.sin(walkTime) * 0.3;
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 25;
+            camera.lookAt(player.position.x, 0, player.position.z);
+        }
+    } else {
+        player.legLeft.rotation.x = 0;
+        player.legRight.rotation.x = 0;
+        player.armLeft.rotation.x = 0;
+        player.armRight.rotation.x = 0;
+    }
+}
+
+// ========== UPDATE NPC ==========
+function updateNPCs() {
+    npcs.forEach(npc => {
+        npc.turnTimer += 1;
+        if(npc.turnTimer > 120) {
+            npc.angle += (Math.random() - 0.5) * 0.5;
+            npc.turnTimer = 0;
+        }
+        npc.walkTime += 0.1;
+        const newX = npc.mesh.position.x + Math.sin(npc.angle) * npc.speed;
+        const newZ = npc.mesh.position.z + Math.cos(npc.angle) * npc.speed;
+        const distFromStart = Math.sqrt(Math.pow(newX - npc.startX, 2) + Math.pow(newZ - npc.startZ, 2));
+
+        if(distFromStart < 8 && !checkCollisionExcept(newX, newZ, npc)) {
+            npc.mesh.position.x = newX;
+            npc.mesh.position.z = newZ;
+            npc.mesh.rotation.y = npc.angle;
+            npc.legLeft.rotation.x = Math.sin(npc.walkTime) * 0.5;
+            npc.legRight.rotation.x = Math.sin(npc.walkTime + Math.PI) * 0.5;
+            npc.armLeft.rotation.x = Math.sin(npc.walkTime + Math.PI) * 0.3;
+            npc.armRight.rotation.x = Math.sin(npc.walkTime) * 0.3;
+            for(let obj of collisionObjects) {
+                if(obj.ref === npc) { obj.x = newX; obj.z = newZ; break; }
+            }
+        } else {
+            npc.angle += Math.PI * 0.6;
+        }
+    });
+}
+
+// ========== UPDATE ZWIERZĄT ==========
+function updateAnimals() {
+    animals.forEach(animal => {
+        animal.time += 0.05;
+        animal.turnTimer += 1;
+        if (animal.turnTimer > 100) {
+            animal.angle += (Math.random() - 0.5) * 0.8;
+            animal.turnTimer = 0;
+        }
+        const newX = animal.mesh.position.x + Math.sin(animal.angle) * animal.speed;
+        const newZ = animal.mesh.position.z + Math.cos(animal.angle) * animal.speed;
+        const distFromStart = Math.sqrt((newX - animal.startX)**2 + (newZ - animal.startZ)**2);
+        const halfMap = (mapWidth * CELL_SIZE) / 2;
+
+        if (distFromStart < 12 && !checkCollisionExcept(newX, newZ, animal) && newX > -halfMap + 2 && newX < halfMap - 2 && newZ > -halfMap + 2 && newZ < halfMap - 2) {
+            animal.mesh.position.x = newX;
+            animal.mesh.position.z = newZ;
+            animal.mesh.rotation.y = animal.angle - Math.PI / 2;
+            const legShift = Math.sin(animal.time * 4) * 0.15;
+            if (animal.legs) {
+                for (let i = 0; i < animal.legs.length; i++) {
+                    animal.legs[i].position.z = (i % 2 === 0 ? 1 : -1) * legShift;
+                }
+            }
+            const head = animal.mesh.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.width === 0.5);
+            if (head) head.rotation.y = Math.sin(animal.time * 2) * 0.25;
+            for (let obj of collisionObjects) {
+                if (obj.ref === animal) { obj.x = newX; obj.z = newZ; }
+            }
+        } else {
+            animal.angle += Math.PI / 2;
+        }
+    });
+}
+
+// ========== PĘTLA ANIMACJI ==========
+function animate() {
+    requestAnimationFrame(animate);
+    updatePlayer();
+    updateNPCs();
+    updateAnimals();
+    renderer.render(scene, camera);
+}
+
+// ========== RESIZE ==========
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ========== WCZYTYWANIE PLIKU ==========
+document.getElementById("fileInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() { generateMapFromImage(img); };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// ========== START ==========
+init();
+animate();
+</script>
+</body>
+</html>

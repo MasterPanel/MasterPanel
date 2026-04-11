@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+       user-select: none;
+      margin: 0;
+      background: url('3.jpg');
+      background-size: cover;              /* Dopasuj do ekranu */
+      background-repeat: no-repeat;        /* Nie powtarzaj */
+      background-position: center center;  /* Wyśrodkuj */
+      background-attachment: fixed;    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+       /* obsługa bezpiecznych marginesów */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    }
+    /* NOWE STYLE: rozmycie tła i obramowanie */
+    #secondPage {
+      backdrop-filter: blur(8px);
+      background:#5559;
+    }
+
+      @keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 5s infinite;
+}
+      @keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 0.5s;
+}
+    #animBox {
+      border: 1px solid black;
+    }
+.phone-frame {
+      margin-top: 100PX;
+      width: 400px;
+      height:990px;
+     
+      border-radius: 40px;
+      padding: 15px;
+      
+      overflow: hidden;
+      position: relative;
+    }    
+  .windowz {
+  background: #5553;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 30px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+/* Powiększanie widgetu i okien przy najechaniu kursorem */
+.widget:hover, .window:hover, .window-2:hover {
+  transform: scale(1.03); /* Powiększenie o 20% */
+  z-index: 10; /* Podnosi element nad inne */
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+
+/* Zachowanie dla widgetu (dodanie przestrzeni na dole w celu uniknięcia zasłonięcia tekstu) */
+.widget {
+  margin-top: 80px;
+  width: 100%;
+  height: 17%;
+  background: #5559;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+  position: relative;
+  padding-bottom: 60px; /* Dodajemy przestrzeń na dole */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Powiększanie okien */
+.window {
+  background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+}
+  
+    .window i {
+            font-size: 50px;
+            color:#333;
+        }
+        .window p {
+            margin-top: 10px;
+            font-size: 20px;
+                      color:#ccc;
+
+    }
+.window-2 {
+  background: #5559;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease-in-out; /* Animacja powiększenia */
+  color:#eeee;
+}
+        .window-2 i {
+            font-size: 50px;
+        }
+       .window-2 p {
+            margin-top: 10px;
+            font-size: 20px;
+    }
+.clock {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 0; /* Usuwamy margines na dole */
+}
+
+.clock-part {
+   margin-top: -60px;
+  background: white;
+  color: black;
+  font-size: 60px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
+}
+
+.date {
+  text-align: right;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+
+    .below-clock {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+
+    .left-info .location {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .left-info .desc {
+      font-size: 16px;
+    }
+
+    .right-info {
+      text-align: right;
+    }
+
+    .right-info .temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .right-info .range {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .weather-icon {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 100px;
+      color: #FFD700;
+    }
+
+    
+    .container {
+      padding: 20px;
+    }
+
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+    }
+
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    /* Toolbar styles */
+    #toolbar {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+    }
+
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1,1); /* cień dla toolbaru */
+      border-radius: 20px;
+    }
+    #toolbar button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: transparent;
+      border: none;
+   border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 3); /* cień przycisku */
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2); /* cień po najechaniu */
+      transform: scale(1.05);
+    }
+       .fan-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin-bottom: 30px;
+    }
+
+    .fan-base {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 40px;
+      background-color: #555;
+      border-radius: 5px 5px 0 0;
+      box-shadow: 0 2px 4px rgb(0 0 0 / 0.7);
+    }
+
+    .fan-body {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 150px;
+      background-color: #444;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgb(0 0 0 / 0.7);
+      border: 5px solid #333;
+    }
+
+    .fan-center {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #666;
+      border-radius: 50%;
+      z-index: 4;
+      box-shadow: 0 2px 2px rgb(0 0 0 / 0.5);
+    }
+
+    .fan-blades {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+    }
+
+    .blade {
+      position: absolute;
+      width: 50px;
+      height: 70px;
+      background-color: #ccc;
+      border-radius: 40% 40% 0 0;
+      opacity: 0.9;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0 0;
+      box-shadow: 0 2px 2px rgb(0 0 0 / 0.7);
+    }
+
+    .blade:nth-child(1) { transform: rotate(0deg) translateY(-75px) translateX(-25px); }
+    .blade:nth-child(2) { transform: rotate(120deg) translateY(-75px) translateX(-25px); }
+    .blade:nth-child(3) { transform: rotate(240deg) translateY(-75px) translateX(-25px); }
+
+    @keyframes rotateFan {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background-color: #5559;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+    }
+
+    .controls button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      background-color: #007bff;
+      transition: background-color 0.3s ease;
+    }
+
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+
+    .controls label {
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 5px;
+    }
+
+    .controls input[type="range"] {
+      width: 200px;
+      -webkit-appearance: none;
+      height: 8px;
+      background: #111;
+      border-radius: 5px;
+      opacity: 0.7;
+    }
+
+    .controls input[type="range"]:hover {
+      opacity: 1;
+    }
+
+    .controls input[type="range"]::-webkit-slider-thumb,
+    .controls input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #007bff;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    #currentSpeedValue {
+      font-weight: bold;
+      color: #007bff;
+      margin-left: 10px;
+    }
+
+    .transition-slide-up { transform: translateY(100%); opacity: 0; }
+    .show-slide-up       { transform: translateY(0); opacity: 1; transition: all 0.4s ease-out; }
+  /* Animacja slide-up dla modala */
+.modal-enter {
+  opacity: 0;
+  transform: translateY(100%);
+}
+.modal-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s ease-out;
+}
+.modal-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.modal-exit-active {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease-in;
+}
+/* Animacja otwierania/zamykania modala wentylatora */
+.fan-modal-enter {
+  opacity: 0;
+  transform: translateY(100%);
+}
+.fan-modal-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s ease-out;
+}
+.fan-modal-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fan-modal-exit-active {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease-in;
+}
+  </style>
+</head>
+                       
+    <div id="pwaBanner" class="flex-col fixed bottom-20 transform -translate-x-/2 bg-gray-800 text-white rounded-lg shadow-lg p-10 flex items-center gap-9 z-50 animate-bounce [animation-duration:3s] hidden">
+        <button onclick="closePwaBanner()" class="ml-40 text-white hover:text-red-400 ">
+    <i class=" fas fa-times  "></i>
+  </button>
+  <i class="fas fa-download text-9xl"></i>
+  <span class="text-2xl " >     Zainstaluj aplikację!</span>
+  <button onclick="installPWA()" class="bg-blue-500 hover:bg-blue-600 text-2xl text-white font-bold  py-1 px-9 rounded animate-bounce">
+   Zainstaluj
+  </button>
+  
+  
+</div>
+<script> 
+      let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Pokaż baner po 3s
+  setTimeout(() => {
+    const banner = document.getElementById('pwaBanner');
+    banner.classList.remove('hidden');
+    banner.classList.add('animate-bounce');
+
+   
+  }, 3000);
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('Zainstalowano PWA');
+      } else {
+        console.log('Odrzucono instalację PWA');
+      }
+      deferredPrompt = null;
+      document.getElementById('pwaBanner').classList.add('hidden');
+    });
+  }
+}
+
+function closePwaBanner() {
+  document.getElementById('pwaBanner').classList.add('hidden');
+}
+</script>              
+<body class="h-screen animate__animated animate__bounceIn" id="body"> <script>    function animateExit(event) {
+      event.preventDefault();
+      const link = event.currentTarget.href;
+      const body = document.getElementById('body');
+      body.classList.remove('animate__bounceIn');
+      body.classList.add('animate__bounceOut');
+      setTimeout(() => {
+        window.location.href = link;
+      }, 700);
+    }
+    </script>                        
+
+<script>    
+  function animateExit(event, targetHref) {
+    event.preventDefault();
+    const body = document.getElementById('body');
+
+    body.classList.remove('animate__bounceIn');
+    void body.offsetWidth; // wymuszenie przeliczenia, by animacja się uruchomiła
+    body.classList.add('animate__bounceOut');
+
+    body.addEventListener('animationend', () => {
+      window.location.href = targetHref;
+    }, { once: true });
+  }
+    </script>  
+<div class="phone-frame">
+    
+  <div class="widget" button id="fullscreenBtn">
+      <div class="clock">
+        <div class="clock-part" id="hours">Jeb</div>
+        <div class="clock-part" id="minutes">Sie</div>
+      </div>
+      <div class="date" id="date">Jebać</div>
+
+      <div class="below-clock">
+        <div class="left-info text-white">
+          <div class="location">Gubin</div>
+          <div class="desc">Przeważnie słonecznie</div>
+        </div>
+        <div class="right-info text-white">
+          <div class="temp">15°C</div>
+          <div class="range">22° / 10°</div>
+        </div>
+      </div>
+
+      <div class="weather-icon">⛅</div>
+    </div>
+<script>
+
+  const apiKey = "b7443c3648481492ff7eb47a9f334466";
+  const miasto = "Gubin";
+  const weatherIcon = document.querySelector(".weather-icon");
+  const desc = document.querySelector(".desc");
+  const temp = document.querySelector(".temp");
+  const range = document.querySelector(".range");
+
+  function getWeather() {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${miasto}&appid=${apiKey}&units=metric&lang=pl`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        const main = data.weather[0].main.toLowerCase();
+        const description = data.weather[0].description;
+        const temperature = Math.round(data.main.temp);
+        const tempMin = Math.round(data.main.temp_min);
+        const tempMax = Math.round(data.main.temp_max);
+
+        // Wybór emoji na podstawie warunków pogodowych
+        let emoji = "🌥️"; // domyślnie częściowo pochmurnie
+        if (main.includes("clear")) {
+          emoji = "☀️";
+        } else if (main.includes("clouds")) {
+          emoji = "⛅";
+        } else if (main.includes("rain") || main.includes("drizzle")) {
+          emoji = "🌧️";
+        } else if (main.includes("thunderstorm")) {
+          emoji = "⛈️";
+        } else if (main.includes("snow")) {
+          emoji = "❄️";
+        } else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) {
+          emoji = "🌫️";
+        }
+
+        // Aktualizacja elementów na stronie
+        weatherIcon.textContent = emoji;
+        desc.textContent = description.charAt(0).toUpperCase() + description.slice(1);
+        temp.textContent = `${temperature}°C`;
+        range.textContent = `${tempMax}° / ${tempMin}°`;
+      })
+      .catch(error => {
+        console.error("Błąd pobierania pogody:", error);
+      });
+  }
+
+  // Pierwsze pobranie i ustawienie interwału
+  getWeather();
+  setInterval(getWeather, 30 * 60 * 1000); // Odśwież co 30 minut
+    document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+});
+    
+    function updateClockAndDate() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      document.getElementById("hours").innerText = hours;
+      document.getElementById("minutes").innerText = minutes;
+
+      const dni = ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."];
+      const mies = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+      const dzien = dni[now.getDay()];
+      const miesiac = mies[now.getMonth()];
+      const data = `${dzien} ${miesiac} ${now.getDate()}`;
+      document.getElementById("date").innerText = data;
+    }
+
+    setInterval(updateClockAndDate, 1000);
+    updateClockAndDate();
+
+</SCRIPT>
+    
+<div class="container grid grid-cols-2 gap-4 text-white text-xl">
+<div class="window" onclick="openLockPage('slide-up')"><i class="fas fa-lock"></i><p>Zamek</p></div>
+   
+
+    <div id="lockModal" class="fixed inset-0 flex items-center justify-center  z-50 n backdrop-blur-xl hidden">
+<div id="lockModalInner" class="bg-white/30 backdrop-blur-3xl rounded-xl p-10 text-center text-white w-[90 już%] max-w-md ">
+        <h2 class="text-5xl mb-6">Zamek</h2>
+        <button onclick="toggleLock()" id="lockButton" class="text-9xl text-red-500 transition duration-300 hover:scale-110 pulse">
+          <i class="fas fa-lock"></i>
+        </button>
+        <br><br>
+        <div id="lockStatus" class="window text-xl text-black font-semiboldbg-white/30 backdrop-blur-3xl px-4 py-2 rounded-xl">Zablokowany</div>
+        <br>
+        <button onclick="closeLockPage('slide-up')" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl text-white">Zamknij</button>
+      </div>
+
+
+
+
+  <script>
+    let locked = true;
+
+    async function toggleLock() {
+      const icon = document.querySelector("#lockButton i");
+      const lockStatus = document.getElementById("lockStatus");
+
+      // efekt drgania
+      icon.classList.add("shake");
+      icon.addEventListener("animationend", () => icon.classList.remove("shake"), { once: true });
+
+      let cmd = "";
+      if (locked) {
+        // odblokowanie
+        icon.classList.remove("fa-lock");
+        icon.classList.add("fa-lock-open", "text-black");
+        icon.classList.remove("text-red-500");
+        lockStatus.textContent = "Odblokowane";
+        lockStatus.classList.remove("text-red-500");
+        lockStatus.classList.add("text-black");
+        cmd = "unlock";
+      } else {
+        // zablokowanie
+        icon.classList.add("fa-lock", "text-red-500");
+        icon.classList.remove("fa-lock-open", "text-black");
+        lockStatus.textContent = "Zablokowane";
+        lockStatus.classList.add("text-red-500");
+        lockStatus.classList.remove("text-black");
+        cmd = "lock";
+      }
+
+      locked = !locked;
+
+      // wysyłka POST do API
+      try {
+        const res = await fetch("https://masterpanell.vercel.app/api/zamek", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cmd })
+        });
+        const data = await res.json();
+        console.log("API:", data);
+      } catch (err) {
+        console.error("Błąd API:", err);
+      }
+    }
+
+    function openLockPage() {
+      const lockModal = document.getElementById("lockModal");
+      const lockModalInner = document.getElementById("lockModalInner");
+
+      lockModal.classList.remove("hidden");
+      lockModalInner.classList.add("modal-enter");
+
+      requestAnimationFrame(() => {
+        lockModalInner.classList.add("modal-enter-active");
+        lockModalInner.classList.remove("modal-enter");
+      });
+
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLockPage() {
+      const lockModal = document.getElementById("lockModal");
+      const lockModalInner = document.getElementById("lockModalInner");
+
+      lockModalInner.classList.add("modal-exit-active");
+      lockModalInner.classList.remove("modal-enter-active");
+
+      setTimeout(() => {
+        lockModal.classList.add("hidden");
+        lockModalInner.classList.remove("modal-exit-active");
+        document.body.style.overflow = "auto";
+      }, 300);
+    }
+  </script>
+
+        </div>
+   
+<div class="window-2" onclick="animateExit(event, 'Light.html')"><i class="fas fa-lightbulb"></i><p>Oświetlenie</p></div>   
+<div class="window-2" onclick="animateExit(event, 'Temp.html')"><i class="fas fa-thermometer-half"></i><p>Temperatra</p></div>
+<div class="window-2" onclick="animateExit(event, 'Roleta.html')"><i class="fas fa-window-maximize"></i><p>Roleta</p></div>
+      <div class="window-2 flex flex-col items-center"  onclick="animateExit(event, 'Zaslona.html')">
+     
+  <div class="relative flex items-center justify-center">
+    <i class="fa fa-bookmark text-5xl text-white -mr-8 z-20"></i>
+    <i class="fa fa-table text-6xl text-black z-10"></i>
+    <i class="fa fa-bookmark text-5xl text-white -ml-8 z-20"></i>
+  </div>
+  <p class="mt-2 text-white">Zasłona</p>
+      </div>
+<div class="window-2" onclick="openPage('slide-up')"><i class="fas fa-fan"></i><p>Wentylator</p></div>
+        
+  <div id="secondPage" class="fixed inset-0 flex items-center justify-center bg-111 backdrop-blur-xl hidden z-50"> 
+    <div id="fanModalInner" class="bg-white/30 backdrop-blur-xl rounded-xl p-10 text-center text-white w-[90%] max-w-md">
+
+      <h2 class="text-5xl mb-6">Wentylator</h2>
+<CENTER>
+      <div class="fan-container">
+        <div class="fan-base"></div>
+        <div class="fan-body">
+          <div class="fan-blades" id="fanBlades">
+            <div class="blade"></div>
+            <div class="blade"></div>
+            <div class="blade"></div>
+          </div>
+          <div class="fan-center"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="toggleFanButton">Włącz</button>
+        <div>
+          <label for="speedSlider">Prędkość:</label><br>
+          <input type="range" id="speedSlider" min="1" max="10" value="5">
+          <span id="currentSpeedValue">5</span>
+        </div>
+      </div>
+
+      <br>
+      <button onclick="closePage('slide-up')" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl mt-4">Wyjdź</button>
+    </div>
+  </div>
+
+  <script>
+  const overlay = document.getElementById("secondPage");
+  const box = document.getElementById("animBox");
+
+  function openPage(type) {
+    const overlay = document.getElementById("secondPage");
+    const fanModalInner = document.getElementById("fanModalInner");
+
+    overlay.classList.remove("hidden");
+    fanModalInner.classList.add("fan-modal-enter");
+
+    requestAnimationFrame(() => {
+      fanModalInner.classList.add("fan-modal-enter-active");
+      fanModalInner.classList.remove("fan-modal-enter");
+    });
+
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePage() {
+    const overlay = document.getElementById("secondPage");
+    const fanModalInner = document.getElementById("fanModalInner");
+
+    fanModalInner.classList.add("fan-modal-exit-active");
+    fanModalInner.classList.remove("fan-modal-enter-active");
+
+    setTimeout(() => {
+      overlay.classList.add("hidden");
+      fanModalInner.classList.remove("fan-modal-exit-active");
+      document.body.style.overflow = "auto";
+    }, 300); // dopasowane do czasu animacji
+  }
+
+  const fanBlades = document.getElementById('fanBlades');
+  const toggleFanButton = document.getElementById('toggleFanButton');
+  const speedSlider = document.getElementById('speedSlider');
+  const currentSpeedValue = document.getElementById('currentSpeedValue');
+
+  let isFanOn = false;
+  let currentSpeed = parseInt(speedSlider.value);
+
+  function updateFanSpeed() {
+    if (isFanOn) {
+      const animationDuration = 2.2 - (currentSpeed * 0.2);
+      fanBlades.style.animation = `rotateFan ${animationDuration}s linear infinite`;
+    } else {
+      fanBlades.style.animation = 'none';
+    }
+    currentSpeedValue.textContent = currentSpeed;
+  }
+
+  async function sendFanCommand(on, speed) {
+    try {
+      await fetch('https://masterpanell.vercel.app/api/fan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on, speed })
+      });
+    } catch (e) {
+      console.error("Błąd wysyłania do API", e);
+    }
+  }
+
+  toggleFanButton.addEventListener('click', () => {
+    isFanOn = !isFanOn;
+    toggleFanButton.textContent = isFanOn ? 'Wyłącz' : 'Włącz';
+    updateFanSpeed();
+    sendFanCommand(isFanOn, currentSpeed);
+  });
+
+  speedSlider.addEventListener('input', () => {
+    currentSpeed = parseInt(speedSlider.value);
+    updateFanSpeed();
+    sendFanCommand(isFanOn, currentSpeed);
+  });
+
+  updateFanSpeed();
+</script>
+        
+<div class="window-2" onclick="animateExit(event, 'mapa.html')"><i class="fas fa-globe"></i><p>GPS</p></div>
+<div class="window-2">
+<a href="http://83.8.168.40:666/"target="_blank">
+  <i class="fas fa-camera"></i>
+  <p>Kamera</p>
+</a>
+</div>
+</div>
+      <div class="flex justify-center mt-4">
+<button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+        <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+
+    <div id="toolbar" class="transition-all duration-300">
+        <script>
+    function toggleToolbar() {
+      const toolbar = document.getElementById('toolbar');
+      const icon = document.getElementById('toggleIcon');
+      const iconPath = document.getElementById('iconPath');
+      const isOpen = toolbar.classList.contains('max-h-40');
+
+      if (isOpen) {
+        toolbar.classList.remove('max-h-40');
+        icon.classList.remove('rotate-180');
+        iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+      } else {
+        toolbar.classList.add('max-h-40');
+        icon.classList.add('rotate-180');
+        iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+      }
+    }
+</script>
+      <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+         <button title="Wideo" onclick="animateExit(event, 'VideoMaster.html')"> 
+             <i class="fas fa-file-video text-xl"></i>
+         </button>
+       
+        <button title="FILES"onclick="animateExit(event, 'FTP.html')">
+           <i class="fas fa-folder text-xl"></i>
+        </button>
+        <button title="Home"onclick="animateExit(event, 'SmartHome.html')">
+    <i  class="fas fa-home text-2xl"></i>
+        </button>
+        <button title="CODER"onclick="animateExit(event, 'Coder.html')">
+    <i class="fas fa-laptop-code text-xl"></i>
+        </button>
+         <button title="Zarządzanie"onclick="animateExit(event, 'Settings.html')">
+    <i  class="fas fa-layer-group text-xl"></i>
+        </button>
+      </div>
+        
+    </div>
+    
+  </div>
+ 
+   
+
+    <script>
+
+    let locked = false;
+
+    function toggleLock() {
+      const iconContainer = document.getElementById("lockIcon");
+      if (locked) {
+        iconContainer.innerHTML = `
+
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11V6a3 3 0 00-6 0m-4 5h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      } else {
+        iconContainer.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2 .896 2 2v1H10v-1c0-1.104.896-2 2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11V8a5 5 0 00-10 0v3M5 11h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+          </svg>
+        `;
+      }
+      locked = !locked;
+    }
+      
+
+
+  </script>
+</body>
+</html>

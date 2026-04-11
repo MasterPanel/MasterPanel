@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000">
+
+    <title>Master Panel</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root { 
+            --kolor-akcentu: #00f2ff;
+            --obramowanie: rgba(255, 255, 255, 0.1);
+        }
+
+        body {    user-select: none;
+            display: flex;
+            justify-content: center; /* Środkowanie w poziomie */
+            align-items: center;     /* Środkowanie w pionie */
+            height: 100vh;           /* Wysokość całego ekranu */
+            margin: 0;
+            font-family: sans-serif;
+            background: linear-gradient(90deg, #141916 0.000%, #141916 7.692%, #332b22 calc(7.692% + 1px), #332b22 15.385%, #533c2f calc(15.385% + 2px), #533c2f 23.077%, #6e4c3b calc(23.077% + 2px), #6e4c3b 30.769%, #825946 calc(30.769% + 2px), #825946 38.462%, #8b624f calc(38.462% + 2px), #8b624f 46.254%, #8a6654 calc(46.254% + 2px), #8a6654 53.846%, #7e6657 calc(53.846% + 2px), #7e6657 62.538%, #686256 calc(62.538% + 2px), #686256 69.232%, #4c5852 calc(69.232% + 2px), #4c5852 76.923%, #2c4b4b calc(76.923% + 2px), #2c4b4b 84.625%, #0c3b42 calc(84.625% + 2px), #0c3b42 92.308%, #002a36 calc(92.308% + 2px) 100.000%);
+            overflow: hidden; user-select: none;
+        }
+
+/* Subtelny, przezroczysty przycisk neonowy */
+        .przycisk-glosowy {
+            width: 110px;
+            height: 110px;
+            background: rgba(25, 25, 25, 0.5); 
+            
+            /* Mocne rozmycie tego, co jest pod przyciskiem */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            
+            /* Cienka, półprzezroczysta ramka (0.3) */
+            border: 1px solid rgba(0, 170, 255, 0.8); 
+            border-radius: 50%;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8); /* Ikona lekko przygaszona */
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Bardzo delikatna, rozproszona poświata bazowa */
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.9);
+        }
+
+        /* Aktywacja: subtelne "rozpalenie" neonu */
+        .przycisk-glosowy.nasluchiwanie {
+            color: #fff;
+            background: rgba(0, 150, 255, 0.6);
+            border-color: rgba(0, 210, 255, 0.8);
+            
+            /* Subtelny neon: jedna warstwa ostra, jedna bardzo rozproszona */
+            box-shadow: 
+                0 0 10px rgba(0, 150, 255, 0.8), 
+                0 0 30px rgba(0, 150, 255, 0.4);
+            
+            animation: puls-subtelny 2s infinite ease-in-out;
+        }
+
+        @keyframes puls-subtelny {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="btnGlos" class="przycisk-glosowy" onclick="toggleGlos()">
+        <i class="fas fa-microphone"></i>
+    </div>
+
+    <script>
+        /* --- KONFIGURACJA API --- */
+        const API_POLECEN = "api/commands";
+        const API_DHT = "api/dht";
+        const API_ZAMKA = "api/zamek";
+        const API_ZASLONY = "api/zaslona";
+
+        /* --- STAN APLIKACJI (DO KOMEND WZGLĘDNYCH) --- */
+        let stanSwiatla = { salon: 0, sypialnia: 0, kuchnia: 0, lena: 0 };
+
+        /* --- FUNKCJE KOMUNIKACJI --- */
+        async function wyslijPolecenie(pokoj, wartosc) {
+            wartosc = Math.max(0, Math.min(100, wartosc)); // Clamp 0-100
+            stanSwiatla[pokoj] = wartosc;
+            if (typeof aktualizujInterfejsSwiatla === "function") aktualizujInterfejsSwiatla(pokoj, wartosc);
+            try {
+                await fetch(API_POLECEN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ room: pokoj, brightness: parseInt(wartosc) }) });
+            } catch (e) { console.error("API Error"); }
+        }
+
+        async function przelaczZamek(idZamka) {
+            const karta = document.getElementById(idZamka);
+            if (!karta) return;
+            const jestZablokowany = !karta.classList.contains('aktywna');
+            const polecenie = jestZablokowany ? "unlock" : "lock";
+            aktualizujInterfejsZamka(idZamka, polecenie);
+            try {
+                await fetch(API_ZAMKA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd: polecenie }) });
+            } catch (e) { aktualizujInterfejsZamka(idZamka, jestZablokowany ? "lock" : "unlock"); }
+        }
+
+        function aktualizujInterfejsZamka(idZamka, stan) {
+            const karta = document.getElementById(idZamka);
+            const ikona = document.getElementById('ikona-' + idZamka);
+            if (!karta || !ikona) return;
+            if (stan === "unlock") {
+                karta.classList.add('aktywna');
+                ikona.classList.replace('fa-lock', 'fa-lock-open');
+                ikona.style.color = "var(--akcent-niebieski)";
+            } else {
+                karta.classList.remove('aktywna');
+                ikona.classList.replace('fa-lock-open', 'fa-lock');
+                ikona.style.color = "#444";
+            }
+        }
+
+        async function polecenieZaslony(cmd) {
+            try {
+                await fetch(API_ZASLONY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd: cmd }) });
+            } catch (e) { console.error("Zaslony API Error"); }
+        }
+
+        async function pobierzDaneDHT() {
+            try {
+                const r = await fetch(API_DHT);
+                return await r.json();
+            } catch (e) { return null; }
+        }
+        
+        /* --- LOGIKA PWA --- */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => {
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            }
+                        });
+                    });
+                });
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        }
+        
+        /* --- ASYSTENT GŁOSOWY --- */
+        let recognition;
+        let isListening = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'pl-PL';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('btnGlos').classList.add('nasluchiwanie');
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                document.getElementById('btnGlos').classList.remove('nasluchiwanie');
+            };
+
+            recognition.onresult = (event) => {
+                const command = event.results[0][0].transcript.toLowerCase();
+                console.log("Komenda głosowa:", command);
+                obsluzKomendeGlosowa(command);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Błąd rozpoznawania mowy:", event.error);
+                document.getElementById('btnGlos').classList.remove('nasluchiwanie');
+            };
+        }
+
+        function toggleGlos() {
+            if (!recognition) {
+                alert("Twoja przeglądarka nie obsługuje rozpoznawania mowy.");
+                return;
+            }
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function mow(tekst) {
+            const msg = new SpeechSynthesisUtterance(tekst);
+            msg.lang = 'pl-PL';
+            window.speechSynthesis.speak(msg);
+        }
+
+        /* --- PARSOWANIE LICZEBnniKÓW --- */
+        function wyodrebnijProcenty(tekst) {
+            const liczby = { "dziesięć": 10, "dwadzieścia": 20, "trzydzieści": 30, "czterdzieści": 40, "pięćdziesiąt": 50, "sześćdziesiąt": 60, "siedemdziesiąt": 70, "osiemdziesiąt": 80, "dziewięćdziesiąt": 90, "sto": 100 };
+            for (let [slowo, liczba] of Object.entries(liczby)) {
+                if (tekst.includes(slowo)) return liczba;
+            }
+            const dopasowanie = tekst.match(/\d+/);
+            return dopasowanie ? parseInt(dopasowanie[0]) : null;
+        }
+
+        /* --- GŁÓWNY HANDLER KOMEND --- */
+        async function obsluzKomendeGlosowa(komenda) {
+            const pokoje = ['salon', 'sypialnia', 'kuchnia', 'lena'];
+            let znaleziona = false;
+
+            // 1. ŚWIATŁA (Włącz / Zgaś / Jaśniej / Ciemniej / Procenty)
+            pokoje.forEach(pokoj => {
+                if (komenda.includes(pokoj)) {
+                    znaleziona = true;
+                    if (komenda.includes("włącz") || komenda.includes("zapal") || komenda.includes("max")) {
+                        wyslijPolecenie(pokoj, 100);
+                        mow("Włączam światło w " + pokoj);
+                    } else if (komenda.includes("zgaś") || komenda.includes("wyłącz")) {
+                        wyslijPolecenie(pokoj, 0);
+                        mow("Wyłączam światło w " + pokoj);
+                    } else if (komenda.includes("jaśniej") || komenda.includes("więcej")) {
+                        wyslijPolecenie(pokoj, stanSwiatla[pokoj] + 25);
+                        mow("Rozjaśniam " + pokoj);
+                    } else if (komenda.includes("ciemniej") || komenda.includes("mniej")) {
+                        wyslijPolecenie(pokoj, stanSwiatla[pokoj] - 25);
+                        mow("Przyciemniam " + pokoj);
+                    } else if (komenda.includes("procent") || komenda.includes("na")) {
+                        let proc = wyodrebnijProcenty(komenda);
+                        if (proc !== null) {
+                            wyslijPolecenie(pokoj, proc);
+                            mow("Ustawiam " + pokoj + " na " + proc + " procent");
+                        }
+                    }
+                }
+            });
+
+            // 2. ZAMEK (Otwórz / Zamknij)
+            if (komenda.includes("zamek") || komenda.includes("drzwi")) {
+                if (komenda.includes("otwórz") || komenda.includes("odblokuj")) {
+                    const kartaZamka = document.getElementById('zamek-glowny');
+                    if(kartaZamka && !kartaZamka.classList.contains('aktywna')) przelaczZamek('zamek-glowny');
+                    mow("Otwieram drzwi");
+                    znaleziona = true;
+                } else if (komenda.includes("zamknij") || komenda.includes("zablokuj")) {
+                    const kartaZamka = document.getElementById('zamek-glowny');
+                    if(kartaZamka && kartaZamka.classList.contains('aktywna')) przelaczZamek('zamek-glowny');
+                    mow("Zamykam drzwi");
+                    znaleziona = true;
+                }
+            }
+
+            // 3. ZASŁONY (Zasłoń / Odsłoń)
+            if (komenda.includes("zasłon")) {
+                if (komenda.includes("odsłoń") || komenda.includes("otwórz")) {
+                    polecenieZaslony("open");
+                    mow("Odsłaniam zasłony");
+                    znaleziona = true;
+                } else if (komenda.includes("zasłoń") || komenda.includes("zamknij")) {
+                    polecenieZaslony("close");
+                    mow("Zasłaniam zasłony");
+                    znaleziona = true;
+                }
+            }
+
+            // 4. STATUS (Temperatura / Wilgotność)
+            if (komenda.includes("temperatura")) {
+                const dane = await pobierzDaneDHT();
+                mow(dane ? `Temperatura wynosi ${dane.temp} stopni` : "Nie mogę pobrać danych o temperaturze");
+                znaleziona = true;
+            } else if (komenda.includes("wilgotność")) {
+                const dane = await pobierzDaneDHT();
+                mow(dane ? `Wilgotność to ${dane.hum} procent` : "Błąd czujnika wilgotności");
+                znaleziona = true;
+            }
+
+            // 5. GLOBALNE (Wszystko)
+            if (komenda.includes("wszystko") || komenda.includes("światła")) {
+                if (komenda.includes("włącz") || komenda.includes("zapal")) {
+                    pokoje.forEach(p => wyslijPolecenie(p, 100));
+                    mow("Włączam wszystkie światła");
+                    znaleziona = true;
+                } else if (komenda.includes("zgaś") || komenda.includes("wyłącz")) {
+                    pokoje.forEach(p => wyslijPolecenie(p, 0));
+                    mow("Gaszę wszystko");
+                    znaleziona = true;
+                }
+            }
+
+            if (!znaleziona) {
+                mow("Nie zrozumiałam polecenia.");
+            }
+        }
+    </script>
+</body>
+</html>

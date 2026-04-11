@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Paneli</title>
+    <style>
+        /* Stylistyka Dark Glassmorphism */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            /* Ciemne tło z gradientem dla lepszego efektu szkła */
+            background: radial-gradient(circle at top left, #2c3e50, #000000);
+            color: #ffffff;
+        }
+
+        .container {
+            /* Efekt Glassmorphism */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            width: 320px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: #00d4ff;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00d4ff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00d4ff 0%, #007bff 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .results {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        span {
+            display: block;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Kalkulator Paneli</h2>
+    
+    <div class="input-group">
+        <label for="width">Szerokość:</label>
+        <input type="number" id="width" placeholder="">
+    </div>
+    
+    <div class="input-group">
+        <label for="height">Wysokość:</label>
+        <input type="number" id="height" placeholder="">
+    </div>
+    
+    <buttdon onclick="obliczPaneli()">Oblicz</button>
+
+    <div class="results" id="results" style="display:none;">
+        <div class="result-item">
+            Liczba desek: <span id="deski">0</span>
+        </div>
+        <div class="result-item">
+            Liczba paczek: <span id="paczki">0</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Główna funkcja obliczeniowa (logika pozostaje bez zmian)
+    function obliczPaneli() {
+        const szerokosc = parseFloat(document.getElementById('width').value);
+        const wysokosc = parseFloat(document.getElementById('height').value);
+
+        if (isNaN(szerokosc) || isNaN(wysokosc) || wysokosc === 0) {
+            
+            return;
+        }
+
+        // 1. Szerokość podzielona przez 9
+        const krok1 = szerokosc / 9;
+
+        // 2. Wynik dzielenia 600 przez wysokość
+        const krok2 = 600 / wysokosc;
+
+        // 3. Wynik kroku 1 dzielony przez wynik kroku 2 (Liczba desek)
+        const liczbaDesekRaw = krok1 / krok2;
+        const liczbaDesek = Math.ceil(liczbaDesekRaw);
+
+        // 4. Liczba desek podzielona przez 5 (Liczba paczek)
+        const liczbaPaczek = Math.ceil(liczbaDesek / 5);
+
+        // Wyświetlenie wyników
+        document.getElementById('deski').innerText = liczbaDesek;
+        document.getElementById('paczki').innerText = liczbaPaczek;
+        document.getElementById('results').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

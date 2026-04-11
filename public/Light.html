@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>MASTER PANEL</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
+    
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+      user-select: none;
+      margin: 0;
+      background: url('2.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .ledButton {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: none;
+      background-color: white;
+      box-shadow: 0 0 20px yellow;
+      cursor: pointer;
+      animation: pulse 2s infinite;
+      transition: background-color 0.3s, box-shadow 0.3s, opacity 0.3s;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 10px orange; }
+      50% { transform: scale(1.1); box-shadow: 0 0 30px yellow; }
+      100% { transform: scale(1); box-shadow: 0 0 10px red; }
+    }
+
+    .brightnessLabel {
+      color: white;
+      margin-top: 30px;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 18px;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 9px;
+      background: #444;
+      border-radius: 4px;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+      border: 2px solid #222;
+    }
+
+    .phone-frame {
+      width: 400px;
+      height: 940px;
+      border-radius: 40px;
+      padding: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .widget {
+      margin-top: 100px;
+      width: 100%;
+      height: 18%;
+      background: #5559;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+      padding-bottom: 60px;
+      transition: all 0.3s ease-in-out;
+      position: relative;
+    }
+
+    .widget:hover,
+    .window:hover,
+    .window-2:hover {
+      transform: scale(1.03);
+      z-index: 10;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .window,
+    .window-2 {
+      background: #5559;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 1);
+      text-align: center;
+      transition: all 0.3s ease-in-out;
+      color: #eee;
+    }
+
+    .window i { font-size: 30px; color: #333; }
+    .window p { font-size: 20px; color: #ccc; }
+    .window-2 i { margin-top: 12px; font-size: 45px; }
+    .window-2 p { font-size: 9px; }
+
+    .clock { display: flex; justify-content: center; gap: 10px; }
+    .clock-part {
+      margin-top: -60px;
+      background: white;
+      color: black;
+      font-size: 60px;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .date { text-align: right; font-size: 16px; margin-bottom: 10px; color: white; }
+
+    .below-clock { display: flex; justify-content: space-between; margin-top: 10px; }
+    .left-info .location { font-size: 20px; font-weight: bold; }
+    .left-info .desc { font-size: 16px; }
+    .right-info { text-align: right; }
+    .right-info .temp { font-size: 24px; font-weight: bold; }
+    .right-info .range { font-size: 14px; color: #ccc; }
+    .weather-icon {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 100px;
+      color: #FFD700;
+    }
+
+    #toolbar { transition: max-height 0.3s ease; overflow: hidden; max-height: 0; }
+    #toolbar.max-h-40 {
+      max-height: 160px;
+      box-shadow: 0 8px 10px rgba(1, 1, 1, 1);
+      border-radius: 20px;
+    }
+
+    #toolbar button {
+      background-color: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(50, 50, 50, 3);
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    nav { padding-left: 0.6rem; }
+    nav button {
+      background-color: #3335;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      box-shadow: 0 4px 12px rgba(0, 2, 0, 1);
+    }
+    nav button:hover { background-color: #555a; box-shadow: 0 4px 12px rgba(0, 2, 0, 1); }
+    nav button.active { background-color: #4449; box-shadow: 0 4px 12px rgba(0, 2, 0, 1); font-weight: 700; }
+
+    .rooms-container {
+      position: relative;
+      width: 100%;
+      height: 450px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .room {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s ease-in-out;
+    }
+    .room.active { opacity: 1; pointer-events: all; }
+
+    .room.slide-up.active { transform: translateY(0); }
+    .room.slide-up { transform: translateY(100%); }
+    .room.slide-left.active { transform: translateX(0); }
+    .room.slide-left { transform: translateX(100%); }
+    .room.zoom-in.active { transform: scale(1); }
+    .room.zoom-in { transform: scale(0.5); }
+    .room.fade-in.active { opacity: 1; }
+    .room.fade-in { opacity: 0; }
+
+    .room-content {
+      display: flex;
+      flex-col;
+      items-center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      height: 100%;
+    }
+    .room-title { font-size: 2.5rem; color: white; }
+    .control-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      width: 100%;
+      max-width: 300px;
+    }
+    .device-button {
+      background: #3335;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .device-button:hover {
+      background: #4449;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    .device-button i { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+  </style>
+</head>
+    <body class="h-screen animate__animated animate__bounceIn" id="body">
+<div class="phone-frame">
+      
+  <div class="widget" id="fullscreenBtn">
+    <div class="clock">
+      <div class="clock-part" id="hours">09</div>
+      <div class="clock-part" id="minutes">34</div>
+    </div>
+    <div class="date" id="date">pon. kwi 14</div>
+
+    <div class="below-clock text-white">
+      <div class="left-info">
+        <div class="location">Gubin</div>
+        <div class="desc">Przeważnie słonecznie</div>
+      </div>
+      <div class="right-info">
+        <div class="temp">15°C</div>
+        <div class="range">22° / 10°</div>
+      </div>
+    </div>
+    <div class="weather-icon">⛅</div>
+  </div>
+
+  <nav>
+    <button data-page="slide-up" class="active" onclick="showRoom('salon', 'slide-up', this)">Salon</button>
+    <button data-page="slide-left" onclick="showRoom('sypialnia', 'slide-left', this)">Sypialnia</button>
+    <button data-page="zoom-in" onclick="showRoom('lazienka', 'zoom-in', this)">Łazienka</button>
+    <button data-page="fade-in" onclick="showRoom('lena', 'fade-in', this)">Lena</button>
+  </nav>
+
+  <div class="rooms-container">
+
+    <!-- Salon -->
+  <div id="salon" class="room slide-up active">
+       <center> <div class="room-content"> 
+        <h2 class="text-5xl text-center w-full">Salon</b>
+      <div class="control-section">
+             <button id="ledButtonSalon" class="ledButton"></button>
+             <div id="brightnessLabelSalon" class="brightnessLabel">Jasność: 100%</div>
+             <input type="range" id="brightnessRangeSalon" min="0" max="100" value="100" />
+             <button onclick="openModal()" class="text-xl px-4 py-2 bg-blue-600 rounded shadow hover:bg-blue-700 transition">
+                LED
+             </button>
+           </div>
+         </div>
+       </center>
+    </div>
+
+    <!-- Sypialnia -->
+    <div id="sypialnia" class="room slide-left">
+       
+       <center> <div class="room-content"> 
+        <h2 class="text-5xl text-center w-full">Sypialnia</b>
+           <div class="control-section">
+             <button id="ledButtonSypialnia" class="ledButton"></button>
+             <div id="brightnessLabelSypialnia" class="brightnessLabel">Jasność: 80%</div>
+             <input type="range" id="brightnessRangeSypialnia" min="0" max="100" value="80" />  
+             <button onclick="openModal()" class="text-xl px-4 py-2 bg-blue-600 rounded shadow hover:bg-blue-700 transition">
+                LED
+             </button>
+           </div>
+         </div>
+       </center>
+    </div>
+
+    <!-- Łazienka -->
+    <div id="lazienka" class="room zoom-in">
+      <center> 
+         <div class="room-content">
+        <h2 class="room-title">Łazienka</b>
+        <div class="control-section">
+             <button id="ledButtonLazienka" class="ledButton"></button>
+             <div id="brightnessLabelLazienka" class="brightnessLabel">Jasność: 70%</div>
+             <input type="range" id="brightnessRangeLazienka" min="0" max="100" value="70" />
+             <button onclick="openModal()" class="text-xl px-4 py-2 bg-blue-600 rounded shadow hover:bg-blue-700 transition">
+                LED
+             </button>
+           </div>
+         </div>
+       </center>
+    </div>
+
+    <!-- Lena -->
+    
+<div id="lena" class="room fade-in">
+       <center> 
+         <div class="room-content">
+        <h2 class="room-title">Lena</b>
+  
+        <div class="control-section">
+             <button id="ledButtonLena" class="ledButton"></button>
+             <div id="brightnessLabelLena" class="brightnessLabel">Jasność: 90%</div>
+             <input type="range" id="brightnessRangeLena" min="0" max="100" value="90" />
+             <button onclick="openModal()" class="text-xl px-4 py-2 bg-blue-600 rounded shadow hover:bg-blue-700 transition">
+                LED
+             </button>
+           </div>
+         </div>
+       </center>
+    </div>
+
+  </div>
+
+  <!-- Modal LED -->
+  <div id="ledModal" class="fixed inset-0 bg-black/50 backdrop-blur-md hidden items-center justify-center z-50">
+    <div class="relative bg-white/20 p-8 rounded-2xl w-[90%] max-w-md text-center shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modalContent">
+      <button onclick="closeModal()" class="absolute top-3 right-4 text-white text-2xl font-bold hover:text-red-400">&times;</button>
+      
+      <div class="flex justify-center gap-3 mb-6">
+        <button onclick="setColor('red')" class="w-10 h-10 rounded-full bg-red-500 border-2 border-white"></button>
+        <button onclick="setColor('green')" class="w-10 h-10 rounded-full bg-green-500 border-2 border-white"></button>
+        <button onclick="setColor('blue')" class="w-10 h-10 rounded-full bg-blue-500 border-2 border-white"></button>
+        <button onclick="setColor('yellow')" class="w-10 h-10 rounded-full bg-yellow-400 border-2 border-white"></button>
+      </div>
+
+      <div class="mb-6">
+        <label for="brightness" class="block mb-1 text-white">Jasność</label>
+        <input type="range" id="brightness" min="0" max="255" value="128" class="w-full accent-yellow-400" oninput="setBrightness(this.value)">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="controlLED('on')" class="bg-green-500 hover:bg-green-600 py-2 rounded-xl text-white">Włącz</button>
+        <button onclick="controlLED('off')" class="bg-red-500 hover:bg-red-600 py-2 rounded-xl text-white">Wyłącz</button>
+        <button onclick="saveSettings()" class="bg-blue-500 hover:bg-blue-600 py-2 rounded-xl text-white">FADE</button>
+        <button onclick="resetLED()" class="bg-gray-500 hover:bg-gray-600 py-2 rounded-xl text-white">VU METR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="flex justify-center mt-4">
+    <button onclick="toggleToolbar()" class="text-gray-300 hover:text-white transition animate-bounce">
+      <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path id="iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+
+  <div id="toolbar" class="transition-all duration-300">
+    <div class="bg-[#5559] text-white flex justify-around items-center px-6 py-4 rounded-2xl mt-2">
+      <button onclick="window.location.href='SmartHome.html'; animateExit(event) ""><i class="fas fa-undo text-xl"></i></button>
+      <button onclick="window.location.href='SmartHome.html'; animateExit(event) "><i class="fas fa-home text-xl"></i></button>
+      <button onclick="window.location.href='Settings.html'; animateExit(event) "><i class="fas fa-cogs text-xl"></i></button>
+    </div>
+  </div>
+</div>
+        <script>
+  const API_URL = "https://masterpanell.vercel.app/api/commands";
+  const apiKey = "b7443c3648481492ff7eb47a9f334466";
+  const miasto = "Gubin";
+  let currentRoom = 'salon';
+
+  const ledStates = {
+    salon: true,
+    sypialnia: false,
+    lazienka: false,
+    lena: false
+  };
+
+  // Zapisywanie stanu LED
+  function saveLEDState(room, brightness) {
+    localStorage.setItem(`led_${room}`, brightness);
+  }
+
+  // Wczytywanie stanu LED
+  function loadLEDState(room) {
+    const saved = localStorage.getItem(`led_${room}`);
+    return saved !== null ? parseInt(saved) : null;
+  }
+
+  async function sendLEDCommand(room, brightness) {
+    const payload = { room: room, brightness: brightness };
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error(`Błąd HTTP! Status: ${response.status}`);
+      console.log(`Polecenie dla pokoju '${room}' z jasnością ${brightness}% wysłane do serwera.`);
+    } catch (error) {
+      console.error(`Nie udało się wysłać polecenia:`, error);
+    }
+  }
+
+  async function toggleLedAndBrightness(room) {
+    const isCurrentlyOn = ledStates[room];
+    const newBrightness = isCurrentlyOn ? 0 : 100;
+    await sendLEDCommand(room, newBrightness);
+    saveLEDState(room, newBrightness);
+    const capitalizedRoom = room.charAt(0).toUpperCase() + room.slice(1);
+    const rangeElement = document.getElementById(`brightnessRange${capitalizedRoom}`);
+    if (rangeElement) {
+      rangeElement.value = newBrightness;
+      rangeElement.dispatchEvent(new Event('input'));
+    }
+  }
+
+  function setupRoomControls() {
+    const rooms = ['salon', 'sypialnia', 'lazienka', 'lena'];
+    rooms.forEach(room => {
+      const capitalizedRoom = room.charAt(0).toUpperCase() + room.slice(1);
+      const buttonElement = document.getElementById(`ledButton${capitalizedRoom}`);
+      const rangeElement = document.getElementById(`brightnessRange${capitalizedRoom}`);
+      const labelElement = document.getElementById(`brightnessLabel${capitalizedRoom}`);
+
+      if (buttonElement && rangeElement && labelElement) {
+        const savedBrightness = loadLEDState(room);
+        if (savedBrightness !== null) {
+          rangeElement.value = savedBrightness;
+          labelElement.textContent = `Jasność: ${savedBrightness}%`;
+          updateButtonAppearance(buttonElement, savedBrightness);
+          ledStates[room] = savedBrightness > 0;
+        } else {
+          const initialBrightness = parseInt(rangeElement.value);
+          ledStates[room] = initialBrightness > 0;
+          updateButtonAppearance(buttonElement, initialBrightness);
+        }
+
+        buttonElement.addEventListener("click", () => {
+          toggleLedAndBrightness(room);
+        });
+
+        rangeElement.addEventListener("input", function () {
+          const brightness = parseInt(this.value);
+          labelElement.textContent = `Jasność: ${brightness}%`;
+          updateButtonAppearance(buttonElement, brightness);
+          ledStates[room] = brightness > 0;
+          saveLEDState(room, brightness);
+          sendLEDCommand(room, brightness);
+        });
+      }
+    });
+  }
+
+  function updateButtonAppearance(button, brightness) {
+    if (brightness > 0) {
+      const lightValue = Math.round((brightness / 100) * 255);
+      const color = `rgb(${lightValue}, ${lightValue}, ${lightValue})`;
+      button.style.opacity = "1";
+      button.style.animation = "pulse 2s infinite";
+      button.style.backgroundColor = color;
+      button.style.boxShadow = `0 0 20px yellow`;
+    } else {
+      button.style.opacity = "0.9";
+      button.style.animation = "none";
+      button.style.backgroundColor = "black";
+      button.style.boxShadow = "none";
+    }
+  }
+
+  function showRoom(roomId, animationType, buttonElement) {
+    document.querySelectorAll('.room').forEach(room => {
+      room.classList.remove('active');
+    });
+    document.querySelectorAll('nav button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    buttonElement.classList.add('active');
+    setTimeout(() => {
+      const targetRoom = document.getElementById(roomId);
+      if (targetRoom) {
+        targetRoom.classList.add('active');
+        currentRoom = roomId;
+      }
+    }, 100);
+  }
+
+  const modal = document.getElementById('ledModal');
+  const content = document.getElementById('modalContent');
+  let selectedColor = 'red';
+  let brightness = 128;
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function closeModal() {
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }, 300);
+  }
+
+  function setBrightness(value) {
+    brightness = value;
+    console.log(`Ustawiona jasność: ${value}`);
+  }
+  function saveSettings() { console.log('FADE mode activated'); }
+  function resetLED() { console.log('VU METR mode activated'); }
+
+  const weatherIcon = document.querySelector(".weather-icon");
+  const desc = document.querySelector(".desc");
+  const temp = document.querySelector(".temp");
+  const range = document.querySelector(".range");
+
+  function getWeather() {
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${miasto}&appid=${apiKey}&units=metric&lang=pl`)
+      .then(res => res.json())
+      .then(data => {
+        const main = data.weather[0].main.toLowerCase();
+        const description = data.weather[0].description;
+        const temperature = Math.round(data.main.temp);
+        const tempMin = Math.round(data.main.temp_min);
+        const tempMax = Math.round(data.main.temp_max);
+        let emoji = "🌥️";
+        if (main.includes("clear")) emoji = "☀️";
+        else if (main.includes("clouds")) emoji = "⛅";
+        else if (main.includes("rain") || main.includes("drizzle")) emoji = "🌧️";
+        else if (main.includes("thunderstorm")) emoji = "⛈️";
+        else if (main.includes("snow")) emoji = "❄️";
+        else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) emoji = "🌫️";
+        weatherIcon.textContent = emoji;
+        desc.textContent = description.charAt(0).toUpperCase() + description.slice(1);
+        temp.textContent = `${temperature}°C`;
+        range.textContent = `${tempMax}° / ${tempMin}°`;
+      })
+      .catch(err => console.error("Błąd pogody:", err));
+  }
+
+  getWeather();
+  setInterval(getWeather, 1800000);
+
+  document.getElementById("fullscreenBtn").addEventListener("click", function() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else if (document.exitFullscreen) document.exitFullscreen();
+  });
+
+  function toggleToolbar() {
+    const toolbar = document.getElementById("toolbar");
+    const icon = document.getElementById("toggleIcon");
+    const iconPath = document.getElementById("iconPath");
+    const isOpen = toolbar.classList.contains("max-h-40");
+    if (isOpen) {
+      toolbar.classList.remove("max-h-40");
+      icon.classList.remove("rotate-180");
+      iconPath.setAttribute("d", "M19 9l-7 7-7-7");
+    } else {
+      toolbar.classList.add("max-h-40");
+      icon.classList.add("rotate-180");
+      iconPath.setAttribute("d", "M19 15l-7-7-7 7");
+    }
+  }
+
+  function updateClockAndDate() {
+    const now = new Date();
+    document.getElementById("hours").innerText = now.getHours().toString().padStart(2, "0");
+    document.getElementById("minutes").innerText = now.getMinutes().toString().padStart(2, "0");
+    const dni = ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."];
+    const mies = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+    document.getElementById("date").innerText = `${dni[now.getDay()]} ${mies[now.getMonth()]} ${now.getDate()}`;
+  }
+  setInterval(updateClockAndDate, 1000);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setupRoomControls();
+    updateClockAndDate();
+  });
+
+  function animateExit(event) {
+    event.preventDefault();
+    const link = event.currentTarget.href;
+    const body = document.getElementById('body');
+    body.classList.remove('animate__bounceIn');
+    body.classList.add('animate__bounceOut');
+    setTimeout(() => { window.location.href = link; }, 700);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kreator</title>
+<style>
+  body {
+	          user-select: none;
+
+    background: #111;
+    color: #eee;
+    font-family: system-ui, Segoe UI, Roboto, Arial;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  h1 { font-size: 18px; margin: 0 0 15px 0; }
+
+  #canvasWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #222;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  canvas {
+    display: block;
+    border: 1px solid #444;
+    image-rendering: pixelated;
+    cursor: crosshair;
+    max-width: 100%; /* Zapobiega wychodzeniu poza ekran na mobile */
+    height: auto;
+  }
+
+  #legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 15px;
+    max-width: 600px;
+  }
+
+  .legendItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a1a1a;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #333;
+  }
+
+  .swatch {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #555;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .swatch.selected { outline: 3px solid #fff; }
+
+  .buttons { margin-top: 15px; }
+
+  button {
+    margin: 5px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: 0;
+    background: #2a7;
+    color: #031;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button.secondary { background: #666; color: #fff; }
+
+  .next-link { margin-top: 20px; display: block; }
+  .next-link img { max-width: 120px; transition: transform 0.2s; }
+  .next-link img:hover { transform: scale(1.1); }
+
+</style>
+</head>
+<body>
+
+<h1>Kreator mapy</h1>
+
+<div id="canvasWrap">
+  <canvas id="view" width="400" height="400" aria-label="Pole do rysowania"></canvas>
+  
+  <div id="legend"></div>
+
+  <div class="buttons">
+    <button id="downloadBtn">Pobierz mapę</button>
+    <button id="clearBtn" class="secondary">Wyczyść mapę</button>
+  </div>
+</div>
+
+<a href="generator.html" class="next-link">
+    <img src="gen.png" alt="dalej">
+</a> 
+
+<script>
+const GRID = 20;
+const VIEW = 400;
+const CELL = VIEW / GRID;
+
+const COLORS = [
+  {name: "Trawa", hex:"#228B22"},
+  {name: "Biały", hex:"#FFFFFF"}, // Dodano kolor biały
+  {name: "Szopa", hex:"#8B4513"},
+  {name: "Wieża", hex:"#000000"},
+  {name: "Mur", hex:"#000080"},
+  {name: "Budynek", hex:"#444444"},
+  {name: "Pole", hex:"#FFA500"},
+  {name: "Drzewo", hex:"#006400"},
+  {name: "Silos", hex:"#808080"},
+  {name: "Siano", hex:"#FFD700"},
+  {name: "Ścieżka", hex:"#D2691E"},
+  {name: "Płot", hex:"#FF0000"},
+  {name: "Woda", hex:"#1E90FF"} 
+];
+
+let map = Array.from({length:GRID}, ()=> Array(GRID).fill(COLORS[0].hex));
+let currentColor = COLORS[0].hex;
+const canvas = document.getElementById('view');
+const ctx = canvas.getContext('2d');
+const rootElement = document.documentElement; 
+
+function drawView(){
+  ctx.clearRect(0,0,VIEW,VIEW);
+  for(let y=0;y<GRID;y++){
+    for(let x=0;x<GRID;x++){
+      ctx.fillStyle = map[y][x];
+      ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+    }
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=GRID;i++){
+    ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL, VIEW); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(VIEW, i*CELL); ctx.stroke();
+  }
+}
+drawView();
+
+const legendNode = document.getElementById('legend');
+COLORS.forEach((c, idx)=>{
+  const item = document.createElement('div');
+  item.className = 'legendItem';
+  const sw = document.createElement('div');
+  sw.className = 'swatch';
+  sw.style.background = c.hex;
+  sw.dataset.hex = c.hex;
+  if(idx===0) sw.classList.add('selected');
+  const label = document.createElement('div');
+  label.style.fontSize='13px';
+  label.textContent = c.name;
+  item.appendChild(sw);
+  item.appendChild(label);
+  legendNode.appendChild(item);
+  sw.addEventListener('click', (e)=> {
+    e.stopPropagation(); // Zapobiega przełączaniu fullscreena przy wyborze koloru
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
+    sw.classList.add('selected');
+    currentColor = c.hex;
+  });
+});
+
+function coordsFromEvent(e){
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width;
+  const scaleY = canvas.height / r.height;
+  const cx = Math.floor(((e.clientX - r.left) * scaleX) / CELL);
+  const cy = Math.floor(((e.clientY - r.top) * scaleY) / CELL);
+  return [cx, cy];
+}
+
+let drawing = false;
+canvas.addEventListener('mousedown', (e)=>{
+  drawing = true;
+  const [x,y] = coordsFromEvent(e);
+  paintCell(x,y);
+});
+window.addEventListener('mouseup', ()=> drawing = false);
+canvas.addEventListener('mousemove', (e)=>{
+  if(!drawing) return;
+  const [x,y] = coordsFromEvent(e);
+  paintCell(x,y);
+});
+
+function paintCell(x,y){
+  if(x<0||y<0||x>=GRID||y>=GRID) return;
+  map[y][x] = currentColor;
+  drawView();
+}
+
+document.getElementById('downloadBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const c = document.createElement('canvas');
+  c.width = GRID; c.height = GRID;
+  const cx = c.getContext('2d');
+  const img = cx.createImageData(GRID, GRID);
+  for(let y=0;y<GRID;y++){
+    for(let x=0;x<GRID;x++){
+      const hex = map[y][x].replace('#','');
+      const r = parseInt(hex.slice(0,2),16);
+      const g = parseInt(hex.slice(2,4),16);
+      const b = parseInt(hex.slice(4,6),16);
+      const idx = (y*GRID + x)*4;
+      img.data[idx] = r; img.data[idx+1] = g; img.data[idx+2] = b; img.data[idx+3] = 255;
+    }
+  }
+  cx.putImageData(img,0,0);
+  const link = document.createElement('a');
+  link.download = 'map_20x20.png';
+  link.href = c.toDataURL('image/png');
+  link.click();
+});
+
+document.getElementById('clearBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  map = Array.from({length:GRID}, ()=> Array(GRID).fill(COLORS[0].hex));
+  drawView();
+});
+
+document.body.addEventListener('click', (e) => {
+    const isControlElement = e.target.closest('#legend') || e.target.closest('button') || e.target.closest('canvas') || e.target.closest('a');
+    if (!isControlElement) {
+        toggleFullscreen();
+    }
+});
+
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        rootElement.requestFullscreen().catch(err => {
+            console.error(`Błąd: ${err.message}`);
+        });
+    }
+}
+
+canvas.addEventListener('touchstart', e=>{ 
+  e.preventDefault(); 
+  const t=e.touches[0]; 
+  const [x,y]=coordsFromEvent(t); 
+  paintCell(x,y); 
+  drawing=true;
+}, {passive: false});
+
+canvas.addEventListener('touchmove', e=>{ 
+  e.preventDefault(); 
+  if(!drawing) return; 
+  const t=e.touches[0]; 
+  const [x,y]=coordsFromEvent(t); 
+  paintCell(x,y);
+}, {passive: false});
+
+window.addEventListener('touchend', ()=> drawing=false);
+</script>
+</body>
+</html>

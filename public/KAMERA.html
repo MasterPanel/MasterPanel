@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>cam</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --accent-color: #3b82f6;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: sans-serif;
+        }
+
+        /* Kontener główny */
+        #scrollContainer {
+            width: 100vw;
+            height: 100vh;
+            overflow: auto; 
+            position: relative;
+            z-index: 1;
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+
+        #scrollContainer::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Iframe - przywrócono pointer-events, aby móc używać suwaków wewnątrz */
+        .video-viewport {
+            border: none;
+            display: block;
+            background: #000;
+            transform-origin: 0 0;
+            transition: width 0.1s, height 0.1s;
+            pointer-events: auto; 
+        }
+
+        /* Panel sterowania */
+        .control-panel {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: calc(30px + env(safe-area-inset-bottom));
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            pointer-events: none; /* Kliknięcia przechodzą do iframe, chyba że trafią w przyciski */
+            transition: opacity 0.3s ease;
+        }
+
+        .control-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            pointer-events: auto; /* Przyciski reagują na dotyk */
+        }
+
+        .joystick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 75px);
+            grid-template-rows: repeat(3, 75px);
+            gap: 15px;
+            background: #1119;
+            padding: 20px;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .bottom-actions {
+            gap: 150px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 280px;
+            padding: 0 10px;
+        }
+
+        .ptz-btn {
+            background: #0003;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .action-btn {
+            background: #0003;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 12px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ptz-btn.center {
+            grid-row: 2;
+            grid-column: 2;
+            background: #0003;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Przycisk do wywoływania menu, gdy jest ukryte */
+        #uiToggleZone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            z-index: 20;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="uiToggleZone" onclick="toggleUI()"></div>
+
+    <div id="scrollContainer">
+        <iframe id="cameraFrame" class="video-viewport" src="http://83.8.169.252:666" 
+                allow="autoplay; fullscreen"></iframe>
+    </div>
+
+    <section class="control-panel" id="uiPanel">
+        <div class="controls-wrapper">
+            
+            <div class="joystick-grid">
+                <button class="ptz-btn" style="grid-column: 2; grid-row: 1;" 
+                    onmousedown="moveCamera('UP')" onmouseup="stopCamera()" 
+                    ontouchstart="moveCamera('UP')" ontouchend="stopCamera()">▲</button>
+                
+                <button class="ptz-btn" style="grid-row: 2; grid-column: 1;" 
+                    onmousedown="moveCamera('LEFT')" onmouseup="stopCamera()" 
+                    ontouchstart="moveCamera('LEFT')" ontouchend="stopCamera()">◀</button>
+                
+                <div class="ptz-btn center" onclick="takeSnapshot()">Foto</div>
+                
+                <button class="ptz-btn" style="grid-row: 2; grid-column: 3;" 
+                    onmousedown="moveCamera('RIGHT')" onmouseup="stopCamera()" 
+                    ontouchstart="moveCamera('RIGHT')" ontouchend="stopCamera()">▶</button>
+                
+                <button class="ptz-btn" style="grid-row: 3; grid-column: 2;" 
+                    onmousedown="moveCamera('DOWN')" onmouseup="stopCamera()" 
+                    ontouchstart="moveCamera('DOWN')" ontouchend="stopCamera()">▼</button>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="action-btn" onclick="zoomCamera('OUT')">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                
+                <button class="action-btn" onclick="zoomCamera('IN')">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <script>
+        // Zmieniono początkowy zoom na 1.0 (100%), aby iframe był na cały ekran
+        let currentZoom = 1.0; 
+        const zoomStep = 0.05;
+        const minZoom = 0.25;
+        const maxZoom = 5.0;
+
+        const slider = document.getElementById('scrollContainer');
+        const uiPanel = document.getElementById('uiPanel');
+
+        // Funkcja przełączania widoczności interfejsu
+        function toggleUI() {
+            uiPanel.classList.toggle('hidden');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        }
+
+        // Inicjalizacja po załadowaniu
+        window.onload = () => {
+            updateIframeSize();
+            setTimeout(centerScroll, 100);
+        };
+
+        // Wyśrodkowanie widoku w kontenerze
+        function centerScroll() {
+            const centerX = (slider.scrollWidth - slider.clientWidth) / 2;
+            const centerY = (slider.scrollHeight - slider.clientHeight) / 2;
+            slider.scrollTo(centerX, centerY);
+        }
+
+        // Zarządzanie rozmiarem iframe i zoomem
+        function zoomCamera(type) {
+            if (type === 'IN') {
+                currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+            } else if (type === 'OUT') {
+                currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+            }
+
+            updateIframeSize();
+            centerScroll();
+
+            const centerBtn = document.querySelector('.center');
+            centerBtn.innerText = `${Math.round(currentZoom * 100)}%`;
+            centerBtn.style.color = 'rgba(255,255,255,0.5)';
+            
+            clearTimeout(window.zoomTimeout);
+            window.zoomTimeout = setTimeout(stopCamera, 800);
+        }
+
+        // Aktualizacja wymiarów iframe na podstawie zoomu
+        function updateIframeSize() {
+            const iframe = document.getElementById('cameraFrame');
+            const multiplier = 1 / currentZoom;
+            iframe.style.width = `${100 * multiplier}vw`;
+            iframe.style.height = `${100 * multiplier}vh`;
+            iframe.style.zoom = currentZoom;
+        }
+
+        // Funkcje sterowania ruchem (Logika PTZ)
+        function moveCamera(direction) {
+            console.log(`Ruch kamery: ${direction}`);
+            const centerBtn = document.querySelector('.center');
+            centerBtn.innerText = direction;
+            centerBtn.style.color = 'rgba(255,255,255,0.5)';
+        }
+
+        // Przywrócenie domyślnego stanu przycisku
+        function stopCamera() {
+            const centerBtn = document.querySelector('.center');
+            centerBtn.innerText = 'Foto';
+            centerBtn.style.color = 'white';
+        }
+
+        // Funkcja robienia zdjęcia
+        function takeSnapshot() {
+          // Logika snapshotu
+        }
+    </script>
+
+</body>
+</html>

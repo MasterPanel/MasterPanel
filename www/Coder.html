@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Coder HTML/INO</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#333">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <link rel="manifest" href="manifest.json">
+  <script>
+    // Rejestracja Service Workera dla PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .catch(err => console.error('Błąd rejestracji Service Worker:', err));
+      });
+    }
+  </script>
+  <style>
+        /* Główne style interfejsu */
+        html, body {user-select: none;
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            font-family: Arial, sans-serif; overflow: hidden;
+            background-color: #282A36;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex; height: 100vh; width: 100%;
+            height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        }
+        #install-banner {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+            background-color: #007bff; color: white; text-align: center;
+            padding: 10px; display: none; justify-content: space-around;
+            align-items: center; font-size: 14px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
+        #install-banner button {
+            background-color: #28a745; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer;
+        }
+        .editor-container, .preview-container { display: flex; flex-direction: column; width: 50%; height: 100%; }
+        .preview-container { border-left: 1px solid #444; background-color: #fff; }
+        @media (max-width: 768px) { .editor-container { width: 100%; } .preview-container { display: none; } }
+        .toolbar {
+            background-color: #333; color: white; display: flex;
+            justify-content: space-between; align-items: center;
+            padding: 10px; height: 40px; box-sizing: border-box;
+            border-bottom: 1px solid #444;
+        }
+        .toolbar-title { font-weight: bold; margin-right: 15px; padding: 5px 0; }
+        .toolbar button {
+            background: none; border: 1px solid #fff; color: #fff;
+            padding: 5px 10px; cursor: pointer; display: flex;
+            align-items: center; gap: 5px; border-radius: 4px;
+        }
+        .toolbar button:hover { background-color: #555; }
+        .editor-toolbar-groups { display: flex; align-items: center; flex-grow: 1; justify-content: flex-end; gap: 20px; }
+        .editor-toolbar-groups > .button-group:first-child { margin-right: auto; }
+        .button-group { display: flex; gap: 10px; }
+        .editor { flex-grow: 1; background-color: #333; overflow: hidden; }
+        .CodeMirror { height: 100% !important; font-size: 1.1em; }
+        #preview-frame { width: 100%; height: 100%; border: none; background-color: white; }
+        .context-menu {
+            position: absolute; background-color: #444; border: 1px solid #666;
+            border-radius: 5px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000; display: none; list-style: none; margin: 0; padding: 5px 0; color: #fff;
+        }
+        .context-menu li { padding: 8px 15px; cursor: pointer; white-space: nowrap; }
+        .context-menu li:hover { background-color: #555; }
+
+        .CodeMirror-dialog { background: #444; color: #eee; padding: 5px 10px; }
+        .CodeMirror-dialog input { background: #222; border: 1px solid #666; color: white; outline: none; margin-left: 5px; }
+        .CodeMirror-search-hint { color: #aaa; font-size: 0.8em; margin-left: 10px; }
+        
+        #status-info { 
+            user-select: none;
+            color: #ccc; 
+            font-size: 12px; 
+            margin-left: 10px; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+            display: none; 
+            vertical-align: middle;
+            line-height: normal;
+        }
+
+        @media (min-width: 600px) {
+            #status-info {
+                display: inline-block;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldgutter.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.css" />
+</head>
+<body>
+    <div id="install-banner">
+        <span>Zainstaluj aplikację Coder!</span>
+        <button id="install-button">ZAINSTALUJ!</button>
+    </div>
+    <div class="container">
+        <div class="editor-container">
+            <div class="toolbar">
+                <div class="editor-toolbar-groups">
+                    <div class="button-group">
+                        <button onclick="undo()" title="Cofnij"><i class="fas fa-undo"></i></button>
+                        <button onclick="redo()" title="Ponów"><i class="fas fa-redo"></i></button>
+                        <button onclick="clearEditor()" title="Wyczyść"><i class="fas fa-trash"></i></button>
+                        <span id="status-info"></span>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="findAndReplace()" title="Znajdź i Zamień"><i class="fas fa-search"></i></button>
+                        <button onclick="saveFile()" title="Zapisz"><i class="fas fa-save"></i></button>
+                        <button onclick="loadFile()" title="Wczytaj"><i class="fas fa-folder-open"></i></button>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="previewInNewTab()" title="Podgląd w nowej karcie"><i class="fas fa-external-link-alt"></i></button>
+                        <button onclick="previewFullscreen()" title="Pełny ekran"><i class="fas fa-desktop"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="editor">
+                <textarea id="html-editor"></textarea>
+            </div>
+        </div>
+        <div class="preview-container">
+            <div class="toolbar"><span class="toolbar-title">PODGLĄD</span></div>
+            <iframe id="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <ul id="context-menu" class="context-menu">
+        <li onclick="selectAll()">Zaznacz wszystko</li>
+        <li onclick="copyText()">Kopiuj</li>
+        <li onclick="cutText()">Wytnij</li>
+        <li onclick="pasteText()">Wklej</li>
+        <li onclick="findAndReplace()">Znajdź / Zamień</li>
+    </ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/search.min.js"></script>
+
+    <script>
+        const STORAGE_KEY = 'coder_html_ino_content';
+        const previewFrame = document.getElementById('preview-frame');
+        const statusInfo = document.getElementById('status-info');
+        let currentFileHandle = null;
+        
+        // Inicjalizacja CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            theme: 'dracula',
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true, 
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            styleActiveLine: true,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+        });
+
+        // Funkcja odświeżania podglądu
+        function updatePreview() {
+            const content = editor.getValue();
+            const doc = previewFrame.contentWindow.document;
+            doc.open();
+            if (editor.getOption("mode") === "htmlmixed") {
+                doc.write(content);
+            } else {
+                doc.write('<html><body style="background:#333;color:#fff;padding:20px;"><h1>Tryb INO/CPP</h1><p>Podgląd HTML wyłączony dla tego typu pliku.</p></body></html>');
+            }
+            doc.close();
+        }
+
+        // Zapisywanie zmian w localStorage
+        editor.on("change", () => {
+            const content = editor.getValue();
+            if (content) {
+                localStorage.setItem(STORAGE_KEY, content);
+            }
+            updatePreview();
+        });
+
+        // Weryfikacja uprawnień do pliku (kluczowe dla File System Access API)
+        async function verifyPermission(fileHandle, readWrite) {
+            const options = {};
+            if (readWrite) { options.mode = 'readwrite'; }
+            if ((await fileHandle.queryPermission(options)) === 'granted') { return true; }
+            if ((await fileHandle.requestPermission(options)) === 'granted') { return true; }
+            return false;
+        }
+
+        // Ładowanie zawartości pliku z uchwytu
+        async function loadFileFromHandle(handle) {
+            try {
+                if (await verifyPermission(handle, false)) {
+                    const file = await handle.getFile();
+                    const content = await file.text();
+                    currentFileHandle = handle;
+                    setModeForExtension(file.name);
+                    editor.setValue(content);
+                    updatePreview();
+                    statusInfo.textContent = `${file.name}`;
+                    document.title = `Coder - ${file.name}`;
+                    return true;
+                }
+            } catch (err) {
+                console.error("Błąd ładowania pliku:", err);
+            }
+            return false;
+        }
+
+        // Logika przy starcie aplikacji
+        window.addEventListener('DOMContentLoaded', async () => {
+            let fileOpened = false;
+
+            // Obsługa plików przekazanych przez system (PWA Launch Handler)
+            if ('launchQueue' in window) {
+                window.launchQueue.setConsumer(async (launchParams) => {
+                    if (launchParams.files && launchParams.files.length > 0) {
+                        fileOpened = await loadFileFromHandle(launchParams.files[0]);
+                    }
+                });
+            }
+
+            // Jeśli nie otwarto pliku z zewnątrz, wczytaj z pamięci podręcznej
+            setTimeout(() => {
+                if (!fileOpened) {
+                    loadFromStorage();
+                }
+            }, 300);
+        });
+
+        // Funkcja wczytywania z localStorage
+        function loadFromStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved && !editor.getValue()) {
+                editor.setValue(saved);
+                updatePreview();
+                statusInfo.textContent = "Wczytano autozapis";
+            }
+        }
+
+        // Rozpoznawanie trybu kolorowania składni
+        function setModeForExtension(filename) {
+            const newMode = (filename.endsWith(".ino") || filename.endsWith(".cpp")) ? "text/x-c++src" : "htmlmixed";
+            editor.setOption("mode", newMode);
+        }
+
+        // Funkcje toolbara
+        function undo() { editor.undo(); }
+        function redo() { editor.redo(); }
+        function clearEditor() { 
+            if(confirm("Czy na pewno chcesz wyczyścić edytor?")) {
+                editor.setValue(''); 
+                localStorage.removeItem(STORAGE_KEY);
+                updatePreview(); 
+                currentFileHandle = null; 
+                document.title = "Coder HTML/INO"; 
+                statusInfo.textContent = "";
+            }
+        }
+
+        function findAndReplace() { editor.execCommand("find"); }
+
+        // Funkcja zapisu pliku (nadpisywanie lub nowy zapis)
+        async function saveFile() {
+            const content = editor.getValue();
+            try {
+                // Jeśli mamy dostęp do systemowego uchwytu pliku (prawdziwe nadpisywanie)
+                if (currentFileHandle && 'showSaveFilePicker' in window) {
+                    if (await verifyPermission(currentFileHandle, true)) {
+                        const writable = await currentFileHandle.createWritable();
+                        await writable.write(content);
+                        await writable.close();
+                        statusInfo.textContent = "Zapisano zmiany.";
+                        return;
+                    }
+                } 
+                
+                // Jeśli to nowy plik lub przeglądarka nie wspiera File System API
+                if ('showSaveFilePicker' in window) {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: currentFileHandle ? currentFileHandle.name : 'index.html',
+                        types: [{
+                            description: 'Pliki kodu',
+                            accept: { 'text/html': ['.html'], 'text/plain': ['.ino', '.cpp'] }
+                        }]
+                    });
+                    currentFileHandle = handle;
+                    const writable = await handle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                    setModeForExtension(handle.name);
+                    document.title = `Coder - ${handle.name}`;
+                    statusInfo.textContent = `${handle.name}`;
+                } else {
+                    // Fallback dla urządzeń bez dostępu do plików (np. niektóre przeglądarki mobilne)
+                    const name = prompt("Zapisz jako (pobieranie nowej kopii):", currentFileHandle ? currentFileHandle.name : "index.html");
+                    if (!name) return;
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = name;
+                    a.click();
+                    statusInfo.textContent = "Pobrano plik.";
+                }
+            } catch (err) {
+                console.error("Błąd zapisu:", err);
+                statusInfo.textContent = "Błąd zapisu.";
+            }
+        }
+
+        // Funkcja wczytywania pliku
+        async function loadFile() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Pliki kodu',
+                            accept: { 'text/html': ['.html'], 'text/plain': ['.ino', '.cpp'] }
+                        }],
+                        multiple: false
+                    });
+                    await loadFileFromHandle(handle);
+                } catch (err) {
+                    console.log("Anulowano wybór pliku");
+                }
+            } else {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setModeForExtension(file.name);
+                    const reader = new FileReader();
+                    reader.onload = () => { 
+                        editor.setValue(reader.result); 
+                        updatePreview(); 
+                        statusInfo.textContent = file.name;
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+        }
+
+        // Podglądy
+        function previewInNewTab() {
+            const content = editor.getValue();
+            const previewWindow = window.open("", "_blank");
+            if (previewWindow) {
+                previewWindow.document.open();
+                previewWindow.document.write(content);
+                previewWindow.document.close();
+            }
+        }
+
+        function previewFullscreen() {
+            if (editor.getOption("mode") !== "htmlmixed") return;
+            const f = document.createElement("iframe");
+            Object.assign(f.style, { position: "fixed", top: "0", left: "0", width: "100%", height: "100%", zIndex: "9999", border: "none" });
+            document.body.appendChild(f);
+            const doc = f.contentWindow.document;
+            doc.open(); doc.write(editor.getValue()); doc.close();
+            const btn = doc.createElement('button');
+            btn.innerHTML = '✕ Wyjdź';
+            Object.assign(btn.style, { position: 'fixed', top: '20px', right: '20px', padding: '10px', background: 'red', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px', zIndex: '10000' });
+            btn.onclick = () => document.body.removeChild(f);
+            doc.body.appendChild(btn);
+        }
+
+        // Menu kontekstowe
+        const contextMenu = document.getElementById('context-menu');
+        editor.getWrapperElement().addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+            contextMenu.style.display = 'block';
+        });
+        document.addEventListener('click', () => contextMenu.style.display = 'none');
+
+        // Funkcje edycyjne
+        function selectAll() { editor.execCommand('selectAll'); }
+        function copyText() { navigator.clipboard.writeText(editor.getSelection()); }
+        function cutText() { navigator.clipboard.writeText(editor.getSelection()).then(() => editor.replaceSelection('')); }
+        function pasteText() { navigator.clipboard.readText().then(t => editor.replaceSelection(t)); }
+
+        // Instalacja PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').style.display = 'flex';
+        });
+        document.getElementById('install-button').onclick = () => {
+            document.getElementById('install-banner').style.display = 'none';
+            if (deferredPrompt) deferredPrompt.prompt();
+        };
+    </script>
+</body>
+</html>

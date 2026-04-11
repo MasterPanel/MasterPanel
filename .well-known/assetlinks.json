@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.ngrok_free.organismically_preoffensive_chuck.twa",
+      "sha256_cert_fingerprints": [
+        "34:B6:64:DB:C6:3D:76:0A:37:7B:1A:6D:B8:9B:5A:A2:4F:DA:D4:1E:42:0E:DD:DB:0F:0B:DD:21:BB:15:C0:38"
+      ]
+    }
+  }
+]
