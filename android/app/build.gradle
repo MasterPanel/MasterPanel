@@ -29,7 +29,6 @@ repositories {
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
-
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
@@ -46,8 +45,9 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
     }
     
-    // Dodaj jawną wersję kotlin-stdlib, aby zapewnić spójność
+    // Dodaj jawną wersję kotlin-stdlib oraz kotlin-stdlib-jdk8
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
@@ -63,3 +63,4 @@ try {
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
+configurations.all { resolutionStrategy { exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8" exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7" } }
