@@ -1,5 +1,15 @@
+
 {
-  "appId": "com.master.os",
-  "appName": "MasterOS",
-  "webDir": "www"
+  "appId": "com.masterpanel.app",
+  "appName": "MasterPanel",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "Keyboard": {
+      "resize": "none"
+    }
+  }
 }
