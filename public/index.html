@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -10,6 +11,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=New+Rocker&display=swap" rel="stylesheet">
+
 
     <title>Master Panel</title>
     
@@ -49,15 +54,19 @@
                 /* --- GRADIENT ACCENT VARIABLES (zarządzane przez Ustawienia) --- */
                 --accent2: #000000;                     /* drugi kolor gradientu */
                 --accent-bg: #0a0001;                   /* tło dla elementów z akcentem (solid lub gradient) */
+                --safe-top: env(safe-area-inset-top);
+                --safe-bottom: env(safe-area-inset-bottom);
             }
 
             * { box-sizing: border-box; -webkit-font-smoothing: antialiased; outline: none; }
 
             body, html {
-				
+			
+  font-family: "Roboto", sans-serif;
+overscroll-behavior-y: contain;
+
                 margin: 0; padding: 0; height: 100%; width: 100%;
                 overflow: hidden; background: #000;
-                font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
                 user-select: none; -webkit-user-select: none;
                 touch-action: none; color: var(--text-main);
             }
@@ -75,29 +84,86 @@
                 object-fit: contain;
                 filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
             }
+         
 
-            /* --- LOCKDOWN OVERLAY --- */
-            #lockdown-overlay {
-                position: fixed; inset: 0; z-index: 1000000;
-                background: radial-gradient(circle at center, #111 0%, #000 100%);
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            }
+    /* --- LOCKDOWN OVERLAY --- */
+    #lockdown-overlay {
+        font-family: "New Rocker", system-ui;
+        font-size: 25px;
+        color: #000; 
+        position: fixed; 
+        inset: 0; 
+        z-index: 1000000;
+        /* Startowe tło */
+        background: radial-gradient(circle at center, #111 0%, #000 100%);
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Wywołanie płynnej animacji (8s dla spokoju, ease-in-out dla płynności) */
+        animation: lockdown-pulse 4s ease-in-out infinite alternate;
+    }
+
+    /* Połączona animacja tła i neonu */
+    @keyframes lockdown-pulse {
+        0% {
+            opacity: 1;
+            /* Ciemniejsze, bardziej sterylne tło */
+            background-color: #000;
+            text-shadow: 
+                0 0 5px #000,
+                0 0 7px #000,
+                0 0 10px #111,
+                 0 0 7px #000,
+                0 0 10px #111,
+                 0 0 7px #000,
+                0 0 10px #111,
+                0 0 15px #000;
+        }
+        25% {
+            opacity: 1;
+          
+        }
+        50% {
+			 background-color: #000;
+            opacity: 1;
+            
+        }
+             60% {
+				  background-color: #000;
+            opacity: 1;
+		}
+        100% {
+            opacity: 0.9;
+            /* Rozjaśnione tło - efekt poświaty "ambient" */
+            background-color: #000;
+            text-shadow: 
+                0 0 2px #1,
+                0 0 5px #fff,
+                0 0 7px #555,
+                0 0 10px #fff,
+                0 0 15px #999;
+        }
+    }
+
             .pulse-btn {
-                padding: 16px 40px; border: 1px solid var(--accent);
-                background: transparent; color: white; cursor: pointer;
-                border-radius: 30px; font-weight: 300; font-size: 1rem;
+                padding: 16px 40px; border: 1px solid #0009;
+                background: #0009; color: #666; cursor: pinter;
+                border-radius: 17px; font-weight: 660; font-size: 1rem;
                 letter-spacing: 5px; transition: 0.3s;
                 animation: pulseGlow 2s infinite;
             }
             @keyframes pulseGlow { 
-                0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+                0% { box-shadow: 0 0 0 0 #000;}
                 70% { box-shadow: 0 0 0 15px rgba(0,0,0,0); }
                 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
             }
 
             /* --- DESKTOP CANVAS --- */
             #master-pc {
+				padding-top: var(--safe-top);
                 width: 100vw; height: 100vh;
                 background: url('https://wallpapers.com/images/hd/2440x1440-desktop-pc-background-wkvl5uwxyeuanzts.jpg') center/cover no-repeat;
                 position: relative; overflow: hidden;
@@ -115,6 +181,7 @@
                 align-items: center; padding: 10px; border-radius: 8px;
                 border: 1px solid transparent; z-index: 10; cursor: pointer;
                 transition: background 0.2s;
+                -webkit-touch-callout: none;
             }
             .icon:hover { background: rgba(255,255,255,0.08); }
             .icon.selected { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); }
@@ -126,12 +193,12 @@
             #ctx-menu {
                 position: fixed; width: 200px; background: var(--menu-bg);
                 backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 10px;
+                border: 1px solid var(--border-glass); border-radius:10px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200000;
                 display: none; flex-direction: column; padding: 5px;
             }
             .ctx-item {
-                padding: 10px 12px; font-size: 12px; border-radius: 6px;
+                padding: 10px 12px; font-size: 12px; border-radius: 10px;
                 display: flex; align-items: center; gap: 10px; cursor: pointer;
                 transition: 0.2s; color: white;
             }
@@ -148,7 +215,7 @@
                 box-shadow: 0 30px 60px rgba(0,0,0,0.6);
                 display: flex; flex-direction: column; overflow: hidden;
             }
-            .window.maximized { inset: 0 !important; width: 100vw !important; height: calc(100vh - var(--taskbar-h)) !important; border-radius: 0; }
+            .window.maximized {padding-bottom: var(--safe-bottom); inset: 0 !important; width: 100vw !important; height: calc(100vh - var(--taskbar-h)) !important; border-radius: 0; }
 
             .win-head {
                 height: 35px; background: var(--win-bg);
@@ -217,7 +284,7 @@
             }
             #start-btn {
                 width: 40px; height: 40px; background: var(--accent-bg);
-                border: none; border-radius: 8px; cursor: pointer;
+                border: none; border-radius: 10px; cursor: pointer;
                 margin-right: 15px; box-shadow: 0 0 15px var(--accent-glow);
                 display: flex; align-items: center; justify-content: center;
                 transition: 0.3s;
@@ -228,7 +295,7 @@
             #task-list { display: flex; gap: 8px; flex: 1; }
             .task-tab {
                 height: 42px; width: 42px; background: rgba(255,255,255,0.05);
-                border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                border-radius: 10px; display: flex; align-items: center; justify-content: center;
                 cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s;
             }
             .task-tab img { width: 26px; height: 26px; }
@@ -238,14 +305,14 @@
             #start-menu {
                 position: absolute; bottom: 55px; left: 15px; width: 240px;
                     background: var(--menu-bg);  backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 12px;
+                border: 1px solid var(--border-glass); border-radius: 10px;
                 display: none; flex-direction: column; padding: 10px; z-index: 100001;
                 transform-origin: bottom left;
             }
             #start-menu.anim-open  { animation: slideUpIn 0.60s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
             #start-menu.anim-close-panel { animation: slideDownOut 0.60s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
             .start-item {
-                padding: 10px 12px; border-radius: 8px; cursor: pointer;
+                padding: 10px 12px; border-radius: 10px; cursor: pointer;
                 display: flex; align-items: center; gap: 12px; font-size: 13px;
                 position: relative; transition: 0.2s; color: #eee;
             }
@@ -263,7 +330,7 @@
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 12px;
+                border-radius: 10px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -291,7 +358,7 @@
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 12px;
+                border-radius: 10px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -330,7 +397,7 @@
 
             .side-item {
                 display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-                border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s;
+                border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s;
                 color: var(--text-dim); white-space: nowrap; overflow: hidden;
             }
             .side-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
@@ -347,7 +414,7 @@
 
             .path-display {
                 font-size: 11px; color: var(--text-dim); font-family: monospace;
-                background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px;
+                background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 6px;
                 flex: 1; overflow: hidden; text-overflow: ellipsis;
             }
 
@@ -359,7 +426,7 @@
 
             /* --- APP SPECIFIC UI --- */
             .browser-bar { height: 45px; background: rgba(255,255,255,0.05); display: flex; padding: 5px 10px; gap: 10px; align-items: center; border-bottom: 1px solid var(--border-glass); }
-            .browser-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 4px; color: white; padding: 5px 10px; font-size: 12px; }
+            .browser-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 6px; color: white; padding: 5px 10px; font-size: 12px; }
 
             iframe { border: none; width: 100%; height: 100%; display: block; background: #fff; }
             textarea { background: transparent; color: #eee; border: none; width: 100%; height: 100%; padding: 15px; resize: none; font-family: monospace; }
@@ -370,9 +437,9 @@
                 background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
                 display: none; align-items: center; justify-content: center;
             }
-            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 16px; padding: 25px; text-align: center; }
-            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; color: white; margin: 15px 0; }
-            .d-btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 10px; padding: 25px; text-align: center; }
+            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 10px; color: white; margin: 15px 0; }
+            .d-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
             .d-btn-primary { background: var(--accent); color: white; margin-left: 10px; }
 
             .resizer { position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; cursor: se-resize; }
@@ -383,7 +450,7 @@
                 position: absolute; bottom: 65px; right: 15px;
                 width: 320px; background: var(--time-bg);
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                border: 1px solid var(--border-glass); border-radius: 16px;
+                border: 1px solid var(--border-glass); border-radius: 10px;
                 display: none; flex-direction: column; padding: 20px;
                 box-shadow: 0 15px 40px rgba(0,0,0,0.5); z-index: 100001;
                 transform-origin: bottom right;
@@ -394,7 +461,7 @@
             .tc-date { font-size: 13px; color: var(--accent); text-align: center; margin-bottom: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
             .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; }
             .cal-day-name { color: var(--text-dim); font-weight: bold; padding-bottom: 10px; }
-            .cal-day { padding: 8px; border-radius: 6px; cursor: default; transition: 0.2s; }
+            .cal-day { padding: 8px; border-radius:10px; cursor: default; transition: 0.2s; }
             .cal-day:hover:not(.other) { background: rgba(255,255,255,0.1); }
             .cal-day.current { background: var(--accent-bg); color: white; font-weight: bold; }
             .cal-day.other { opacity: 0.3; }
@@ -473,7 +540,7 @@
     .calc-display {
         background: rgba(0, 0, 0, 0.4);
         border: 1px solid var(--border-glass);
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 15px;
         text-align: right;
         font-family: monospace;
@@ -490,7 +557,7 @@
     .calc-btn {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--border-glass);
-        border-radius: 8px;
+        border-radius: 10px;
         color: white;
         font-size: 16px;
         cursor: pointer;
@@ -524,7 +591,7 @@
             .notepad-toolbar-group { display: flex; gap: 8px; }
             .n-btn { 
                     background: #9991;  border: 1px solid var(--border-glass); 
-                color: white; padding: 6px 8px; border-radius: 4px; 
+                color: white; padding: 6px 8px; border-radius: 6px; 
                 cursor: pointer; font-size: 10px; transition: 0.2s;
                 display: flex; align-items: center; gap: 6px;
             }
@@ -545,7 +612,7 @@
                 backdrop-filter: blur(22px);
                 -webkit-backdrop-filter: blur(22px);
                 border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 18px;
+                border-radius: 10px;
                 overflow: hidden;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.45);
             }
@@ -667,14 +734,14 @@
         }
         /* Sidebar nawigacji Ustawień */
         .settings-nav {
-            width: 150px; background: rgba(0,0,0,0.25);
+            width: 124px; background: rgba(0,0,0,0.25);
             border-right: 1px solid var(--border-glass);
             display: flex; flex-direction: column;
             padding: 12px 8px; gap: 4px; flex-shrink: 0;
         }
         .sn-item {
             display: flex; align-items: center; gap: 8px;
-            padding: 9px 10px; border-radius: 7px;
+            padding: 9px 10px; border-radius: 10px;
             font-size: 11px; cursor: pointer; color: var(--text-dim);
             transition: 0.2s;
         }
@@ -704,7 +771,7 @@
         }
         .s-input {
             width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.35);
-            border: 1px solid var(--border-glass); border-radius: 6px;
+            border: 1px solid var(--border-glass); border-radius: 10px;
             color: white; font-size: 12px; margin-bottom: 10px;
         }
         .s-input:focus { border-color: var(--accent); }
@@ -714,7 +781,7 @@
         }
         .s-mode-btn {
             flex: 1; padding: 8px 4px; background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-glass); border-radius: 6px;
+            border: 1px solid var(--border-glass); border-radius: 10px;
             color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;
             transition: 0.2s;
         }
@@ -724,7 +791,7 @@
             display: flex; gap: 10px; align-items: center; margin-bottom: 10px;
         }
         .s-color-swatch {
-            width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-glass);
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-glass);
             cursor: pointer; flex-shrink: 0; overflow: hidden; position: relative;
         }
         .s-color-swatch input[type="color"] {
@@ -734,7 +801,7 @@
         .s-color-label { font-size: 11px; color: var(--text-dim); }
         /* Gradient preview bar */
         #s-gradient-preview {
-            height: 12px; border-radius: 6px; margin: 8px 0 12px 0;
+            height: 12px; border-radius: 10px; margin: 8px 0 12px 0;
             border: 1px solid var(--border-glass);
             background: var(--accent);
             transition: background 0.3s;
@@ -809,13 +876,13 @@
         /* Tło toru (track) — niemal przezroczysty, ciemny */
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
+            border-radius: 5px;
         }
 
         /* Suwak (thumb) — akcentowany kolor, zaokrąglony */
         ::-webkit-scrollbar-thumb {
             background: var(--accent);
-            border-radius: 10px;
+            border-radius: 5px;
             box-shadow: 0 0 6px var(--accent-glow);
             transition: background 0.2s;
         }
@@ -865,7 +932,7 @@
     <body oncontextmenu="return false;">
 
         <div id="lockdown-overlay">
-            <h1 style="letter-spacing: 15px; font-weight: 200;">MASTER OS</h1>
+            <h1 style="letter-spacing: 10px; font-weight: 400;">Master OS</h1>
             <button class="pulse-btn" onclick="MasterSystem.boot()">Zaloguj</button>
         </div>
 
@@ -1014,7 +1081,7 @@
 
     { id: 503, name: 'Notatnik', app: 'Notepad',     x: 10, y: 310, size: 'MEDIUM' },
     { id: 504, name: 'Paint', app: 'Paint',          x: 110, y: 310, size: 'LARGE' },
-    { id: 512, name: 'Browser', app: 'Browser',        x: 210, y: 310, size: 'L' },
+    { id: 512, name: 'Browser', app: 'Browser',        x: 210, y: 310, size: 'MAX' },
     { id: 516, name: 'Kalkulator Paneli', app: 'kalk', x: 310, y: 310, size: 'P' },
 
     { id: 514, name: 'Pilot', app: 'Pilot',           x: 10, y: 610, size: 'P' },
@@ -1347,14 +1414,34 @@
                     const sw = window.innerWidth, sh = window.innerHeight;
                     const isMob = sw < 768;
                     const config = {
-                        'SMALL':  { w: isMob ? sw * 0.85 : 380, h: isMob ? sh * 0.5 : 300 },
-                        'S':  { w: isMob ? sw * 0.85 : 240, h: isMob ? sh * 0.5 : 200 },
-                        'MEDIUM': { w: isMob ? sw * 0.92 : sw * 0.6, h: isMob ? sh * 0.7 : sh * 0.6 },
-                        'LARGE':  { w: isMob ? sw * 0.96 : sw * 0.85, h: isMob ? sh * 0.85 : sh * 0.8 },
-                        'L':      { w: isMob ? sw * 0.90 : 440,  h: isMob ? sh * 0.7 : sh * 0.9   },
-                        'K':  { w: isMob ? sw * 0.85 : 380,  h: isMob ? sh * 0.5 : sh * 0.5   },
+                        /* --- Rozmiary oryginalne --- */
+                        'SMALL':   { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.5  : 300        },
+                        'S':       { w: isMob ? sw * 0.85 : 240,       h: isMob ? sh * 0.5  : 200        },
+                        'MEDIUM':  { w: isMob ? sw * 0.92 : sw * 0.6,  h: isMob ? sh * 0.7  : sh * 0.6  },
+                        'LARGE':   { w: isMob ? sw * 0.96 : sw * 0.85, h: isMob ? sh * 0.85 : sh * 0.8  },
+                        'L':       { w: isMob ? sw * 0.90 : 440,       h: isMob ? sh * 0.7  : sh * 0.9  },
+                        'K':       { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.5  : sh * 0.5  },
+                        'P':       { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.7  : sh * 0.8  },
 
-                        'P':  { w: isMob ? sw * 0.85 : 380,  h: isMob ? sh * 0.7 : sh * 0.8   }
+                        /* --- Nowe rozmiary --- */
+
+                        /* Miniaturka — mała kwadratowa kartka, np. do kalkulatora / notatki */
+                        '1': { w: isMob ? sw * 0.75 : 300,       h: isMob ? sh * 0.4  : 250        },
+
+                        /* Szeroki pasek — np. odtwarzacz mediów, pasek kontrolny */
+                        '2':    { w: isMob ? sw * 0.98 : sw * 0.82, h: isMob ? sh * 0.38 : sh * 0.38 },
+
+                        /* Wysoki wąski — np. sidebar z narzędziami */
+                        '3':    { w: isMob ? sw * 0.70 : 340,       h: isMob ? sh * 0.88 : sh * 0.85 },
+
+                        /* Sidebar — wąski, pełna wysokość (minus pasek zadań) */
+                        '4': { w: isMob ? sw * 0.60 : 280,       h: sh - 47                        },
+
+                        /* Prawie pełny ekran — duże okno z widocznym pulpitem za nim */
+                        '5':  { w: isMob ? sw * 0.99 : sw * 0.95, h: isMob ? sh * 0.95 : sh * 0.92 },
+
+                        /* MAX — placeholder; launch() od razu dodaje klasę .maximized */
+                        '6':     { w: sw * 0.95, h: sh * 0.92 }
                     };
                     return config[sizeId] || config['MEDIUM'];
                 },
@@ -1389,6 +1476,12 @@
                     MasterWindow.makeDraggable(w, id);
                     MasterWindow.makeResizable(w);
                     MasterApp.render(id, app, data);
+
+                    /* Jeśli rozmiar to MAX — od razu maksymalizuj bez animacji */
+                    if (sizeId === 'MAX') {
+                        w.classList.add('maximized');
+                    }
+
                     MasterWindow.syncTaskbar();
                     document.getElementById('start-menu').style.display = 'none';
                     return w;
@@ -1596,7 +1689,7 @@
                             return `
                             <div class="s-slider-row">
                                 <div class="s-slider-header">
-                                    <span class="s-slider-name">${label}</span>
+                                    <span class="s-slider-name">Ustawienia</span>
                                     <span class="s-slider-val" id="sv-${id}">${pct}%</span>
                                 </div>
                                 <input type="range" class="s-slider" id="sr-${id}"
@@ -1611,10 +1704,9 @@
                             <!-- ===== SIDEBAR NAWIGACJI ===== -->
                             <nav class="settings-nav">
                                 <div class="sn-item active" onclick="MasterApp.settingsTab(this,'s-personalization')">
-                                    <i class="fas fa-palette"></i> Personalizacja
-                                </div>
+                                    <i class="fas fa-palette"></i>Główne                                </div>
                                 <div class="sn-item" onclick="MasterApp.settingsTab(this,'s-transparency')">
-                                    <i class="fas fa-layer-group"></i> Przezroczystość
+                                    <i class="fas fa-layer-group"></i>Efekt szkła
                                 </div>
                                 <div class="sn-item" onclick="MasterApp.settingsTab(this,'s-sysinfo')">
                                     <i class="fas fa-circle-info"></i> O systemie
@@ -1647,19 +1739,19 @@
                                     <!-- ========= ROZMIESZCZENIE IKON ========= -->
                                     <!-- Wybór jednego z trzech presetów układu ikon na pulpicie -->
                                     <div class="s-group">
-                                        <div class="s-group-title">Rozmieszczenie ikon i widgetów</div>
+                                        <div class="s-group-title">Układ Ikon</div>
                                         <div class="s-mode-row" style="gap:6px;">
                                             <div class="s-mode-btn" id="layout-btn-default"
                                                 onclick="MasterApp.applyLayout('default')">
-                                                <i class="fas fa-th-large"></i> Domyślny
+                                                <i class="fas fa-th-large"></i>
                                             </div>
                                             <div class="s-mode-btn" id="layout-btn-mobile"
                                                 onclick="MasterApp.applyLayout('mobile')">
-                                                <i class="fas fa-mobile-alt"></i> Mobilny
+                                                <i class="fas fa-mobile-alt"></i>
                                             </div>
                                             <div class="s-mode-btn" id="layout-btn-hybrid"
                                                 onclick="MasterApp.applyLayout('hybrid')">
-                                                <i class="fas fa-shuffle"></i> Hybrydowy
+                                                <i class="fas fa-shuffle"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -2109,7 +2201,7 @@
                         { id: 513, name: 'Listwa',            app: 'Listwa',     x: 110, y: 410, size: 'P'      },
                         { id: 514, name: 'Pilot',             app: 'Pilot',      x: 110, y: 310, size: 'P'      },
                         { id: 505, name: 'AppStore',          app: 'AppStore',   x: 10,  y: 510, size: 'LARGE'  },
-                        { id: 506, name: 'Chrome',            app: 'Browser',    x: 10,  y: 110, size: 'LARGE'  },
+                        { id: 506, name: 'Chrome',            app: 'Browser',    x: 10,  y: 110, size: 'MAX'    },
                         { id: 507, name: 'Ustawienia',        app: 'Settings',   x: 10,  y: 610, size: 'MEDIUM' },
                         { id: 508, name: 'Kosz',              app: 'Trash',      x: 330, y: 760, size: 'SMALL'  }
                     ];
@@ -2122,7 +2214,7 @@
                         { id: 511, name: 'AppStore',          app: 'AppStore',   x: 310, y: 210, size: 'L'      },
                         { id: 503, name: 'Notatnik',          app: 'Notepad',    x: 10,  y: 310, size: 'MEDIUM' },
                         { id: 504, name: 'Paint',             app: 'Paint',      x: 110, y: 310, size: 'LARGE'  },
-                        { id: 512, name: 'Browser',           app: 'Browser',    x: 210, y: 310, size: 'LARGE'  },
+                        { id: 512, name: 'Browser',           app: 'Browser',    x: 210, y: 310, size: 'MAX'    },
                         { id: 516, name: 'Kalkulator Paneli', app: 'kalk',       x: 310, y: 310, size: 'P'      },
                         { id: 514, name: 'Pilot',             app: 'Pilot',      x: 10,  y: 610, size: 'P'      },
                         { id: 510, name: 'Pralka',            app: 'Pralka',     x: 110, y: 610, size: 'MEDIUM' },
@@ -2137,7 +2229,7 @@
                     /* --- PRESET: Hybrydowy — stały układ zdefiniowany ręcznie --- */
                     const layoutHybrid = [
                         { id: 501, name: 'Eksplorator',       app: 'Explorer',    x: 10,  y: 10,  size: 'MEDIUM' },
-                        { id: 502, name: 'Chrome',            app: 'Browser',     x: 110, y: 10,  size: 'MEDIUM' },
+                        { id: 502, name: 'Chrome',            app: 'Browser',     x: 110, y: 10,  size: 'MAX'    },
                         { id: 509, name: 'Coder',             app: 'Coder',       x: 210, y: 10,  size: 'K'      },
                         { id: 503, name: 'Notatnik',          app: 'Notepad',     x: 310, y: 10,  size: 'P'      },
 
@@ -2940,7 +3032,7 @@ body.innerHTML = `
                         <div class="start-item" onclick="MasterWindow.launch('Explorer', 'Eksplorator', '', 'MEDIUM')">
                             <img src="${ICON_MAP['Explorer']}"> <span>Eksplorator</span>
                         </div>
-                        <div class="start-item" onclick="MasterWindow.launch('Browser', 'Chrome', '', 'LARGE')">
+                        <div class="start-item" onclick="MasterWindow.launch('Browser', 'Chrome', '', 'MAX')">
                             <img src="${ICON_MAP['Browser']}"> <span>Chrome</span>
                         </div>
                         <div class="start-item" onclick="MasterWindow.launch('AppStore', 'AppStore', '', 'LARGE')">
@@ -2970,22 +3062,22 @@ body.innerHTML = `
                         <div class="start-item has-submenu">
                             <img src="${ICON_MAP['Tool']}"> <span>Narzędzia</span>
                             <div class="submenu">
-                                <div class="start-item" onclick="MasterWindow.launch('Coder', 'Coder', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Coder', 'Coder', '', 'MAX')">
                                     <img src="${ICON_MAP['Coder']}"> <span>Coder</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Notepad', 'Notatnik', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Notepad', 'Notatnik', '', 'MAX')">
                                     <img src="${ICON_MAP['Notepad']}"> <span>Notatnik</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Paint', 'Paint', '', 'LARGE')">
+                                <div class="start-item" onclick="MasterWindow.launch('Paint', 'Paint', '', 'MAX')">
                                     <img src="${ICON_MAP['Paint']}"> <span>Paint</span>
                                 </div>
-                                                           <div class="start-item" onclick="MasterWindow.launch('kalk', 'Kalkulator Paneli', '', 'K')">
+                                                           <div class="start-item" onclick="MasterWindow.launch('kalk', 'Kalkulator Paneli', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/639/639341.png"> <span>Panele</span>
                                 </div>
                                 <div class="start-item" onclick="MasterWindow.launch('Calculator', 'Calculator', '', 'K')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/342/342344.png"> <span>Kalkulator</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Video', 'Video', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Video', 'Video', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/15433/15433109.png"> <span>Video</span>
                                 </div>
                             </div>
@@ -2997,16 +3089,16 @@ body.innerHTML = `
                                 <div class="start-item" onclick="MasterWindow.launch('Casino', 'Casino', '', 'K')">
                                     <img src="${ICON_MAP['Casino']}"> <span>Casino</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Gra', 'Gra 3D', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Gra', 'Gra 3D', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/3559/3559457.png"> <span>Gra 3D</span>
                                 </div>
                                                          <div class="start-item" onclick="MasterWindow.launch('Gra3', 'Fortnajt', '', 'LARGE')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/2369/2369399.png"> <span>FORTNAJT</span>
                                 </div>
-                                  <div class="start-item" onclick="MasterWindow.launch('Gra2', 'Gra2', '', 'LARGE')">
+                                  <div class="start-item" onclick="MasterWindow.launch('Gra2', 'Gra2', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/17533/17533057.png"> <span>Brylak</span>
                                 </div>
-                                        <div class="start-item" onclick="MasterWindow.launch('Kreator', 'Kreator', '', 'MEDIUM')">
+                                        <div class="start-item" onclick="MasterWindow.launch('Kreator', 'Kreator', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/421/421019.png"> <span>Kreator</span>
                                 </div>
                                 <div class="start-item" onclick="MasterWindow.launch('KAMERA', 'Kamera', '', 'L')">
@@ -3017,7 +3109,7 @@ body.innerHTML = `
 
                         <hr style="border:0; border-top: 1px solid var(--border-glass); margin: 5px 0;">
 
-                        <div class="start-item" onclick="MasterWindow.launch('Settings', 'Ustawienia', '', 'K')">
+                        <div class="start-item" onclick="MasterWindow.launch('Settings', 'Ustawienia', '', 'MAX')">
                             <img src="${ICON_MAP['Settings']}"> <span>Ustawienia</span>
                         </div>
                         <div class="start-item" onclick="MasterSystem.reinstall()">

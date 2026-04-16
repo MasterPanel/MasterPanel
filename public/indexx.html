@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -189,12 +188,9 @@
         
  
         .karta-podgladu { background: #9992; backdrop-filter: blur(7px); border-radius:22px; border:1px solid var(--obramowanie); margin-bottom:15px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,.6); }
-        .karta-podgladu-2 { background: #9992; backdrop-filter: blur(7px); border-radius:22px; border:1px solid var(--obramowanie); margin-bottom:15px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,.6); width:210%; height:60%; opacity: 0; transition: opacity 0.3s ease-in-out; }
-        .karta-podgladu-2:hover { opacity: 1; }
         
         .tytul-podgladu { padding:10px 15px; font-size:.9rem; color: var(--kolor-akcentu); border-bottom:1px solid var(--obramowanie); display:flex; align-items:center; gap:8px; }
         
-        /* ZMIANA: Overflow hidden dla płynnego powiększania */
         .tresc-podgladu { height:260px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
         .nakladka-klikana { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; cursor: pointer; background: transparent; }
@@ -204,12 +200,12 @@
         .miejsce-na-kamere i { font-size: 3rem; margin-bottom: 10px; animation: pulsowanie 2s infinite; }
         .miejsce-na-kamere span { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
         
-        #widok-kamery { position: relative; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; transition: opacity 0.5s ease-in, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: block; }
+        #widok-kamery { position: relative; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; transition: opacity 0.5s ease-in; display: block; }
         #widok-kamery.zaladowany { opacity: 1; }
        
         @keyframes pulsowanie { 0% { opacity: 0.3; } 50% { opacity: 0.6; } 100% { opacity: 0.3; } }
 
-        .tresc-podgladu iframe { position: fixed; top:35px; right:70px; transform: scale(1.2); transform-origin: 0 0; width:100%; height:100%; border:0; object-fit:cover; }
+        .tresc-podgladu iframe { position: absolute; top:0; left:0; width:100%; height:100%; border:0; }
 
         #baner-instalacji-pwa {
             position: absolute; bottom: -200px; left: 50%; transform: translateX(-50%); width: 95%; background: #1117; border-radius: 24px; padding: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); z-index: 1000; transition: bottom 0.5s cubic-bezier(0.23, 1, 0.32, 1); display: flex; flex-direction: column; gap: 15px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
@@ -263,13 +259,11 @@
             z-index: 2100;
             border: 1px solid var(--obramowanie);
         }
-        
-        /* Kontener dla nakładających się ikon */
+
         .icon-stack {
             font-family: "Font Awesome 6 Free" !important;
             display: inline-block;
             position: relative;
-            /* Rozmiar całego zestawu */
             font-size: 5rem; 
         }
 
@@ -285,7 +279,6 @@
             font-size: 0.5em;
             color: #111;
         }
-        
     </style>
 </head>
 <body onclick="agresywneSprawdzenieFullscreen()">
@@ -317,24 +310,52 @@
                 <h2 style="text-align: center; font-size: 30px; color: var(--kolor-akcentu); margin-top: 0px;">Master Panel</h2>
                 <div class="siatka-kontroli">
                     <div class="karta-kontroli" id="karta-salon">
-                        <div class="naglowek-karty"><span class="nazwa-pokoju">Salon</span><div class="przelacznik" onclick="przelaczUrzadzenie('salon', this)"><div class="uchwyt"></div></div></div>
+                        <div class="naglowek-karty">
+                            <span class="nazwa-pokoju">Salon</span>
+                            <div class="przelacznik" onclick="przelaczUrzadzenie('salon', this)"><div class="uchwyt"></div></div>
+                        </div>
                         <div class="ikona-karty"><i class="fas fa-couch"></i></div>
-                        <div class="stopka-karty"><input type="range" min="0" max="100" value="0" onchange="wyslijPolecenie('salon', this.value)"></div>
+                        <div class="stopka-karty">
+                            <input type="range" min="0" max="100" value="0" 
+                                   oninput="isUserInteracting='salon'"
+                                   onchange="wyslijPolecenie('salon', this.value); isUserInteracting=null;">
+                        </div>
                     </div>
                     <div class="karta-kontroli" id="karta-sypialnia">
-                        <div class="naglowek-karty"><span class="nazwa-pokoju">Sypialnia</span><div class="przelacznik" onclick="przelaczUrzadzenie('sypialnia', this)"><div class="uchwyt"></div></div></div>
+                        <div class="naglowek-karty">
+                            <span class="nazwa-pokoju">Sypialnia</span>
+                            <div class="przelacznik" onclick="przelaczUrzadzenie('sypialnia', this)"><div class="uchwyt"></div></div>
+                        </div>
                         <div class="ikona-karty"><i class="fas fa-bed"></i></div>
-                        <div class="stopka-karty"><input type="range" min="0" max="100" value="0" onchange="wyslijPolecenie('sypialnia', this.value)"></div>
+                        <div class="stopka-karty">
+                            <input type="range" min="0" max="100" value="0" 
+                                   oninput="isUserInteracting='sypialnia'"
+                                   onchange="wyslijPolecenie('sypialnia', this.value); isUserInteracting=null;">
+                        </div>
                     </div>
                     <div class="karta-kontroli" id="karta-kuchnia">
-                        <div class="naglowek-karty"><span class="nazwa-pokoju">Kuchnia</span><div class="przelacznik" onclick="przelaczUrzadzenie('kuchnia', this)"><div class="uchwyt"></div></div></div>
+                        <div class="naglowek-karty">
+                            <span class="nazwa-pokoju">Kuchnia</span>
+                            <div class="przelacznik" onclick="przelaczUrzadzenie('kuchnia', this)"><div class="uchwyt"></div></div>
+                        </div>
                         <div class="ikona-karty"><i class="fas fa-utensils"></i></div>
-                        <div class="stopka-karty"><input type="range" min="0" max="100" value="0" onchange="wyslijPolecenie('kuchnia', this.value)"></div>
+                        <div class="stopka-karty">
+                            <input type="range" min="0" max="100" value="0" 
+                                   oninput="isUserInteracting='kuchnia'"
+                                   onchange="wyslijPolecenie('kuchnia', this.value); isUserInteracting=null;">
+                        </div>
                     </div>
                     <div class="karta-kontroli" id="karta-lena">
-                        <div class="naglowek-karty"><span class="nazwa-pokoju">Lena</span><div class="przelacznik" onclick="przelaczUrzadzenie('lena', this)"><div class="uchwyt"></div></div></div>
+                        <div class="naglowek-karty">
+                            <span class="nazwa-pokoju">Lena</span>
+                            <div class="przelacznik" onclick="przelaczUrzadzenie('lena', this)"><div class="uchwyt"></div></div>
+                        </div>
                         <div class="ikona-karty"><i class="fas fa-child-dress"></i></div>
-                        <div class="stopka-karty"><input type="range" min="0" max="100" value="0" onchange="wyslijPolecenie('lena', this.value)"></div>
+                        <div class="stopka-karty">
+                            <input type="range" min="0" max="100" value="0" 
+                                   oninput="isUserInteracting='lena'"
+                                   onchange="wyslijPolecenie('lena', this.value); isUserInteracting=null;">
+                        </div>
                     </div>
                 </div>
                 <div class="siatka-kontroli">
@@ -423,7 +444,7 @@
                 <div class="karta-podgladu">
                     <div class="tytul-podgladu"><i class="fas fa-map-marked-alt"></i> Lokalizacja</div>
                     <div class="tresc-podgladu">
-                        <iframe src="mapa.html"></iframe>
+                        <iframe src="GL3D.html"></iframe>
                     </div>
                 </div>
             </div>
@@ -448,142 +469,88 @@
         let wykresPodsumowania = null;
         let aktualnyEkran = 0;
         const liczbaEkranow = 5;
+        
+        // Zmienna zapobiegająca nadpisywaniu suwaka przez serwer podczas przesuwania
+        let isUserInteracting = null;
 
-        /* FUNKCJE MODALA */
+        /* MODALE */
         function otworzModal(url) {
             const modal = document.getElementById('modal-iframe');
-            const iframe = document.getElementById('iframe-cel');
-            iframe.src = url;
+            document.getElementById('iframe-cel').src = url;
             modal.style.display = 'flex';
         }
-
         function zamknijModal() {
-            const modal = document.getElementById('modal-iframe');
-            const iframe = document.getElementById('iframe-cel');
-            iframe.src = "";
-            modal.style.display = 'none';
+            document.getElementById('modal-iframe').style.display = 'none';
+            document.getElementById('iframe-cel').src = "";
         }
 
-        function otworzWNowymOknie(url) { window.open(url, '_blank'); }
-
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                document.getElementById('nakladka-pelnodostepna').style.display = 'flex';
-            }
-        });
-
+        /* FULLSCREEN */
         function zadajTrybFullscreen() {
             const el = document.documentElement;
             const zadanie = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
             if (zadanie) {
                 zadanie.call(el).then(() => {
                     document.getElementById('nakladka-pelnodostepna').style.display = 'none';
-                }).catch(err => console.log("Czekam na gest..."));
+                }).catch(() => {});
             }
         }
-
         function agresywneSprawdzenieFullscreen() { if (!document.fullscreenElement) zadajTrybFullscreen(); }
 
+        /* GESTY */
         let startDotykuX = 0;
-        let koniecDotykuX = 0;
-        const kontenerAplikacji = document.getElementById('kontenerAplikacji');
-
-        kontenerAplikacji.addEventListener('touchstart', e => { startDotykuX = e.changedTouches[0].screenX; }, {passive: true});
-        kontenerAplikacji.addEventListener('touchend', e => { koniecDotykuX = e.changedTouches[0].screenX; obsluzGest(); }, {passive: true});
-
-        function obsluzGest() {
-            // Blokuj gesty swipu jeśli modal jest otwarty
-            if(document.getElementById('modal-iframe').style.display === 'flex') return;
-            
-            const prog = 50;
-            if (koniecDotykuX < startDotykuX - prog && aktualnyEkran < liczbaEkranow - 1) nawiguj(aktualnyEkran + 1);
-            if (koniecDotykuX > startDotykuX + prog && aktualnyEkran > 0) nawiguj(aktualnyEkran - 1);
-        }
-
-        let monitInstalacji;
-        const banerPWA = document.getElementById('baner-instalacji-pwa');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            monitInstalacji = e;
-            setTimeout(() => { banerPWA.classList.add('widoczny'); }, 3000);
-        });
-        function zamknijBanerPWA() { banerPWA.classList.remove('widoczny'); }
-        async function instalujPWA() {
-            if (!monitInstalacji) return;
-            zamknijBanerPWA();
-            monitInstalacji.prompt();
-            await monitInstalacji.userChoice;
-            monitInstalacji = null;
-        }
-
-        function aktualizujWidokZaslony(wartosc) {
-            const tkanina = document.getElementById('tkaninaZaslony');
-            tkanina.style.width = `${20 + (wartosc * 0.83)}%`;
-        }
-        function ruchZaslony(cel) {
-            if (cel !== 'stop') {
-                document.getElementById('suwak-zaslony').value = cel;
-                aktualizujWidokZaslony(cel);
+        const kontener = document.getElementById('kontenerAplikacji');
+        kontener.addEventListener('touchstart', e => { startDotykuX = e.changedTouches[0].screenX; }, {passive: true});
+        kontener.addEventListener('touchend', e => { 
+            const diff = e.changedTouches[0].screenX - startDotykuX;
+            if(Math.abs(diff) > 50 && document.getElementById('modal-iframe').style.display !== 'flex') {
+                if(diff < 0 && aktualnyEkran < liczbaEkranow - 1) nawiguj(aktualnyEkran + 1);
+                if(diff > 0 && aktualnyEkran > 0) nawiguj(aktualnyEkran - 1);
             }
-            wyslijPolecenieZaslony(cel);
-        }
-        function aktualizujWidokRolety(wartosc) {
-            document.getElementById('tkaninaRolety').style.height = `${wartosc}%`;
-        }
-        function ruchRolety(cel) {
-            if (cel !== 'stop') {
-                document.getElementById('suwak-rolety').value = cel;
-                aktualizujWidokRolety(cel);
-            }
-            wyslijPolecenieZaslony(cel);
-        }
-        async function wyslijPolecenieZaslony(wartosc) {
-            try { await fetch(API_ZASLONY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position: wartosc }) }); } catch (e) { console.error(e); }
-        }
-        
-        function stworzKontenerWykresu(pokoj, siatka) {
-            const div = document.createElement('div');
-            div.className = 'kontener-wykresu';
-            const nazwaWyswietlana = pokoj.charAt(0).toUpperCase() + pokoj.slice(1);            
-            div.innerHTML = `
-                <span style="font-size:0.8rem; color:#888; text-transform: uppercase; font-weight:bold;">${nazwaWyswietlana}</span>
-                <div class="otoczka-wykresu" style="position: relative; width: 100%; height: 110px;">
-                    <canvas id="wykres-${pokoj}"></canvas>
-                    <div id="wartosc-${pokoj}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                        <div class="wartosc-t" style="color: #ff5e00; font-weight: bold; font-size: 1.1rem;">0°C</div>
-                        <div class="wartosc-h" style="color: #00f2ff; font-size: 0.8rem;">0%</div>
-                    </div>
-                </div>`;
-            siatka.appendChild(div);
-            inicjujWykres(pokoj);
+        }, {passive: true});
+
+        function nawiguj(indeks) {
+            aktualnyEkran = indeks;
+            document.getElementById('glownySuwak').style.transform = `translateX(-${indeks * 20}%)`;
+            document.querySelectorAll('.przycisk-nawigacji').forEach(b => b.classList.remove('aktywny'));
+            document.getElementById(`przycisk-naw-${indeks}`).classList.add('aktywny');
         }
 
-        function inicjujWykres(pokoj) {
-            const plotno = document.getElementById(`wykres-${pokoj}`);
-            if (!plotno) return;
-            wykresyPokoi[pokoj] = new Chart(plotno.getContext('2d'), { 
-                type: 'doughnut', 
-                data: { datasets: [{ data: [0, 40], backgroundColor: ['#ff5e00', '#111'], borderWidth: 0 }, { data: [0, 100], backgroundColor: ['#00f2ff', '#111'], borderWidth: 0 }] }, 
-                options: { cutout: '70%', plugins: { legend: false }, maintainAspectRatio: false, animation: { duration: 500 } } 
-            });
-        }
-
-        async function odswiezDHT() {
+        /* OBSŁUGA ŚWIATEŁ I URZĄDZEŃ */
+        async function wyslijPolecenie(pokoj, wartosc) {
+            const jasnosc = parseInt(wartosc);
+            aktualizujInterfejsSwiatla(pokoj, jasnosc);
             try {
-                const odp = await fetch(API_DHT);
-                if (!odp.ok) return;
-                const dane = await odp.json();
-                const siatka = document.getElementById('siatkaWykresow');
-                const etykiety = [], temp = [], wilg = [];
-                Object.keys(dane).forEach(pokoj => {
-                    if (!wykresyPokoi[pokoj]) stworzKontenerWykresu(pokoj, siatka);
-                    const t = parseFloat(dane[pokoj].temp), h = parseFloat(dane[pokoj].hum);
-                    aktualizujWykres(pokoj, t, h);
-                    etykiety.push(pokoj === 'lazienka' ? 'Kuchnia' : pokoj);
-                    temp.push(t); wilg.push(h);
+                await fetch(API_POLECEN, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ room: pokoj, brightness: jasnosc }) 
                 });
-                aktualizujWykresPodsumowania(etykiety, temp, wilg);
-            } catch (e) { console.warn("Błąd czujników"); }
+            } catch (e) { console.error("Błąd zapisu"); }
+        }
+
+        function przelaczUrzadzenie(pokoj, el) {
+            const wlaczony = !el.classList.contains('wlaczony');
+            wyslijPolecenie(pokoj, wlaczony ? 100 : 0);
+        }
+
+        function aktualizujInterfejsSwiatla(pokoj, jasnosc) {
+            const karta = document.getElementById(`karta-${pokoj}`);
+            if (!karta) return;
+            const przelacznik = karta.querySelector('.przelacznik');
+            const suwak = karta.querySelector('input[type=range]');
+            
+            // Tylko jeśli użytkownik nie dotyka teraz tego suwaka
+            if (isUserInteracting !== pokoj) {
+                suwak.value = jasnosc;
+            }
+
+            if (jasnosc > 0) {
+                karta.classList.add('aktywna');
+                przelacznik.classList.add('wlaczony');
+            } else {
+                karta.classList.remove('aktywna');
+                przelacznik.classList.remove('wlaczony');
+            }
         }
 
         async function odswiezSwiatla() {
@@ -596,54 +563,74 @@
                         aktualizujInterfejsSwiatla(pokoj, dane.brightness);
                     }
                 }
-            } catch (e) { console.warn("Błąd synchronizacji świateł"); }
+            } catch (e) { console.warn("Sync error"); }
         }
 
-        function aktualizujInterfejsSwiatla(pokoj, jasnosc) {
-            const karta = document.getElementById(`karta-${pokoj}`);
-            if (!karta) return;
-            const przelacznik = karta.querySelector('.przelacznik');
-            const suwak = karta.querySelector('input[type=range]');
-            
-            suwak.value = jasnosc;
-            if (jasnosc > 0) {
-                karta.classList.add('aktywna');
-                przelacznik.classList.add('wlaczony');
-            } else {
-                karta.classList.remove('aktywna');
-                przelacznik.classList.remove('wlaczony');
-            }
+        /* POMIARY I WYKRESY */
+        async function odswiezDHT() {
+            try {
+                const odp = await fetch(API_DHT);
+                const dane = await odp.json();
+                const siatka = document.getElementById('siatkaWykresow');
+                const etykiety = [], temp = [], wilg = [];
+                Object.keys(dane).forEach(pokoj => {
+                    if (!wykresyPokoi[pokoj]) stworzKontenerWykresu(pokoj, siatka);
+                    const t = parseFloat(dane[pokoj].temp), h = parseFloat(dane[pokoj].hum);
+                    aktualizujWykres(pokoj, t, h);
+                    etykiety.push(pokoj.toUpperCase());
+                    temp.push(t); wilg.push(h);
+                });
+                aktualizujWykresPodsumowania(etykiety, temp, wilg);
+            } catch (e) {}
+        }
+
+        function stworzKontenerWykresu(pokoj, siatka) {
+            const div = document.createElement('div');
+            div.className = 'kontener-wykresu';
+            div.innerHTML = `
+                <span style="font-size:0.7rem; color:#888; text-transform: uppercase;">${pokoj}</span>
+                <div style="position: relative; width: 100%; height: 110px;">
+                    <canvas id="wykres-${pokoj}"></canvas>
+                    <div id="wartosc-${pokoj}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        <div class="wartosc-t" style="color: #ff5e00; font-weight: bold;">0°C</div>
+                        <div class="wartosc-h" style="color: #00f2ff; font-size: 0.8rem;">0%</div>
+                    </div>
+                </div>`;
+            siatka.appendChild(div);
+            wykresyPokoi[pokoj] = new Chart(document.getElementById(`wykres-${pokoj}`).getContext('2d'), { 
+                type: 'doughnut', 
+                data: { datasets: [{ data: [0, 40], backgroundColor: ['#ff5e00', '#111'], borderWidth: 0 }, { data: [0, 100], backgroundColor: ['#00f2ff', '#111'], borderWidth: 0 }] }, 
+                options: { cutout: '70%', plugins: { legend: false }, maintainAspectRatio: false } 
+            });
         }
 
         function aktualizujWykres(pokoj, t, h) {
-            const wykres = wykresyPokoi[pokoj];
-            if (!wykres) return;
-            wykres.data.datasets[0].data = [Math.min(t, 40), Math.max(0, 40 - t)];
-            wykres.data.datasets[1].data = [Math.min(h, 100), Math.max(0, 100 - h)];
-            wykres.update();
-            const poleWartosci = document.getElementById(`wartosc-${pokoj}`);
-            if (poleWartosci) {
-                poleWartosci.querySelector('.wartosc-t').innerText = `${t}°C`;
-                poleWartosci.querySelector('.wartosc-h').innerText = `${h}%`;
-            }
+            const w = wykresyPokoi[pokoj];
+            w.data.datasets[0].data = [t, 40 - t];
+            w.data.datasets[1].data = [h, 100 - h];
+            w.update();
+            const p = document.getElementById(`wartosc-${pokoj}`);
+            p.querySelector('.wartosc-t').innerText = `${t}°C`;
+            p.querySelector('.wartosc-h').innerText = `${h}%`;
         }
 
-        function aktualizujWykresPodsumowania(etykiety, temperatury, wilgotnosci) {
+        function aktualizujWykresPodsumowania(labels, t, h) {
             const ctx = document.getElementById('wykresSlupkowyWszystkiePokoje').getContext('2d');
             if (!wykresPodsumowania) {
                 wykresPodsumowania = new Chart(ctx, { 
                     type: 'bar', 
-                    data: { labels: etykiety, datasets: [{ label: 'Temp', data: temperatury, backgroundColor: '#ff5e00', borderRadius: 5 }, { label: 'Wilg', data: wilgotnosci, backgroundColor: '#00f2ff', borderRadius: 5 }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, grid: { color: '#222' } }, x: { grid: { display: false } } } } 
+                    data: { labels, datasets: [{ label: 'T', data: t, backgroundColor: '#ff5e00' }, { label: 'H', data: h, backgroundColor: '#00f2ff' }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } } 
                 });
             } else {
-                wykresPodsumowania.data.labels = etykiety;
-                wykresPodsumowania.data.datasets[0].data = temperatury;
-                wykresPodsumowania.data.datasets[1].data = wilgotnosci;
+                wykresPodsumowania.data.labels = labels;
+                wykresPodsumowania.data.datasets[0].data = t;
+                wykresPodsumowania.data.datasets[1].data = h;
                 wykresPodsumowania.update();
             }
         }
 
+        /* INICJALIZACJA */
         document.addEventListener('DOMContentLoaded', () => {
             odswiezDHT();
             odswiezSwiatla(); 
@@ -651,94 +638,26 @@
             setInterval(odswiezSwiatla, 5000); 
         });
 
-        function nawiguj(indeks) {
-            aktualnyEkran = indeks;
-            document.getElementById('glownySuwak').style.transform = `translateX(-${indeks * 20}%)`;
-            document.querySelectorAll('.przycisk-nawigacji').forEach(b => b.classList.remove('aktywny'));
-            document.getElementById(`przycisk-naw-${indeks}`).classList.add('aktywny');
+        /* ZASŁONY / ROLETY */
+        function aktualizujWidokZaslony(v) { document.getElementById('tkaninaZaslony').style.width = `${20 + (v * 0.8)}%`; }
+        function aktualizujWidokRolety(v) { document.getElementById('tkaninaRolety').style.height = `${v}%`; }
+        async function wyslijPolecenieZaslony(v) {
+            try { await fetch(API_ZASLONY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position: v }) }); } catch(e) {}
         }
 
-        async function wyslijPolecenie(pokoj, wartosc) {
-            aktualizujInterfejsSwiatla(pokoj, wartosc);
-            try {
-                await fetch(API_POLECEN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ room: pokoj, brightness: parseInt(wartosc) }) });
-            } catch (e) { console.error("API Error"); }
+        /* ZAMEK */
+        async function przelaczZamek(id) {
+            const karta = document.getElementById(id);
+            const lock = karta.classList.contains('aktywna');
+            const cmd = lock ? "lock" : "unlock";
+            const ikona = document.getElementById('ikona-' + id);
+            
+            karta.classList.toggle('aktywna');
+            ikona.classList.toggle('fa-lock');
+            ikona.classList.toggle('fa-lock-open');
+            
+            try { await fetch(API_ZAMKA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd }) }); } catch(e) {}
         }
-
-        function przelaczUrzadzenie(pokoj, el) {
-            const wlaczony = !el.classList.contains('wlaczony');
-            const wartosc = wlaczony ? 100 : 0;
-            wyslijPolecenie(pokoj, wartosc);
-        }
-
-        async function przelaczZamek(idZamka) {
-            const karta = document.getElementById(idZamka);
-            const jestZablokowany = !karta.classList.contains('aktywna');
-            const polecenie = jestZablokowany ? "unlock" : "lock";
-            aktualizujInterfejsZamka(idZamka, polecenie);
-            try {
-                await fetch(API_ZAMKA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd: polecenie }) });
-            } catch (e) { aktualizujInterfejsZamka(idZamka, jestZablokowany ? "lock" : "unlock"); }
-        }
-
-        function aktualizujInterfejsZamka(idZamka, stan) {
-            const karta = document.getElementById(idZamka);
-            const ikona = document.getElementById('ikona-' + idZamka);
-            if (stan === "unlock") {
-                karta.classList.add('aktywna');
-                ikona.classList.replace('fa-lock', 'fa-lock-open');
-                ikona.style.color = "var(--akcent-niebieski)";
-            } else {
-                karta.classList.remove('aktywna');
-                ikona.classList.replace('fa-lock-open', 'fa-lock');
-                ikona.style.color = "#444";
-            }
-        }
-        
-
-  /**
-   * REJESTRACJA I OBSŁUGA NATYCHMIASTOWEJ AKTUALIZACJI PWA
-   * Ten skrypt współpracuje z plikiem service-worker.js
-   */
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(registration => {
-          console.log('[PWA] Service Worker zarejestrowany pomyślnie.');
-
-          // Nasłuchiwanie na pojawienie się nowego pracownika (updatefound)
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            console.log('[PWA] Znaleziono nową wersję aplikacji...');
-
-            newWorker.addEventListener('statechange', () => {
-              // Sprawdzamy, czy nowy SW zakończył instalację
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[PWA] Nowa zawartość jest gotowa. Odświeżanie...');
-                // Opcjonalnie: tutaj można wywołać alert/toast zamiast auto-refresh
-                // window.location.reload(); 
-              }
-            });
-          });
-        })
-        .catch(error => {
-          console.error('[PWA] Błąd rejestracji Service Workera:', error);
-        });
-    });
-
-    // Zmienna zapobiegająca pętli odświeżania
-    let refreshing = false;
-
-    // To zdarzenie odpala się, gdy nowy SW przejmuje kontrolę (self.clients.claim())
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        console.log('[PWA] Kontroler zmieniony - przeładowuję stronę dla nowej wersji.');
-        window.location.reload();
-      }
-    });
-  }
-
     </script>
 </body>
 </html>

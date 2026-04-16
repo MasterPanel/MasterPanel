@@ -183,27 +183,83 @@ const LIGHT_FILE = path.join(__dirname, 'lightData.json');
 let roomCommands = fs.existsSync(LIGHT_FILE) ? JSON.parse(fs.readFileSync(LIGHT_FILE, 'utf8')) : {};
 let dhtData = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) : {};
 
+/* =======================
+   LIGHT COMMANDS
+======================= */
+
 app.all('/api/commands', (req, res) => {
+
+    /* WYSYŁANIE KOMENDY */
+
     if (req.method === 'POST') {
+
         const { room, brightness } = req.body;
-        roomCommands[room] = { brightness: parseInt(brightness) || 0, timestamp: Date.now() };
+
+        roomCommands[room] = {
+            brightness: parseInt(brightness) || 0,
+            timestamp: Date.now()
+        };
+
         fs.writeFileSync(LIGHT_FILE, JSON.stringify(roomCommands, null, 2));
-        console.log(`\x1b[33m[AKCJA]\x1b[0m Światło: ${room} -> ${brightness}%`);
+
+        console.log(`[LIGHT] ${room} -> ${brightness}`);
+
         return res.json({ status: 'ok' });
     }
+
+
+    /* ODCZYT KOMENDY */
+
     const { room } = req.query;
-    res.json(room && roomCommands[room] ? roomCommands[room] : { status: 'no_command' });
+
+    if (room && roomCommands[room]) {
+
+        const cmd = roomCommands[room];
+
+        /* USUŃ PO ODCZYCIE */
+        delete roomCommands[room];
+
+        fs.writeFileSync(LIGHT_FILE, JSON.stringify(roomCommands, null, 2));
+
+        return res.json(cmd);
+    }
+
+    res.json({ status: 'no_command' });
+
 });
 
-app.all('/api/dht', (req, res) => {
-    if (req.method === 'POST') {
-        const { room, temp, hum } = req.body;
-        dhtData[room.toLowerCase()] = { temp, hum, time: Date.now() };
-        fs.writeFileSync(DATA_FILE, JSON.stringify(dhtData, null, 2));
-        return res.json({ status: 'ok' });
-    }
-    res.json(dhtData);
+
+/* =======================
+   LIGHT STATE
+======================= */
+
+app.post('/api/light/state', (req, res) => {
+
+    const { room, brightness } = req.body;
+
+    roomState[room] = {
+        brightness,
+        time: Date.now()
+    };
+
+    res.json({ status: "ok" });
+
 });
+
+
+app.get('/api/light/state', (req, res) => {
+
+    const { room } = req.query;
+
+    if (room && roomState[room])
+        return res.json(roomState[room]);
+
+    res.json({ status: "offline" });
+
+});
+
+
+
 
 /* =======================
    START SERWERA

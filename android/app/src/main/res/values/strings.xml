@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MasterPanel</string>
-    <string name="title_activity_main">MasterPanel</string>
-    <string name="package_name">dev.ngrok_free.organismically_preoffensive_chuck.twa</string>
-    <string name="custom_url_scheme">dev.ngrok_free.organismically_preoffensive_chuck.twa</string>
+    <string name="app_name">MasterOS</string>
+    <string name="title_activity_main">MasterOS</string>
+    <string name="package_name">com.master.os</string>
+    <string name="custom_url_scheme">com.master.os</string>
 </resources>

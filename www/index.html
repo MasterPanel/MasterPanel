@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -10,6 +11,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=New+Rocker&display=swap" rel="stylesheet">
+
 
     <title>Master Panel</title>
     
@@ -49,17 +54,23 @@
                 /* --- GRADIENT ACCENT VARIABLES (zarządzane przez Ustawienia) --- */
                 --accent2: #000000;                     /* drugi kolor gradientu */
                 --accent-bg: #0a0001;                   /* tło dla elementów z akcentem (solid lub gradient) */
+                --safe-top: env(safe-area-inset-top);
+                --safe-bottom: env(safe-area-inset-bottom);
             }
 
             * { box-sizing: border-box; -webkit-font-smoothing: antialiased; outline: none; }
 
             body, html {
-				
+			
+  font-family: "Roboto", sans-serif;
+overscroll-behavior-y: contain;
+
                 margin: 0; padding: 0; height: 100%; width: 100%;
                 overflow: hidden; background: #000;
-                font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
                 user-select: none; -webkit-user-select: none;
                 touch-action: none; color: var(--text-main);
+                padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
             }
 
             /* --- FULLSCREEN INVOKER (TRANSPARENT BUTTON) --- */
@@ -75,29 +86,86 @@
                 object-fit: contain;
                 filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
             }
+         
 
-            /* --- LOCKDOWN OVERLAY --- */
-            #lockdown-overlay {
-                position: fixed; inset: 0; z-index: 1000000;
-                background: radial-gradient(circle at center, #111 0%, #000 100%);
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            }
+    /* --- LOCKDOWN OVERLAY --- */
+    #lockdown-overlay {
+        font-family: "New Rocker", system-ui;
+        font-size: 25px;
+        color: #000; 
+        position: fixed; 
+        inset: 0; 
+        z-index: 1000000;
+        /* Startowe tło */
+        background: radial-gradient(circle at center, #111 0%, #000 100%);
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Wywołanie płynnej animacji (8s dla spokoju, ease-in-out dla płynności) */
+        animation: lockdown-pulse 4s ease-in-out infinite alternate;
+    }
+
+    /* Połączona animacja tła i neonu */
+    @keyframes lockdown-pulse {
+        0% {
+            opacity: 1;
+            /* Ciemniejsze, bardziej sterylne tło */
+            background-color: #000;
+            text-shadow: 
+                0 0 5px #000,
+                0 0 7px #000,
+                0 0 10px #111,
+                 0 0 7px #000,
+                0 0 10px #111,
+                 0 0 7px #000,
+                0 0 10px #111,
+                0 0 15px #000;
+        }
+        25% {
+            opacity: 1;
+          
+        }
+        50% {
+			 background-color: #000;
+            opacity: 1;
+            
+        }
+             60% {
+				  background-color: #000;
+            opacity: 1;
+		}
+        100% {
+            opacity: 0.9;
+            /* Rozjaśnione tło - efekt poświaty "ambient" */
+            background-color: #000;
+            text-shadow: 
+                0 0 2px #1,
+                0 0 5px #fff,
+                0 0 7px #555,
+                0 0 10px #fff,
+                0 0 15px #999;
+        }
+    }
+
             .pulse-btn {
-                padding: 16px 40px; border: 1px solid var(--accent);
-                background: transparent; color: white; cursor: pointer;
-                border-radius: 30px; font-weight: 300; font-size: 1rem;
+                padding: 16px 40px; border: 1px solid #0009;
+                background: #0009; color: #666; cursor: pinter;
+                border-radius: 17px; font-weight: 660; font-size: 1rem;
                 letter-spacing: 5px; transition: 0.3s;
                 animation: pulseGlow 2s infinite;
             }
             @keyframes pulseGlow { 
-                0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+                0% { box-shadow: 0 0 0 0 #000;}
                 70% { box-shadow: 0 0 0 15px rgba(0,0,0,0); }
                 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
             }
 
             /* --- DESKTOP CANVAS --- */
             #master-pc {
+				padding-top: var(--safe-top);
                 width: 100vw; height: 100vh;
                 background: url('https://wallpapers.com/images/hd/2440x1440-desktop-pc-background-wkvl5uwxyeuanzts.jpg') center/cover no-repeat;
                 position: relative; overflow: hidden;
@@ -112,9 +180,10 @@
             /* --- DESKTOP ICONS --- */
             .icon {
                 position: absolute; width: 90px; display: flex; flex-direction: column;
-                align-items: center; padding: 10px; border-radius: 8px;
+                align-items: center; padding: 10px; border-radius: 5px;
                 border: 1px solid transparent; z-index: 10; cursor: pointer;
                 transition: background 0.2s;
+                -webkit-touch-callout: none;
             }
             .icon:hover { background: rgba(255,255,255,0.08); }
             .icon.selected { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); }
@@ -126,12 +195,12 @@
             #ctx-menu {
                 position: fixed; width: 200px; background: var(--menu-bg);
                 backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 10px;
+                border: 1px solid var(--border-glass); border-radius: 5px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200000;
                 display: none; flex-direction: column; padding: 5px;
             }
             .ctx-item {
-                padding: 10px 12px; font-size: 12px; border-radius: 6px;
+                padding: 10px 12px; font-size: 12px; border-radius: 5px;
                 display: flex; align-items: center; gap: 10px; cursor: pointer;
                 transition: 0.2s; color: white;
             }
@@ -144,11 +213,11 @@
                 position: absolute;
                 background: var(--win-bg); backdrop-filter: blur(var(--blur-val));
                 -webkit-backdrop-filter: blur(var(--blur-val));
-                border-radius: 10px; border: 1px solid var(--border-glass);
+                border-radius: 5px; border: 1px solid var(--border-glass);
                 box-shadow: 0 30px 60px rgba(0,0,0,0.6);
                 display: flex; flex-direction: column; overflow: hidden;
             }
-            .window.maximized { inset: 0 !important; width: 100vw !important; height: calc(100vh - var(--taskbar-h)) !important; border-radius: 0; }
+            .window.maximized {padding-bottom: var(--safe-bottom); inset: 0 !important; width: 100vw !important; height: calc(100vh - var(--taskbar-h)) !important; border-radius: 0; }
 
             .win-head {
                 height: 35px; background: var(--win-bg);
@@ -217,7 +286,7 @@
             }
             #start-btn {
                 width: 40px; height: 40px; background: var(--accent-bg);
-                border: none; border-radius: 8px; cursor: pointer;
+                border: none; border-radius: 5px; cursor: pointer;
                 margin-right: 15px; box-shadow: 0 0 15px var(--accent-glow);
                 display: flex; align-items: center; justify-content: center;
                 transition: 0.3s;
@@ -228,7 +297,7 @@
             #task-list { display: flex; gap: 8px; flex: 1; }
             .task-tab {
                 height: 42px; width: 42px; background: rgba(255,255,255,0.05);
-                border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                border-radius: 5px; display: flex; align-items: center; justify-content: center;
                 cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s;
             }
             .task-tab img { width: 26px; height: 26px; }
@@ -238,14 +307,14 @@
             #start-menu {
                 position: absolute; bottom: 55px; left: 15px; width: 240px;
                     background: var(--menu-bg);  backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 12px;
+                border: 1px solid var(--border-glass); border-radius: 5px;
                 display: none; flex-direction: column; padding: 10px; z-index: 100001;
                 transform-origin: bottom left;
             }
             #start-menu.anim-open  { animation: slideUpIn 0.60s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
             #start-menu.anim-close-panel { animation: slideDownOut 0.60s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
             .start-item {
-                padding: 10px 12px; border-radius: 8px; cursor: pointer;
+                padding: 10px 12px; border-radius: 5px; cursor: pointer;
                 display: flex; align-items: center; gap: 12px; font-size: 13px;
                 position: relative; transition: 0.2s; color: #eee;
             }
@@ -263,7 +332,7 @@
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 12px;
+                border-radius: 5px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -291,7 +360,7 @@
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 12px;
+                border-radius: 5px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -330,7 +399,7 @@
 
             .side-item {
                 display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-                border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s;
+                border-radius: 5px; font-size: 12px; cursor: pointer; transition: 0.2s;
                 color: var(--text-dim); white-space: nowrap; overflow: hidden;
             }
             .side-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
@@ -370,8 +439,8 @@
                 background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
                 display: none; align-items: center; justify-content: center;
             }
-            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 16px; padding: 25px; text-align: center; }
-            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; color: white; margin: 15px 0; }
+            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 5px; padding: 25px; text-align: center; }
+            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; color: white; margin: 15px 0; }
             .d-btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
             .d-btn-primary { background: var(--accent); color: white; margin-left: 10px; }
 
@@ -383,7 +452,7 @@
                 position: absolute; bottom: 65px; right: 15px;
                 width: 320px; background: var(--time-bg);
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                border: 1px solid var(--border-glass); border-radius: 16px;
+                border: 1px solid var(--border-glass); border-radius: 5px;
                 display: none; flex-direction: column; padding: 20px;
                 box-shadow: 0 15px 40px rgba(0,0,0,0.5); z-index: 100001;
                 transform-origin: bottom right;
@@ -394,7 +463,7 @@
             .tc-date { font-size: 13px; color: var(--accent); text-align: center; margin-bottom: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
             .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; }
             .cal-day-name { color: var(--text-dim); font-weight: bold; padding-bottom: 10px; }
-            .cal-day { padding: 8px; border-radius: 6px; cursor: default; transition: 0.2s; }
+            .cal-day { padding: 8px; border-radius:5px; cursor: default; transition: 0.2s; }
             .cal-day:hover:not(.other) { background: rgba(255,255,255,0.1); }
             .cal-day.current { background: var(--accent-bg); color: white; font-weight: bold; }
             .cal-day.other { opacity: 0.3; }
@@ -473,7 +542,7 @@
     .calc-display {
         background: rgba(0, 0, 0, 0.4);
         border: 1px solid var(--border-glass);
-        border-radius: 8px;
+        border-radius: 5px;
         padding: 15px;
         text-align: right;
         font-family: monospace;
@@ -490,7 +559,7 @@
     .calc-btn {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--border-glass);
-        border-radius: 8px;
+        border-radius: 5px;
         color: white;
         font-size: 16px;
         cursor: pointer;
@@ -545,7 +614,7 @@
                 backdrop-filter: blur(22px);
                 -webkit-backdrop-filter: blur(22px);
                 border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 18px;
+                border-radius: 5px;
                 overflow: hidden;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.45);
             }
@@ -674,7 +743,7 @@
         }
         .sn-item {
             display: flex; align-items: center; gap: 8px;
-            padding: 9px 10px; border-radius: 7px;
+            padding: 9px 10px; border-radius: 5px;
             font-size: 11px; cursor: pointer; color: var(--text-dim);
             transition: 0.2s;
         }
@@ -693,7 +762,7 @@
         }
         .s-group {
             margin-bottom: 20px; background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-glass); border-radius: 10px; padding: 14px;
+            border: 1px solid var(--border-glass); border-radius: 5px; padding: 14px;
         }
         .s-group-title {
             font-size: 9px; font-weight: 800; letter-spacing: 1px;
@@ -704,7 +773,7 @@
         }
         .s-input {
             width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.35);
-            border: 1px solid var(--border-glass); border-radius: 6px;
+            border: 1px solid var(--border-glass); border-radius: 5px;
             color: white; font-size: 12px; margin-bottom: 10px;
         }
         .s-input:focus { border-color: var(--accent); }
@@ -714,7 +783,7 @@
         }
         .s-mode-btn {
             flex: 1; padding: 8px 4px; background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-glass); border-radius: 6px;
+            border: 1px solid var(--border-glass); border-radius: 5px;
             color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;
             transition: 0.2s;
         }
@@ -724,7 +793,7 @@
             display: flex; gap: 10px; align-items: center; margin-bottom: 10px;
         }
         .s-color-swatch {
-            width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-glass);
+            width: 36px; height: 36px; border-radius: 5px; border: 1px solid var(--border-glass);
             cursor: pointer; flex-shrink: 0; overflow: hidden; position: relative;
         }
         .s-color-swatch input[type="color"] {
@@ -734,7 +803,7 @@
         .s-color-label { font-size: 11px; color: var(--text-dim); }
         /* Gradient preview bar */
         #s-gradient-preview {
-            height: 12px; border-radius: 6px; margin: 8px 0 12px 0;
+            height: 12px; border-radius: 5px; margin: 8px 0 12px 0;
             border: 1px solid var(--border-glass);
             background: var(--accent);
             transition: background 0.3s;
@@ -770,7 +839,7 @@
         .s-apply-btn {
             width: 100%; padding: 12px; margin-top: 4px;
             background: var(--accent-bg); color: white; border: none;
-            border-radius: 8px; font-weight: bold; font-size: 13px;
+            border-radius: 5px; font-weight: bold; font-size: 13px;
             cursor: pointer; transition: filter 0.2s;
         }
         .s-apply-btn:hover { filter: brightness(1.2); }
@@ -809,13 +878,13 @@
         /* Tło toru (track) — niemal przezroczysty, ciemny */
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
+            border-radius: 5px;
         }
 
         /* Suwak (thumb) — akcentowany kolor, zaokrąglony */
         ::-webkit-scrollbar-thumb {
             background: var(--accent);
-            border-radius: 10px;
+            border-radius: 5px;
             box-shadow: 0 0 6px var(--accent-glow);
             transition: background 0.2s;
         }
@@ -865,7 +934,7 @@
     <body oncontextmenu="return false;">
 
         <div id="lockdown-overlay">
-            <h1 style="letter-spacing: 15px; font-weight: 200;">MASTER OS</h1>
+            <h1 style="letter-spacing: 10px; font-weight: 400;">Master OS</h1>
             <button class="pulse-btn" onclick="MasterSystem.boot()">Zaloguj</button>
         </div>
 

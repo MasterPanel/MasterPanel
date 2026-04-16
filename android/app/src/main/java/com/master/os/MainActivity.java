@@ -1,4 +1,4 @@
-package dev.ngrok_free.organismically_preoffensive_chuck.twa;
+package com.master.os;
 
 import com.getcapacitor.BridgeActivity;
 

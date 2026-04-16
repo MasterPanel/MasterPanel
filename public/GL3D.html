@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GeoLokalizator3D</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/192.png">
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<style>
+/* Reset marginesów i ustawienie pełnej wysokości dla kontenera HTML/Body */
+html, body { 
+    margin: 0;
+    user-select:none;
+    padding: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: hidden; 
+    background: #000; 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+}
+
+/* Mapa zajmuje absolutnie całą przestrzeń widoku */
+#map { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    width: 100%; 
+    height: 100%; 
+}
+
+/* Nakładka UI z uwzględnieniem bezpiecznej strefy (notch) */
+.ui-overlay {
+    position: absolute; 
+    top: calc(15px + env(safe-area-inset-top)); 
+    left: calc(15px + env(safe-area-inset-left)); 
+    z-index: 10;
+    background: rgba(10, 15, 30, 0.1); 
+    color: #f8fafc;
+    padding: 12px; 
+    border-radius: 5px; 
+    width: 220px;
+    border: 1px solid #334155;
+    backdrop-filter: blur(3px);
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+/* Niewidzialny przycisk aktywujący pełny ekran */
+#fullscreen-trigger {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+button {
+    width: 100%; 
+    background: #3833;
+    border: none; 
+    padding: 10px; 
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px;
+    color: #999;
+}
+
+button:disabled { background: #3335; color: #666; }
+
+#toggle-lock { background: #9005; color: #999; }
+#toggle-lock.unlocked { background: #0905; }
+
+.table { margin-top: 10px; font-size: 13px; }
+.table div {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #2226;
+}
+
+.device-list {
+    margin-top: 15px;
+    border-top: 1px solid #2226;
+    padding-top: 10px;
+}
+.device-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    background: #1116;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+}
+.device-item:hover { background: rgba(56, 189, 248, 0.2); }
+.device-item.active { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+.device-name { font-weight: bold; color: #9998; display: block; margin-bottom: 4px; }
+
+/* Kontener znacznika 3D */
+.marker-3d { 
+    width: 48px; 
+    height: 72px; 
+    position: relative;
+    transform: rotateX(10deg); 
+    transform-style: preserve-3d;
+}
+
+.pixel-man {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.pixel-man div {
+    position: absolute;
+    border: 2px solid #000; 
+    box-sizing: border-box;
+}
+
+.pixel-man .head { width: 20px; height: 20px; background: #942; top: 0; left: 14px; z-index: 5; }
+.pixel-man .body { width: 20px; height: 24px; background: #131; top: 20px; left: 14px; z-index: 4; }
+.pixel-man .arm { width: 8px; height: 24px; background: #131; top: 20px; z-index: 3; }
+.pixel-man .arm.left { left: 6px; }
+.pixel-man .arm.right { right: 6px; }
+.pixel-man .leg { width: 8px; height: 28px; background: #009; top: 44px; z-index: 2; }
+.pixel-man .leg.left { left: 14px; }
+.pixel-man .leg.right { left: 26px; }
+
+.pulse {
+    position: absolute;
+    width: 40px; 
+    height: 40px;
+    background: rgba(153, 0, 0, 0.6);
+    border-radius: 50%;
+    border: 2px solid #000;
+    bottom: -15px; 
+    left: 50%;
+    margin-left: -20px;
+    z-index: 1;
+    animation: pulse-square 2s infinite;
+}
+
+@keyframes pulse-square {
+    0% { transform: scale(0.8) rotateX(70deg); opacity: 1; }
+    100% { transform: scale(2.5) rotateX(70deg); opacity: 0; }
+}
+
+/* Banner instalacyjny PWA */
+#pwa-install-banner {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    width: calc(100% - 40px);
+    max-width: 400px;
+    background: rgba(25, 30, 45, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 16px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white;
+}
+
+#pwa-install-banner.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+.pwa-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pwa-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #1e293b;
+    object-fit: cover;
+}
+
+.pwa-text h4 { margin: 0; font-size: 16px; color: #f8fafc; }
+.pwa-text p { margin: 2px 0 0 0; font-size: 13px; color: #94a3b8; }
+
+.pwa-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.pwa-btn {
+    flex: 1;
+    margin-top: 0;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.pwa-btn-install {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.pwa-btn-cancel {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
+</style>
+</head>
+
+<body>
+
+<button id="fullscreen-trigger"></button>
+
+<div id="pwa-install-banner">
+    <div class="pwa-header">
+        <img src="icons/192.png" alt="App Icon" class="pwa-icon">
+        <div class="pwa-text">
+            <h4>Zainstaluj GeoLokalizator3D</h4>
+            <p>Dodaj do ekranu głównego dla lepszych wrażeń.</p>
+        </div>
+    </div>
+    <div class="pwa-actions">
+        <button class="pwa-btn pwa-btn-cancel" id="pwa-cancel">PÓŹNIEJ</button>
+        <button class="pwa-btn pwa-btn-install" id="pwa-install">INSTALUJ</button>
+    </div>
+</div>
+
+<div class="ui-overlay">
+    <div class="table">
+        <div><span>Aktywne urządzenia:</span><span id="device-count">0</span></div>
+        <div><span>Twoje ID:</span><span id="my-id">---</span></div>
+    </div>
+
+    <button id="start">START</button>
+    <button id="toggle-lock">KAMERA: ZABLOKOWANA</button>
+    
+    <div class="device-list" id="device-list"></div>
+</div>
+
+<div id="map"></div>
+
+<script>
+const socket = io();
+const myDeviceId = "" + Math.random().toString(36).substr(2, 4).toUpperCase();
+document.getElementById('my-id').innerText = myDeviceId;
+
+let isCameraLocked = true;
+let deferredPrompt;
+
+// Obsługa instalacji PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('pwa-install-banner').classList.add('visible');
+});
+
+document.getElementById('pwa-install').addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        deferredPrompt = null;
+        document.getElementById('pwa-install-banner').classList.remove('visible');
+    }
+});
+
+document.getElementById('pwa-cancel').addEventListener('click', () => {
+    document.getElementById('pwa-install-banner').classList.remove('visible');
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('SW zarejestrowany:', reg.scope))
+            .catch(err => console.error('Błąd SW:', err));
+    });
+}
+
+const fsTrigger = document.getElementById('fullscreen-trigger');
+fsTrigger.addEventListener('click', () => {
+    const docElm = document.documentElement;
+    if (docElm.requestFullscreen) docElm.requestFullscreen();
+    else if (docElm.webkitRequestFullscreen) docElm.webkitRequestFullscreen(); 
+    else if (docElm.msRequestFullscreen) docElm.msRequestFullscreen();
+    fsTrigger.style.display = 'none';
+});
+
+const lockBtn = document.getElementById('toggle-lock');
+lockBtn.addEventListener('click', () => {
+    isCameraLocked = !isCameraLocked;
+    if (isCameraLocked) {
+        lockBtn.innerText = "Pokaż znacznik";
+        lockBtn.classList.remove('unlocked');
+        if (devices[myDeviceId]) map.easeTo({ center: devices[myDeviceId].lastCoords, duration: 1000 });
+    } else {
+        lockBtn.innerText = "Tryb swobodny";
+        lockBtn.classList.add('unlocked');
+    }
+});
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic3RyYWNodTY2NiIsImEiOiJjbW55emwwcmIwMDNuMnlzYW5wZHg5bmxtIn0.5FQGxmi52zij7CbcSPfNHw';
+
+const map = new mapboxgl.Map({
+    container:'map',
+    style:'mapbox://styles/mapbox/satellite-v9',
+    center:[14.7245,51.9495],
+    zoom:16,
+    pitch:65,
+    bearing:-20,
+    antialias:true
+});
+
+const devices = {}; 
+let trackedDeviceId = null;
+
+function createMarkerElement(){
+    const el=document.createElement('div');
+    el.className='marker-3d';
+    const p=document.createElement('div');
+    p.className='pulse';
+    el.appendChild(p);
+    const man=document.createElement('div');
+    man.className='pixel-man';
+    const parts = ['head', 'body', 'arm left', 'arm right', 'leg left', 'leg right'];
+    parts.forEach(cls => {
+        const d = document.createElement('div');
+        d.className = cls;
+        man.appendChild(d);
+    });
+    el.appendChild(man);
+    return el;
+}
+
+function getDistance(a,b){
+    const R=6371000;
+    const dLat=(b[1]-a[1])*Math.PI/180;
+    const dLon=(b[0]-a[0])*Math.PI/180;
+    const lat1=a[1]*Math.PI/180;
+    const lat2=b[1]*Math.PI/180;
+    const x=Math.sin(dLat/2)**2 + Math.sin(dLon/2)**2*Math.cos(lat1)*Math.cos(lat2);
+    return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function updateDeviceData(id, coords, accuracy) {
+    const time = Date.now();
+    if (!devices[id]) {
+        devices[id] = {
+            id: id,
+            marker: new mapboxgl.Marker({ element: createMarkerElement(), anchor: 'bottom' }).setLngLat(coords).addTo(map),
+            route: [coords],
+            lastCoords: coords,
+            lastTime: time,
+            speed: 0,
+            accuracy: accuracy
+        };
+        const sourceId = `route-${id}`;
+        map.addSource(sourceId, {
+            'type': 'geojson',
+            'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': devices[id].route } }
+        });
+        map.addLayer({
+            'id': `${sourceId}-layer`, 'type': 'line', 'source': sourceId,
+            'paint': { 'line-color': id === myDeviceId ? '#38bdf8' : '#e11d48', 'line-width': 4, 'line-opacity': 0.6 }
+        });
+        renderDeviceList();
+    } else {
+        const dev = devices[id];
+        const dist = getDistance(dev.lastCoords, coords);
+        const dt = (time - dev.lastTime) / 1000;
+        if (dt > 0) {
+            let newCalcSpeed = (dist / dt) * 3.6;
+            dev.speed = dev.speed * 0.7 + newCalcSpeed * 0.3;
+            if (dev.speed < 0.5) dev.speed = 0;
+        }
+        dev.lastCoords = coords;
+        dev.lastTime = time;
+        dev.accuracy = accuracy;
+        dev.route.push(coords);
+        dev.marker.setLngLat(coords);
+        if (map.getSource(`route-${id}`)) {
+            map.getSource(`route-${id}`).setData({
+                'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': dev.route }
+            });
+        }
+    }
+    if (isCameraLocked && (trackedDeviceId === id || (trackedDeviceId === null && id === myDeviceId))) {
+        map.easeTo({ center: coords, duration: 1000, essential: true });
+    }
+    updateUIItem(id);
+}
+
+socket.on('allDevices', (devicesList) => {
+    devicesList.forEach(data => {
+        if (data.id !== myDeviceId) {
+            updateDeviceData(data.id, data.coords, data.accuracy);
+        }
+    });
+});
+
+socket.on('locationUpdate', (data) => updateDeviceData(data.id, data.coords, data.accuracy));
+
+socket.on('deviceDisconnected', (id) => {
+    if (devices[id]) {
+        devices[id].marker.remove();
+        if (map.getLayer(`route-${id}-layer`)) map.removeLayer(`route-${id}-layer`);
+        if (map.getSource(`route-${id}`)) map.removeSource(`route-${id}`);
+        delete devices[id];
+        renderDeviceList();
+    }
+});
+
+function renderDeviceList() {
+    const list = document.getElementById('device-list');
+    list.innerHTML = '';
+    Object.keys(devices).forEach(id => {
+        const item = document.createElement('div');
+        item.className = `device-item ${trackedDeviceId === id ? 'active' : ''}`;
+        item.id = `ui-${id}`;
+        item.onclick = () => {
+            trackedDeviceId = id;
+            isCameraLocked = true;
+            lockBtn.innerText = "Pokaż znacznik";
+            lockBtn.classList.remove('unlocked');
+            renderDeviceList();
+            map.flyTo({ center: devices[id].lastCoords, zoom: 18, pitch: 70 });
+        };
+        const displayName = id === myDeviceId ? "TY" : id;
+        item.innerHTML = `<span class="device-name">${displayName}</span><div class="table"><div><span>Prędkość:</span><span class="v-speed">0 km/h</span></div><div><span>Dokładność:</span><span class="v-acc">--</span></div></div>`;
+        list.appendChild(item);
+    });
+    document.getElementById('device-count').innerText = Object.keys(devices).length;
+}
+
+function updateUIItem(id) {
+    const item = document.getElementById(`ui-${id}`);
+    if (item) {
+        item.querySelector('.v-speed').innerText = (devices[id].speed || 0).toFixed(1) + " km/h";
+        item.querySelector('.v-acc').innerText = (devices[id].accuracy || 0).toFixed(1) + " m";
+    }
+}
+
+map.on('load', ()=>{
+    map.addSource('mapbox-dem',{ type:'raster-dem', url:'mapbox://mapbox.mapbox-terrain-dem-v1' });
+    map.setTerrain({ source:'mapbox-dem', exaggeration:1.5 });
+    map.addSource('streets-source', { type: 'vector', url: 'mapbox://mapbox.mapbox-streets-v8' });
+
+    map.addLayer({
+        'id': '3d-forests', 'type': 'fill-extrusion', 'source': 'streets-source', 'source-layer': 'landuse',
+        'filter': ['match', ['get', 'class'], ['park', 'wood', 'scrub', 'grass'], true, false],
+        'paint': { 'fill-extrusion-color': '#2d5a27', 'fill-extrusion-height': 9, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0.8 }
+    });
+
+    map.addLayer({
+        'id': '3d-buildings', 'source': 'streets-source', 'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'], 'type': 'fill-extrusion', 'minzoom': 13,
+        'paint': {
+            'fill-extrusion-color': '#222',
+            'fill-extrusion-height': ['coalesce', ['get', 'height'], 20],
+            'fill-extrusion-base': ['coalesce', ['get', 'min_height'], 0],
+            'fill-extrusion-opacity': 1
+        }
+    });
+
+    map.addLayer({
+        'id': 'road-layer', 'type': 'line', 'source': 'streets-source', 'source-layer': 'road',
+        'layout': { 'line-join': 'round', 'line-cap': 'round' },
+        'paint': { 'line-color': '#888', 'line-width': ['interpolate', ['linear'], ['zoom'], 14, 1, 18, 10] }
+    });
+
+    map.setFog({ 'range': [0.5, 10], 'color': '#242d3e', 'horizon-blend': 0.1 });
+});
+
+function startGPS(){
+    navigator.geolocation.watchPosition(pos=>{
+        const coords=[pos.coords.longitude,pos.coords.latitude];
+        updateDeviceData(myDeviceId, coords, pos.coords.accuracy);
+        socket.emit('updatePosition', { id: myDeviceId, coords: coords, accuracy: pos.coords.accuracy });
+        if (trackedDeviceId === null) trackedDeviceId = myDeviceId;
+    }, (err) => console.error(err), { enableHighAccuracy: true });
+}
+
+document.getElementById('start').onclick=()=>{
+    startGPS();
+    document.getElementById('start').disabled=true;
+    document.getElementById('start').innerText = "Lokalizuję";
+};
+
+map.addControl(new mapboxgl.NavigationControl());
+</script>
+
+</body>
+</html>

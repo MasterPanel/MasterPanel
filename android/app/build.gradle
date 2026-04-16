@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "dev.ngrok_free.organismically_preoffensive_chuck.twa"
+    namespace "com.master.os"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "dev.ngrok_free.organismically_preoffensive_chuck.twa"
+        applicationId "com.master.os"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
