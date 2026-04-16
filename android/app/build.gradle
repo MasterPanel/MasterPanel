@@ -38,11 +38,16 @@ dependencies {
     
     implementation (project(':capacitor-android')) {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
     }
     
     implementation (project(':capacitor-cordova-android-plugins')) {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
     }
+    
+    // Dodaj jawną wersję kotlin-stdlib, aby zapewnić spójność
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
