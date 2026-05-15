@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVP Sport - Player</title>
+    <style>
+        /* Główne style kontenera */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .content-view {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Przycisk powrotu */
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #444;
+            outline: 2px solid #0078d4;
+        }
+
+        /* Sekcja odtwarzacza */
+        .player-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .player-placeholder {
+            text-align: center;
+            color: #555;
+        }
+
+        .play-icon {
+            font-size: 80px;
+            margin-bottom: 10px;
+        }
+
+        /* Informacje o programie */
+        .info-section {
+            padding: 20px;
+            background-color: #252525;
+            border-radius: 10px;
+        }
+
+        .channel-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #0078d4;
+        }
+
+        .program-description {
+            color: #ccc;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content-view">
+        <a href="index.html" class="back-button">← Powrót do listy</a>
+
+        <div class="player-container">
+            <div class="player-placeholder">
+                <div class="play-icon">▶</div>
+                <p>Ładowanie strumienia wideo...</p>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h1 class="channel-title">TVP Sport</h1>
+            <p><strong>Teraz:</strong> Mecz na żywo</p>
+            <p class="program-description">
+                Oglądasz transmisję na żywo w najwyższej jakości. Skorzystaj z przycisku powrotu, aby przejść do listy kanałów.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

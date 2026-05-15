@@ -69,8 +69,6 @@ overscroll-behavior-y: contain;
                 overflow: hidden; background: #000;
                 user-select: none; -webkit-user-select: none;
                 touch-action: none; color: var(--text-main);
-                padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
             }
 
             /* --- FULLSCREEN INVOKER (TRANSPARENT BUTTON) --- */
@@ -180,7 +178,7 @@ overscroll-behavior-y: contain;
             /* --- DESKTOP ICONS --- */
             .icon {
                 position: absolute; width: 90px; display: flex; flex-direction: column;
-                align-items: center; padding: 10px; border-radius: 5px;
+                align-items: center; padding: 10px; border-radius: 8px;
                 border: 1px solid transparent; z-index: 10; cursor: pointer;
                 transition: background 0.2s;
                 -webkit-touch-callout: none;
@@ -195,12 +193,12 @@ overscroll-behavior-y: contain;
             #ctx-menu {
                 position: fixed; width: 200px; background: var(--menu-bg);
                 backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 5px;
+                border: 1px solid var(--border-glass); border-radius:10px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200000;
                 display: none; flex-direction: column; padding: 5px;
             }
             .ctx-item {
-                padding: 10px 12px; font-size: 12px; border-radius: 5px;
+                padding: 10px 12px; font-size: 12px; border-radius: 10px;
                 display: flex; align-items: center; gap: 10px; cursor: pointer;
                 transition: 0.2s; color: white;
             }
@@ -213,7 +211,7 @@ overscroll-behavior-y: contain;
                 position: absolute;
                 background: var(--win-bg); backdrop-filter: blur(var(--blur-val));
                 -webkit-backdrop-filter: blur(var(--blur-val));
-                border-radius: 5px; border: 1px solid var(--border-glass);
+                border-radius: 10px; border: 1px solid var(--border-glass);
                 box-shadow: 0 30px 60px rgba(0,0,0,0.6);
                 display: flex; flex-direction: column; overflow: hidden;
             }
@@ -286,7 +284,7 @@ overscroll-behavior-y: contain;
             }
             #start-btn {
                 width: 40px; height: 40px; background: var(--accent-bg);
-                border: none; border-radius: 5px; cursor: pointer;
+                border: none; border-radius: 10px; cursor: pointer;
                 margin-right: 15px; box-shadow: 0 0 15px var(--accent-glow);
                 display: flex; align-items: center; justify-content: center;
                 transition: 0.3s;
@@ -297,7 +295,7 @@ overscroll-behavior-y: contain;
             #task-list { display: flex; gap: 8px; flex: 1; }
             .task-tab {
                 height: 42px; width: 42px; background: rgba(255,255,255,0.05);
-                border-radius: 5px; display: flex; align-items: center; justify-content: center;
+                border-radius: 10px; display: flex; align-items: center; justify-content: center;
                 cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s;
             }
             .task-tab img { width: 26px; height: 26px; }
@@ -307,14 +305,14 @@ overscroll-behavior-y: contain;
             #start-menu {
                 position: absolute; bottom: 55px; left: 15px; width: 240px;
                     background: var(--menu-bg);  backdrop-filter: blur(25px);
-                border: 1px solid var(--border-glass); border-radius: 5px;
+                border: 1px solid var(--border-glass); border-radius: 10px;
                 display: none; flex-direction: column; padding: 10px; z-index: 100001;
                 transform-origin: bottom left;
             }
             #start-menu.anim-open  { animation: slideUpIn 0.60s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
             #start-menu.anim-close-panel { animation: slideDownOut 0.60s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
             .start-item {
-                padding: 10px 12px; border-radius: 5px; cursor: pointer;
+                padding: 10px 12px; border-radius: 10px; cursor: pointer;
                 display: flex; align-items: center; gap: 12px; font-size: 13px;
                 position: relative; transition: 0.2s; color: #eee;
             }
@@ -332,7 +330,7 @@ overscroll-behavior-y: contain;
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 5px;
+                border-radius: 10px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -360,7 +358,7 @@ overscroll-behavior-y: contain;
                 background: var(--menu-bg); 
                 backdrop-filter: blur(32px);
                 border: 1px solid var(--border-glass); 
-                border-radius: 5px;
+                border-radius: 10px;
                 display: none; 
                 flex-direction: column; 
                 padding: 8px; 
@@ -399,7 +397,7 @@ overscroll-behavior-y: contain;
 
             .side-item {
                 display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-                border-radius: 5px; font-size: 12px; cursor: pointer; transition: 0.2s;
+                border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s;
                 color: var(--text-dim); white-space: nowrap; overflow: hidden;
             }
             .side-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
@@ -416,7 +414,7 @@ overscroll-behavior-y: contain;
 
             .path-display {
                 font-size: 11px; color: var(--text-dim); font-family: monospace;
-                background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px;
+                background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 6px;
                 flex: 1; overflow: hidden; text-overflow: ellipsis;
             }
 
@@ -428,7 +426,7 @@ overscroll-behavior-y: contain;
 
             /* --- APP SPECIFIC UI --- */
             .browser-bar { height: 45px; background: rgba(255,255,255,0.05); display: flex; padding: 5px 10px; gap: 10px; align-items: center; border-bottom: 1px solid var(--border-glass); }
-            .browser-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 4px; color: white; padding: 5px 10px; font-size: 12px; }
+            .browser-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 6px; color: white; padding: 5px 10px; font-size: 12px; }
 
             iframe { border: none; width: 100%; height: 100%; display: block; background: #fff; }
             textarea { background: transparent; color: #eee; border: none; width: 100%; height: 100%; padding: 15px; resize: none; font-family: monospace; }
@@ -439,9 +437,9 @@ overscroll-behavior-y: contain;
                 background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
                 display: none; align-items: center; justify-content: center;
             }
-            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 5px; padding: 25px; text-align: center; }
-            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 5px; color: white; margin: 15px 0; }
-            .d-btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+            .dialog-box { background: #2229;  backdrop-filter: blur(10px); border: 1px solid var(--border-glass); width: 340px; border-radius: 10px; padding: 25px; text-align: center; }
+            .dialog-input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 10px; color: white; margin: 15px 0; }
+            .d-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
             .d-btn-primary { background: var(--accent); color: white; margin-left: 10px; }
 
             .resizer { position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; cursor: se-resize; }
@@ -452,7 +450,7 @@ overscroll-behavior-y: contain;
                 position: absolute; bottom: 65px; right: 15px;
                 width: 320px; background: var(--time-bg);
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                border: 1px solid var(--border-glass); border-radius: 5px;
+                border: 1px solid var(--border-glass); border-radius: 10px;
                 display: none; flex-direction: column; padding: 20px;
                 box-shadow: 0 15px 40px rgba(0,0,0,0.5); z-index: 100001;
                 transform-origin: bottom right;
@@ -463,7 +461,7 @@ overscroll-behavior-y: contain;
             .tc-date { font-size: 13px; color: var(--accent); text-align: center; margin-bottom: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
             .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; }
             .cal-day-name { color: var(--text-dim); font-weight: bold; padding-bottom: 10px; }
-            .cal-day { padding: 8px; border-radius:5px; cursor: default; transition: 0.2s; }
+            .cal-day { padding: 8px; border-radius:10px; cursor: default; transition: 0.2s; }
             .cal-day:hover:not(.other) { background: rgba(255,255,255,0.1); }
             .cal-day.current { background: var(--accent-bg); color: white; font-weight: bold; }
             .cal-day.other { opacity: 0.3; }
@@ -542,7 +540,7 @@ overscroll-behavior-y: contain;
     .calc-display {
         background: rgba(0, 0, 0, 0.4);
         border: 1px solid var(--border-glass);
-        border-radius: 5px;
+        border-radius: 10px;
         padding: 15px;
         text-align: right;
         font-family: monospace;
@@ -559,7 +557,7 @@ overscroll-behavior-y: contain;
     .calc-btn {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--border-glass);
-        border-radius: 5px;
+        border-radius: 10px;
         color: white;
         font-size: 16px;
         cursor: pointer;
@@ -593,7 +591,7 @@ overscroll-behavior-y: contain;
             .notepad-toolbar-group { display: flex; gap: 8px; }
             .n-btn { 
                     background: #9991;  border: 1px solid var(--border-glass); 
-                color: white; padding: 6px 8px; border-radius: 4px; 
+                color: white; padding: 6px 8px; border-radius: 6px; 
                 cursor: pointer; font-size: 10px; transition: 0.2s;
                 display: flex; align-items: center; gap: 6px;
             }
@@ -614,7 +612,7 @@ overscroll-behavior-y: contain;
                 backdrop-filter: blur(22px);
                 -webkit-backdrop-filter: blur(22px);
                 border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 5px;
+                border-radius: 10px;
                 overflow: hidden;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.45);
             }
@@ -727,6 +725,89 @@ overscroll-behavior-y: contain;
             vertical-align: middle;
 
         }
+              /* --- Widget: Retro Flip Clock --- */
+        #w-retro { top: 200px; left: 15px; }
+        .retro-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: scale(0.75);
+            transform-origin: top left;
+        }
+        .retro-container .clock-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: -15px; 
+            z-index: 1;
+            cursor: move; /* Do przeciągania na pulpicie */
+        }
+        .retro-container .flip-card {
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 50%, #e0e0e0 51%, #d0d0d0 100%);
+            width: 160px;
+            height: 180px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 110px;
+            font-weight: 310;
+            color: #333;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            position: relative;
+            border: 1px solid #ccc;
+        }
+        .retro-container .flip-card::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            box-shadow: 0 1px 1px rgba(255,255,255,0.7);
+        }
+        .retro-container .am-pm {
+            position: absolute;
+            bottom: 20px;
+            right: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+        }
+        .retro-container .weather-panel {
+            background: linear-gradient(135deg, #333 0%, #111 100%);
+            width: 400px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            border: 1px solid #444;
+            z-index: 0;
+            padding-top: 25px; 
+        }
+        .retro-container .sun-icon {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffeb3b 0%, #fbc02d 70%, #f57f17 100%);
+            border-radius: 50%;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 30px #fbc02d;
+            z-index: 2;
+        }
+        .retro-container .weather-left { display: flex; flex-direction: column; gap: 15px; }
+        .retro-container .weather-right { text-align: right; display: flex; flex-direction: column; }
+        .retro-container .date-text { font-size: 18px; color: #aaa; }
+        .retro-container .condition-text { font-size: 20px; font-weight: bold; }
+        .retro-container .temp-main { font-size: 36px; font-weight: normal; }
+        .retro-container .temp-range { font-size: 18px; color: #aaa; }
+
         /* ===================================================
            SETTINGS APP — Ustawienia Systemu MasterOS
            Pełny panel z zakładkami i suwakami przezroczystości
@@ -736,14 +817,14 @@ overscroll-behavior-y: contain;
         }
         /* Sidebar nawigacji Ustawień */
         .settings-nav {
-            width: 150px; background: rgba(0,0,0,0.25);
+            width: 124px; background: rgba(0,0,0,0.25);
             border-right: 1px solid var(--border-glass);
             display: flex; flex-direction: column;
             padding: 12px 8px; gap: 4px; flex-shrink: 0;
         }
         .sn-item {
             display: flex; align-items: center; gap: 8px;
-            padding: 9px 10px; border-radius: 5px;
+            padding: 9px 10px; border-radius: 10px;
             font-size: 11px; cursor: pointer; color: var(--text-dim);
             transition: 0.2s;
         }
@@ -762,7 +843,7 @@ overscroll-behavior-y: contain;
         }
         .s-group {
             margin-bottom: 20px; background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-glass); border-radius: 5px; padding: 14px;
+            border: 1px solid var(--border-glass); border-radius: 10px; padding: 14px;
         }
         .s-group-title {
             font-size: 9px; font-weight: 800; letter-spacing: 1px;
@@ -773,7 +854,7 @@ overscroll-behavior-y: contain;
         }
         .s-input {
             width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.35);
-            border: 1px solid var(--border-glass); border-radius: 5px;
+            border: 1px solid var(--border-glass); border-radius: 10px;
             color: white; font-size: 12px; margin-bottom: 10px;
         }
         .s-input:focus { border-color: var(--accent); }
@@ -783,7 +864,7 @@ overscroll-behavior-y: contain;
         }
         .s-mode-btn {
             flex: 1; padding: 8px 4px; background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-glass); border-radius: 5px;
+            border: 1px solid var(--border-glass); border-radius: 10px;
             color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;
             transition: 0.2s;
         }
@@ -793,7 +874,7 @@ overscroll-behavior-y: contain;
             display: flex; gap: 10px; align-items: center; margin-bottom: 10px;
         }
         .s-color-swatch {
-            width: 36px; height: 36px; border-radius: 5px; border: 1px solid var(--border-glass);
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-glass);
             cursor: pointer; flex-shrink: 0; overflow: hidden; position: relative;
         }
         .s-color-swatch input[type="color"] {
@@ -803,7 +884,7 @@ overscroll-behavior-y: contain;
         .s-color-label { font-size: 11px; color: var(--text-dim); }
         /* Gradient preview bar */
         #s-gradient-preview {
-            height: 12px; border-radius: 5px; margin: 8px 0 12px 0;
+            height: 12px; border-radius: 10px; margin: 8px 0 12px 0;
             border: 1px solid var(--border-glass);
             background: var(--accent);
             transition: background 0.3s;
@@ -839,7 +920,7 @@ overscroll-behavior-y: contain;
         .s-apply-btn {
             width: 100%; padding: 12px; margin-top: 4px;
             background: var(--accent-bg); color: white; border: none;
-            border-radius: 5px; font-weight: bold; font-size: 13px;
+            border-radius: 8px; font-weight: bold; font-size: 13px;
             cursor: pointer; transition: filter 0.2s;
         }
         .s-apply-btn:hover { filter: brightness(1.2); }
@@ -977,6 +1058,35 @@ overscroll-behavior-y: contain;
                     <textarea id="w-notes-text" placeholder="Wpisz notatkę..."></textarea>
                 </div>
             </div>
+            
+            
+            
+<div class="widget" id="w-retro" style="display:none;">
+                <div class="retro-container">
+                    <div class="clock-section">
+                        <div class="flip-card" id="retro-hours">00</div>
+                        <div class="flip-card" id="retro-minutes">
+                            <span id="retro-min-val">30</span>
+                            <div class="am-pm" id="retro-ampm">PM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="sun-icon"></div>
+
+                    <div class="weather-panel">
+                        <div class="weather-left">
+                            <div class="date-text" id="retro-current-date">Ndz, Maj 3</div>
+                            <div class="condition-text">Słonecznie</div>
+                        </div>
+                        <div class="weather-right">
+                            <div class="temp-main">20°</div>
+                            <div class="temp-range">20°/5°</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
             <!-- =====================================================
                  WIDGET: Pogoda Tygodniowa — domyślnie ukryty
@@ -1063,6 +1173,7 @@ overscroll-behavior-y: contain;
                 'Tool':       'https://cdn-icons-png.flaticon.com/512/1850/1850682.png',
                 'Kreator':    'https://cdn-icons-png.flaticon.com/512/421/421019.png',
                 'ImageViewer':'https://cdn-icons-png.flaticon.com/512/7184/7184115.png',
+                'YouTube':    'https://cdn-icons-png.flaticon.com/512/1384/1384060.png',
                 'Widgety':    'https://cdn-icons-png.flaticon.com/512/6214/6214270.png'
             };
 
@@ -1083,7 +1194,7 @@ overscroll-behavior-y: contain;
 
     { id: 503, name: 'Notatnik', app: 'Notepad',     x: 10, y: 310, size: 'MEDIUM' },
     { id: 504, name: 'Paint', app: 'Paint',          x: 110, y: 310, size: 'LARGE' },
-    { id: 512, name: 'Browser', app: 'Browser',        x: 210, y: 310, size: 'L' },
+    { id: 512, name: 'Browser', app: 'Browser',        x: 210, y: 310, size: 'MAX' },
     { id: 516, name: 'Kalkulator Paneli', app: 'kalk', x: 310, y: 310, size: 'P' },
 
     { id: 514, name: 'Pilot', app: 'Pilot',           x: 10, y: 610, size: 'P' },
@@ -1095,6 +1206,8 @@ overscroll-behavior-y: contain;
     { id: 529, name: 'nativ', app: 'nativ',            x: 110, y: 710, size: 'L' },
     { id: 519, name: 'info', app: 'info'            ,  x: 210, y: 710, size: 'L' },
     { id: 521, name: 'Smart', app: 'Smart',            x: 310, y: 710, size: 'P' },
+    { id: 540, name: 'YouTube', app: 'YouTube',         x: 10,  y: 410, size: 'MEDIUM' },
+
 
                              ],
                 trash: [],
@@ -1230,6 +1343,20 @@ overscroll-behavior-y: contain;
                 div.ondblclick = () => {
                     if(type === 'shortcut') {
                         if(data.app === 'Trash') MasterWindow.launch('Trash', 'Kosz', '', 'SMALL');
+                        
+                        /* --- YouTube: na mobile próbuje otworzyć apkę, na desktop nowe okno --- */
+                        else if(data.app === 'YouTube') {
+                            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                            if(isMobile) {
+                                /* Próba uruchomienia aplikacji YouTube przez deep link */
+                                window.location.href = 'vnd.youtube://';
+                                /* Fallback — jeśli apka nie jest zainstalowana, po 1.5s otwiera stronę */
+                                setTimeout(() => { window.open('https://www.youtube.com', '_blank'); }, 1500);
+                            } else {
+                                /* Desktop — otwiera YouTube w nowej karcie/oknie */
+                                window.open('https://www.youtube.com', '_blank');
+                            }
+                        }
                         else MasterWindow.launch(data.app, data.name, data.customUrl || '', data.size);
                     }
                     else if(data.type === 'dir') MasterWindow.launch('Explorer', data.name, '', 'MEDIUM');
@@ -1416,14 +1543,34 @@ overscroll-behavior-y: contain;
                     const sw = window.innerWidth, sh = window.innerHeight;
                     const isMob = sw < 768;
                     const config = {
-                        'SMALL':  { w: isMob ? sw * 0.85 : 380, h: isMob ? sh * 0.5 : 300 },
-                        'S':  { w: isMob ? sw * 0.85 : 240, h: isMob ? sh * 0.5 : 200 },
-                        'MEDIUM': { w: isMob ? sw * 0.92 : sw * 0.6, h: isMob ? sh * 0.7 : sh * 0.6 },
-                        'LARGE':  { w: isMob ? sw * 0.96 : sw * 0.85, h: isMob ? sh * 0.85 : sh * 0.8 },
-                        'L':      { w: isMob ? sw * 0.90 : 440,  h: isMob ? sh * 0.7 : sh * 0.9   },
-                        'K':  { w: isMob ? sw * 0.85 : 380,  h: isMob ? sh * 0.5 : sh * 0.5   },
+                        /* --- Rozmiary oryginalne --- */
+                        'SMALL':   { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.5  : 300        },
+                        'S':       { w: isMob ? sw * 0.85 : 240,       h: isMob ? sh * 0.5  : 200        },
+                        'MEDIUM':  { w: isMob ? sw * 0.92 : sw * 0.6,  h: isMob ? sh * 0.7  : sh * 0.6  },
+                        'LARGE':   { w: isMob ? sw * 0.96 : sw * 0.85, h: isMob ? sh * 0.85 : sh * 0.8  },
+                        'L':       { w: isMob ? sw * 0.90 : 440,       h: isMob ? sh * 0.7  : sh * 0.9  },
+                        'K':       { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.5  : sh * 0.5  },
+                        'P':       { w: isMob ? sw * 0.85 : 380,       h: isMob ? sh * 0.7  : sh * 0.8  },
 
-                        'P':  { w: isMob ? sw * 0.85 : 380,  h: isMob ? sh * 0.7 : sh * 0.8   }
+                        /* --- Nowe rozmiary --- */
+
+                        /* Miniaturka — mała kwadratowa kartka, np. do kalkulatora / notatki */
+                        '1': { w: isMob ? sw * 0.75 : 300,       h: isMob ? sh * 0.4  : 250        },
+
+                        /* Szeroki pasek — np. odtwarzacz mediów, pasek kontrolny */
+                        '2':    { w: isMob ? sw * 0.98 : sw * 0.82, h: isMob ? sh * 0.38 : sh * 0.38 },
+
+                        /* Wysoki wąski — np. sidebar z narzędziami */
+                        '3':    { w: isMob ? sw * 0.70 : 340,       h: isMob ? sh * 0.88 : sh * 0.85 },
+
+                        /* Sidebar — wąski, pełna wysokość (minus pasek zadań) */
+                        '4': { w: isMob ? sw * 0.60 : 280,       h: sh - 47                        },
+
+                        /* Prawie pełny ekran — duże okno z widocznym pulpitem za nim */
+                        '5':  { w: isMob ? sw * 0.99 : sw * 0.95, h: isMob ? sh * 0.95 : sh * 0.92 },
+
+                        /* MAX — placeholder; launch() od razu dodaje klasę .maximized */
+                        '6':     { w: sw * 0.95, h: sh * 0.92 }
                     };
                     return config[sizeId] || config['MEDIUM'];
                 },
@@ -1458,6 +1605,12 @@ overscroll-behavior-y: contain;
                     MasterWindow.makeDraggable(w, id);
                     MasterWindow.makeResizable(w);
                     MasterApp.render(id, app, data);
+
+                    /* Jeśli rozmiar to MAX — od razu maksymalizuj bez animacji */
+                    if (sizeId === 'MAX') {
+                        w.classList.add('maximized');
+                    }
+
                     MasterWindow.syncTaskbar();
                     document.getElementById('start-menu').style.display = 'none';
                     return w;
@@ -1665,7 +1818,7 @@ overscroll-behavior-y: contain;
                             return `
                             <div class="s-slider-row">
                                 <div class="s-slider-header">
-                                    <span class="s-slider-name">${label}</span>
+                                    <span class="s-slider-name">Ustawienia</span>
                                     <span class="s-slider-val" id="sv-${id}">${pct}%</span>
                                 </div>
                                 <input type="range" class="s-slider" id="sr-${id}"
@@ -1680,10 +1833,9 @@ overscroll-behavior-y: contain;
                             <!-- ===== SIDEBAR NAWIGACJI ===== -->
                             <nav class="settings-nav">
                                 <div class="sn-item active" onclick="MasterApp.settingsTab(this,'s-personalization')">
-                                    <i class="fas fa-palette"></i> Personalizacja
-                                </div>
+                                    <i class="fas fa-palette"></i>Główne                                </div>
                                 <div class="sn-item" onclick="MasterApp.settingsTab(this,'s-transparency')">
-                                    <i class="fas fa-layer-group"></i> Przezroczystość
+                                    <i class="fas fa-layer-group"></i>Efekt szkła
                                 </div>
                                 <div class="sn-item" onclick="MasterApp.settingsTab(this,'s-sysinfo')">
                                     <i class="fas fa-circle-info"></i> O systemie
@@ -1716,19 +1868,19 @@ overscroll-behavior-y: contain;
                                     <!-- ========= ROZMIESZCZENIE IKON ========= -->
                                     <!-- Wybór jednego z trzech presetów układu ikon na pulpicie -->
                                     <div class="s-group">
-                                        <div class="s-group-title">Rozmieszczenie ikon i widgetów</div>
+                                        <div class="s-group-title">Układ Ikon</div>
                                         <div class="s-mode-row" style="gap:6px;">
                                             <div class="s-mode-btn" id="layout-btn-default"
                                                 onclick="MasterApp.applyLayout('default')">
-                                                <i class="fas fa-th-large"></i> Domyślny
+                                                <i class="fas fa-th-large"></i>
                                             </div>
                                             <div class="s-mode-btn" id="layout-btn-mobile"
                                                 onclick="MasterApp.applyLayout('mobile')">
-                                                <i class="fas fa-mobile-alt"></i> Mobilny
+                                                <i class="fas fa-mobile-alt"></i>
                                             </div>
                                             <div class="s-mode-btn" id="layout-btn-hybrid"
                                                 onclick="MasterApp.applyLayout('hybrid')">
-                                                <i class="fas fa-shuffle"></i> Hybrydowy
+                                                <i class="fas fa-shuffle"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -2178,7 +2330,7 @@ overscroll-behavior-y: contain;
                         { id: 513, name: 'Listwa',            app: 'Listwa',     x: 110, y: 410, size: 'P'      },
                         { id: 514, name: 'Pilot',             app: 'Pilot',      x: 110, y: 310, size: 'P'      },
                         { id: 505, name: 'AppStore',          app: 'AppStore',   x: 10,  y: 510, size: 'LARGE'  },
-                        { id: 506, name: 'Chrome',            app: 'Browser',    x: 10,  y: 110, size: 'LARGE'  },
+                        { id: 506, name: 'Chrome',            app: 'Browser',    x: 10,  y: 110, size: 'MAX'    },
                         { id: 507, name: 'Ustawienia',        app: 'Settings',   x: 10,  y: 610, size: 'MEDIUM' },
                         { id: 508, name: 'Kosz',              app: 'Trash',      x: 330, y: 760, size: 'SMALL'  }
                     ];
@@ -2191,7 +2343,7 @@ overscroll-behavior-y: contain;
                         { id: 511, name: 'AppStore',          app: 'AppStore',   x: 310, y: 210, size: 'L'      },
                         { id: 503, name: 'Notatnik',          app: 'Notepad',    x: 10,  y: 310, size: 'MEDIUM' },
                         { id: 504, name: 'Paint',             app: 'Paint',      x: 110, y: 310, size: 'LARGE'  },
-                        { id: 512, name: 'Browser',           app: 'Browser',    x: 210, y: 310, size: 'LARGE'  },
+                        { id: 512, name: 'Browser',           app: 'Browser',    x: 210, y: 310, size: 'MAX'    },
                         { id: 516, name: 'Kalkulator Paneli', app: 'kalk',       x: 310, y: 310, size: 'P'      },
                         { id: 514, name: 'Pilot',             app: 'Pilot',      x: 10,  y: 610, size: 'P'      },
                         { id: 510, name: 'Pralka',            app: 'Pralka',     x: 110, y: 610, size: 'MEDIUM' },
@@ -2206,7 +2358,7 @@ overscroll-behavior-y: contain;
                     /* --- PRESET: Hybrydowy — stały układ zdefiniowany ręcznie --- */
                     const layoutHybrid = [
                         { id: 501, name: 'Eksplorator',       app: 'Explorer',    x: 10,  y: 10,  size: 'MEDIUM' },
-                        { id: 502, name: 'Chrome',            app: 'Browser',     x: 110, y: 10,  size: 'MEDIUM' },
+                        { id: 502, name: 'Chrome',            app: 'Browser',     x: 110, y: 10,  size: 'MAX'    },
                         { id: 509, name: 'Coder',             app: 'Coder',       x: 210, y: 10,  size: 'K'      },
                         { id: 503, name: 'Notatnik',          app: 'Notepad',     x: 310, y: 10,  size: 'P'      },
 
@@ -2595,12 +2747,15 @@ overscroll-behavior-y: contain;
                ===================================================== */
             const MasterWidgets = {
 
-             DEFS: [
+              DEFS: [
                 { id: 'w-analog',  key: 'analog',  name: 'Zegar Analogowy',    icon: 'https://cdn-icons-png.flaticon.com/512/831/831269.png' },
                 { id: 'w-digital', key: 'digital', name: 'Zegar Cyfrowy', icon: 'https://cdn-icons-png.flaticon.com/512/16968/16968257.png' },
                 { id: 'w-notes',   key: 'notes',   name: 'Notatnik',            icon: 'https://cdn-icons-png.flaticon.com/512/752/752326.png' },
                 { id: 'w-weather', key: 'weather', name: 'Pogoda Tygodniowa',    icon: 'https://cdn-icons-png.flaticon.com/512/12157/12157555.png' },
+                { id: 'w-retro',   key: 'retro',   name: 'Zegar Retro Flip',   icon: 'https://cdn-icons-png.flaticon.com/512/831/831270.png' }
             ],
+
+                
 
                   WMO: {
             // Czyste niebo
@@ -2645,6 +2800,8 @@ overscroll-behavior-y: contain;
                 _analogRunning:   false,
                 _digitalInterval: null,
                 _weatherInterval: null,
+                _retroInterval:   null,
+
 
                 /* Odczyt stanu aktywności z localStorage */
                 getState: () => JSON.parse(localStorage.getItem('master_widgets_state') || '{}'),
@@ -2670,9 +2827,10 @@ overscroll-behavior-y: contain;
                     MasterWidgets.makeDraggable('w-digital', document.querySelector('#w-digital .widget-body'));
                     MasterWidgets.makeDraggable('w-notes',   document.querySelector('#w-notes .notes-header'));
                     MasterWidgets.makeDraggable('w-weather', document.querySelector('#w-weather .weather-top-row'));
+                    MasterWidgets.makeDraggable('w-retro',   document.querySelector('#w-retro .clock-section'));
                 },
 
-                /* --- Pokazuje widget i uruchamia jego logikę --- */
+/* --- Pokazuje widget i uruchamia jego logikę --- */
                 _showWidget: (widgetId) => {
                     const el = document.getElementById(widgetId);
                     if (!el) return;
@@ -2695,8 +2853,12 @@ overscroll-behavior-y: contain;
                         if (!MasterWidgets._weatherInterval)
                             MasterWidgets._weatherInterval = setInterval(MasterWidgets.fetchWeather, 30 * 60 * 1000);
                     }
+                    if (widgetId === 'w-retro') {
+                        MasterWidgets.updateRetroClock();
+                        if (!MasterWidgets._retroInterval)
+                            MasterWidgets._retroInterval = setInterval(MasterWidgets.updateRetroClock, 1000);
+                    }
                 },
-
                 /* --- Ukrywa widget i zatrzymuje jego procesy --- */
                 _hideWidget: (widgetId) => {
                     const el = document.getElementById(widgetId);
@@ -2826,6 +2988,32 @@ body.innerHTML = `
                         document.addEventListener('pointermove', move);
                         document.addEventListener('pointerup', up);
                     };
+                },
+
+                /* --- ZEGAR RETRO FLIP --- */
+                updateRetroClock: () => {
+                    const now = new Date();
+                    let hours = now.getHours();
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+                    hours = hours % 12;
+                    hours = hours ? hours : 12;
+                    const hoursStr = String(hours).padStart(2, '0');
+
+                    const elH = document.getElementById('retro-hours');
+                    const elM = document.getElementById('retro-min-val');
+                    const elAmPm = document.getElementById('retro-ampm');
+                    const elDate = document.getElementById('retro-current-date');
+
+                    if (elH) elH.textContent = hoursStr;
+                    if (elM) elM.textContent = minutes;
+                    if (elAmPm) elAmPm.textContent = ampm;
+
+                    if (elDate) {
+                        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+                        elDate.textContent = now.toLocaleDateString('pl-PL', options);
+                    }
                 },
 
                 /* --- ZEGAR ANALOGOWY (canvas + rAF) --- */
@@ -3009,7 +3197,7 @@ body.innerHTML = `
                         <div class="start-item" onclick="MasterWindow.launch('Explorer', 'Eksplorator', '', 'MEDIUM')">
                             <img src="${ICON_MAP['Explorer']}"> <span>Eksplorator</span>
                         </div>
-                        <div class="start-item" onclick="MasterWindow.launch('Browser', 'Chrome', '', 'LARGE')">
+                        <div class="start-item" onclick="MasterWindow.launch('Browser', 'Chrome', '', 'MAX')">
                             <img src="${ICON_MAP['Browser']}"> <span>Chrome</span>
                         </div>
                         <div class="start-item" onclick="MasterWindow.launch('AppStore', 'AppStore', '', 'LARGE')">
@@ -3039,22 +3227,22 @@ body.innerHTML = `
                         <div class="start-item has-submenu">
                             <img src="${ICON_MAP['Tool']}"> <span>Narzędzia</span>
                             <div class="submenu">
-                                <div class="start-item" onclick="MasterWindow.launch('Coder', 'Coder', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Coder', 'Coder', '', 'MAX')">
                                     <img src="${ICON_MAP['Coder']}"> <span>Coder</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Notepad', 'Notatnik', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Notepad', 'Notatnik', '', 'MAX')">
                                     <img src="${ICON_MAP['Notepad']}"> <span>Notatnik</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Paint', 'Paint', '', 'LARGE')">
+                                <div class="start-item" onclick="MasterWindow.launch('Paint', 'Paint', '', 'MAX')">
                                     <img src="${ICON_MAP['Paint']}"> <span>Paint</span>
                                 </div>
-                                                           <div class="start-item" onclick="MasterWindow.launch('kalk', 'Kalkulator Paneli', '', 'K')">
+                                                           <div class="start-item" onclick="MasterWindow.launch('kalk', 'Kalkulator Paneli', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/639/639341.png"> <span>Panele</span>
                                 </div>
                                 <div class="start-item" onclick="MasterWindow.launch('Calculator', 'Calculator', '', 'K')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/342/342344.png"> <span>Kalkulator</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Video', 'Video', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Video', 'Video', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/15433/15433109.png"> <span>Video</span>
                                 </div>
                             </div>
@@ -3066,16 +3254,16 @@ body.innerHTML = `
                                 <div class="start-item" onclick="MasterWindow.launch('Casino', 'Casino', '', 'K')">
                                     <img src="${ICON_MAP['Casino']}"> <span>Casino</span>
                                 </div>
-                                <div class="start-item" onclick="MasterWindow.launch('Gra', 'Gra 3D', '', 'MEDIUM')">
+                                <div class="start-item" onclick="MasterWindow.launch('Gra', 'Gra 3D', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/3559/3559457.png"> <span>Gra 3D</span>
                                 </div>
                                                          <div class="start-item" onclick="MasterWindow.launch('Gra3', 'Fortnajt', '', 'LARGE')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/2369/2369399.png"> <span>FORTNAJT</span>
                                 </div>
-                                  <div class="start-item" onclick="MasterWindow.launch('Gra2', 'Gra2', '', 'LARGE')">
+                                  <div class="start-item" onclick="MasterWindow.launch('Gra2', 'Gra2', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/17533/17533057.png"> <span>Brylak</span>
                                 </div>
-                                        <div class="start-item" onclick="MasterWindow.launch('Kreator', 'Kreator', '', 'MEDIUM')">
+                                        <div class="start-item" onclick="MasterWindow.launch('Kreator', 'Kreator', '', 'MAX')">
                                     <img src="https://cdn-icons-png.flaticon.com/512/421/421019.png"> <span>Kreator</span>
                                 </div>
                                 <div class="start-item" onclick="MasterWindow.launch('KAMERA', 'Kamera', '', 'L')">
@@ -3086,7 +3274,7 @@ body.innerHTML = `
 
                         <hr style="border:0; border-top: 1px solid var(--border-glass); margin: 5px 0;">
 
-                        <div class="start-item" onclick="MasterWindow.launch('Settings', 'Ustawienia', '', 'K')">
+                        <div class="start-item" onclick="MasterWindow.launch('Settings', 'Ustawienia', '', 'MAX')">
                             <img src="${ICON_MAP['Settings']}"> <span>Ustawienia</span>
                         </div>
                         <div class="start-item" onclick="MasterSystem.reinstall()">

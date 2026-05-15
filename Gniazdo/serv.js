@@ -86,7 +86,7 @@ app.post('/control', async (req, res) => {
     }
 });
 
-app.listen(3000, '0.0.0.0', () => {
+app.listen(5000, '0.0.0.0', () => {
     const reset = "\x1b[0m";
     const cyan = "\x1b[36m";
     const yellow = "\x1b[33m";

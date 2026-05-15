@@ -8,6 +8,20 @@
     <title>Master Remote</title>
 
     <style>
+		          /* Wyłącza niebieskie podświetlenie w przeglądarkach opartych na WebKit */
+     	* {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+          }
+            button, 
+            a, 
+            input, 
+            select, 
+            textarea, 
+           [role="button"] {
+            -webkit-tap-highlight-color: transparent;
+            outline: none; /* Usuwa ramkę fokusu */
+}
         :root {
             --bg: #0f0f0f;
             --btn: #252525;
@@ -18,6 +32,7 @@
         }
 
         body {
+			user-select: none;
             padding: calc(20px + env(safe-area-inset-top)) 
                     calc(20px + env(safe-area-inset-right)) 
                     calc(20px + env(safe-area-inset-bottom)) 

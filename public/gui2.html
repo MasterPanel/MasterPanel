@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telewizja Na Żywo - WebOS</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --glow-color: rgba(207, 6, 82, 0.6);
+            --tile-w: 300px;
+            --tile-h: 180px;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: url('5.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%);
+            z-index: -1;
+        }
+
+        header {
+            padding: 40px 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-button {
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-button:focus {
+            background: var(--glow-color);
+            border-color: white;
+            outline: none;
+            transform: scale(1.1);
+        }
+
+        .page-title {
+            font-size: 3rem;
+            font-weight: 100;
+        }
+
+        .content-view {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 80px;
+        }
+
+        .channel-grid {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+            padding: 50px 0;
+            scroll-behavior: smooth;
+        }
+
+        .channel-grid::-webkit-scrollbar { display: none; }
+
+        .channel-card {
+            min-width: var(--tile-w);
+            height: var(--tile-h);
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 3px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .channel-card:focus {
+            outline: none;
+            transform: scale(1.1);
+            border-color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 0 30px var(--glow-color);
+        }
+
+        .channel-logo {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .channel-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .now-playing {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <header>
+        <div class="page-title">Telewizja Na Żywo</div>
+        <div class="back-button" tabindex="1" id="backBtn">Powrót</div>
+    </header>
+
+    <div class="content-view">
+        <div class="channel-grid">
+            
+<a href="gui3.html"  class="channel-card" tabindex="2">
+                <div class="channel-logo">⚽</div>
+                <div class="channel-name">TVP Sport</div>
+                <div class="now-playing">Mecz na żywo</div>
+            </a>
+            <div class="channel-card" tabindex="3">
+                <div class="channel-logo">📰</div>
+                <div class="channel-name">TVN24</div>
+                <div class="now-playing">Fakty Wieczorne</div>
+            </div>
+            <div class="channel-card" tabindex="4">
+                <div class="channel-logo">🎥</div>
+                <div class="channel-name">HBO</div>
+                <div class="now-playing">Diuna: Część Druga</div>
+            </div>
+            <div class="channel-card" tabindex="5">
+                <div class="channel-logo">🌍</div>
+                <div class="channel-name">Discovery</div>
+                <div class="now-playing">Gorączka Złota</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Obsługa przycisku powrotu
+        document.getElementById('backBtn').addEventListener('click', function() {
+            window.location.href = 'gui.html';
+        });
+
+        // Obsługa nawigacji
+        document.addEventListener('keydown', function(e) {
+            var active = document.activeElement;
+            
+            if (e.key === 'ArrowRight' || e.keyCode === 39) {
+                var next = active.nextElementSibling;
+                if (next) next.focus();
+            } else if (e.key === 'ArrowLeft' || e.keyCode === 37) {
+                var prev = active.previousElementSibling;
+                if (prev) prev.focus();
+            } else if (e.key === 'ArrowDown' || e.keyCode === 40) {
+                // Jeśli jesteśmy na przycisku powrotu, przejdź do pierwszego kanału
+                if (active.id === 'backBtn') {
+                    document.querySelector('.channel-card').focus();
+                }
+            } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
+                // Z dowolnego kanału wróć do przycisku powrotu
+                if (active.classList.contains('channel-card')) {
+                    document.getElementById('backBtn').focus();
+                }
+            } else if (e.key === 'Enter' || e.keyCode === 13) {
+                if (active.id === 'backBtn') {
+                    active.click();
+                } else {
+                    console.log("Odtwarzanie kanału: " + active.querySelector('.channel-name').innerText);
+                }
+            }
+        });
+
+        window.onload = function() {
+            // Ustaw focus na pierwszym kanale przy starcie
+            document.querySelectorAll('.channel-card')[0].focus();
+        };
+    </script>
+</body>
+</html>

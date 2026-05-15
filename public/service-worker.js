@@ -2,8 +2,8 @@
  * MasterOS - Pełny tryb Offline z odświeżaniem danych
  */
 
-const CACHE_STATIC = 'pwa-static-v5'; // Zmiana wersji wymusza aktualizację
-const CACHE_DYNAMIC = 'pwa-dynamic-v5';
+const CACHE_STATIC = 'pwa-static-v1'; // Zmiana wersji wymusza aktualizację
+const CACHE_DYNAMIC = 'pwa-dynamic-v1';
 
 const OFFLINE_URL = '/index.html';
 

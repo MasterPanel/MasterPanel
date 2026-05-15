@@ -32,6 +32,20 @@
     
 
         <style>
+			          /* Wyłącza niebieskie podświetlenie w przeglądarkach opartych na WebKit */
+     	* {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+          }
+            button, 
+            a, 
+            input, 
+            select, 
+            textarea, 
+           [role="button"] {
+            -webkit-tap-highlight-color: transparent;
+            outline: none; /* Usuwa ramkę fokusu */
+}
             /* --- SYSTEM CORE VARIABLES --- */
             :root {
                 --accent: #0a0001;
@@ -424,6 +438,20 @@ overscroll-behavior-y: contain;
                 grid-auto-rows: max-content; gap: 15px; overflow-y: auto; 
             }
 
+            /* --- Zaznaczenie elementów w eksploratorze --- */
+            .file-item.selected {
+                background: rgba(0, 120, 212, 0.25) !important;
+                border: 1px solid rgba(0, 120, 212, 0.5) !important;
+            }
+
+            /* Przycisk usuwania zaznaczonych w eksploratorze */
+            .exp-del-sel-btn {
+                background: rgba(255, 95, 87, 0.15); border: 1px solid rgba(255, 95, 87, 0.4);
+                color: #ff5f57; padding: 4px 10px; border-radius: 6px; font-size: 11px;
+                cursor: pointer; transition: 0.2s; white-space: nowrap; display: none;
+            }
+            .exp-del-sel-btn:hover { background: rgba(255, 95, 87, 0.3); }
+
             /* --- APP SPECIFIC UI --- */
             .browser-bar { height: 45px; background: rgba(255,255,255,0.05); display: flex; padding: 5px 10px; gap: 10px; align-items: center; border-bottom: 1px solid var(--border-glass); }
             .browser-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 6px; color: white; padding: 5px 10px; font-size: 12px; }
@@ -718,6 +746,48 @@ overscroll-behavior-y: contain;
             .weather-temp-hi { font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 500; }
             .weather-temp-lo { font-size: 11px; color: rgba(255,255,255,0.35); }
             .weather-err { font-size: 11px; color: rgba(255,255,255,0.35); text-align: center; padding: 8px; }
+
+            /* --- Widget: Odtwarzacz Muzyki --- */
+            #w-music { top: 100px; right: 40px; }
+            #w-music .widget-body { width: 220px; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+            .music-cover {
+                width: 130px; height: 130px; border-radius: 10px;
+                background-size: cover; background-position: center;
+                background-color: rgba(255,255,255,0.05);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5); margin-bottom: 15px; cursor: move;
+            }
+            .music-cover.playing { animation: musicPulse 2s infinite ease-in-out; }
+            @keyframes musicPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+            .music-info { text-align: center; width: 100%; margin-bottom: 12px; }
+            .music-title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .music-artist { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+            .music-progress-container {
+                width: 100%; height: 4px; background: rgba(255,255,255,0.1);
+                border-radius: 2px; margin-bottom: 15px; cursor: pointer;
+            }
+            .music-progress-bar { height: 100%; background: var(--text-main); width: 0%; border-radius: 2px; transition: width 0.5s linear; }
+            .music-controls { display: flex; gap: 20px; align-items: center; }
+            .m-ctrl { background: none; border: none; color: #fff; cursor: pointer; opacity: 0.7; font-size: 16px; }
+            .m-ctrl:hover { opacity: 1; }
+
+            /* --- Widget: Czujniki DHT --- */
+            #w-dht { top: 100px; left: 40px; }
+            #w-dht .widget-body { width: 280px; padding: 15px; }
+            .dht-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; cursor: move; }
+            .dht-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); }
+            .dht-status {
+                width: 8px; height: 8px; background: #00ff88; border-radius: 50%;
+                box-shadow: 0 0 8px #00ff88; animation: dht-blink 2s infinite;
+            }
+            @keyframes dht-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+            .dht-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .dht-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); }
+            .dht-room { font-size: 10px; color: var(--text-dim); margin-bottom: 8px; text-transform: capitalize; }
+            .dht-values { display: flex; flex-direction: column; gap: 4px; }
+            .dht-val { font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+            .dht-val i { font-size: 12px; width: 14px; opacity: 0.6; }
+            .dht-temp { color: #ff5f57; }
+            .dht-hum { color: #3498db; }
             /* Stylizacja obrazka zastępującego emoji */
         .notes-icon {
             height: 1.2em;
@@ -725,6 +795,89 @@ overscroll-behavior-y: contain;
             vertical-align: middle;
 
         }
+              /* --- Widget: Retro Flip Clock --- */
+        #w-retro { top: 200px; left: 15px; }
+        .retro-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: scale(0.75);
+            transform-origin: top left;
+        }
+        .retro-container .clock-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: -15px; 
+            z-index: 1;
+            cursor: move; /* Do przeciągania na pulpicie */
+        }
+        .retro-container .flip-card {
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 50%, #e0e0e0 51%, #d0d0d0 100%);
+            width: 160px;
+            height: 180px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 110px;
+            font-weight: 310;
+            color: #333;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            position: relative;
+            border: 1px solid #ccc;
+        }
+        .retro-container .flip-card::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            box-shadow: 0 1px 1px rgba(255,255,255,0.7);
+        }
+        .retro-container .am-pm {
+            position: absolute;
+            bottom: 20px;
+            right: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+        }
+        .retro-container .weather-panel {
+            background: linear-gradient(135deg, #333 0%, #111 100%);
+            width: 400px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            border: 1px solid #444;
+            z-index: 0;
+            padding-top: 25px; 
+        }
+        .retro-container .sun-icon {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffeb3b 0%, #fbc02d 70%, #f57f17 100%);
+            border-radius: 50%;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 30px #fbc02d;
+            z-index: 2;
+        }
+        .retro-container .weather-left { display: flex; flex-direction: column; gap: 15px; }
+        .retro-container .weather-right { text-align: right; display: flex; flex-direction: column; }
+        .retro-container .date-text { font-size: 18px; color: #aaa; }
+        .retro-container .condition-text { font-size: 20px; font-weight: bold; }
+        .retro-container .temp-main { font-size: 36px; font-weight: normal; }
+        .retro-container .temp-range { font-size: 18px; color: #aaa; }
+
         /* ===================================================
            SETTINGS APP — Ustawienia Systemu MasterOS
            Pełny panel z zakładkami i suwakami przezroczystości
@@ -975,6 +1128,35 @@ overscroll-behavior-y: contain;
                     <textarea id="w-notes-text" placeholder="Wpisz notatkę..."></textarea>
                 </div>
             </div>
+            
+            
+            
+<div class="widget" id="w-retro" style="display:none;">
+                <div class="retro-container">
+                    <div class="clock-section">
+                        <div class="flip-card" id="retro-hours">00</div>
+                        <div class="flip-card" id="retro-minutes">
+                            <span id="retro-min-val">30</span>
+                            <div class="am-pm" id="retro-ampm">PM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="sun-icon"></div>
+
+                    <div class="weather-panel">
+                        <div class="weather-left">
+                            <div class="date-text" id="retro-current-date">Ndz, Maj 3</div>
+                            <div class="condition-text">Słonecznie</div>
+                        </div>
+                        <div class="weather-right">
+                            <div class="temp-main">20°</div>
+                            <div class="temp-range">20°/5°</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
             <!-- =====================================================
                  WIDGET: Pogoda Tygodniowa — domyślnie ukryty
@@ -990,6 +1172,40 @@ overscroll-behavior-y: contain;
             </div>
 
         </main>
+
+        <!-- =====================================================
+             WIDGET: Odtwarzacz Muzyki — domyślnie ukryty
+             ===================================================== -->
+        <div class="widget" id="w-music" style="display:none;">
+            <div class="widget-body">
+                <div class="music-cover" id="music-art"></div>
+                <div class="music-info">
+                    <div class="music-title" id="music-title">Wczytywanie...</div>
+                    <div class="music-artist" id="music-artist">System</div>
+                </div>
+                <div class="music-progress-container" onclick="MasterWidgets.seekMusic(event)">
+                    <div class="music-progress-bar" id="music-progress"></div>
+                </div>
+                <div class="music-controls">
+                    <button class="m-ctrl" onclick="MasterWidgets.prevMusic()"><i class="fas fa-backward-step"></i></button>
+                    <button class="m-ctrl" id="music-play-pause" onclick="MasterWidgets.toggleMusic()"><i class="fas fa-play"></i></button>
+                    <button class="m-ctrl" onclick="MasterWidgets.nextMusic()"><i class="fas fa-forward-step"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             WIDGET: Czujniki DHT — domyślnie ukryty
+             ===================================================== -->
+        <div class="widget" id="w-dht" style="display:none;">
+            <div class="widget-body">
+                <div class="dht-header">
+                    <div class="dht-title"><i class="fas fa-microchip" style="margin-right:8px;"></i>Pomiary DHT</div>
+                    <div class="dht-status"></div>
+                </div>
+                <div class="dht-grid" id="dht-container"></div>
+            </div>
+        </div>
 
         <div id="ctx-menu"></div>
 
@@ -1061,6 +1277,7 @@ overscroll-behavior-y: contain;
                 'Tool':       'https://cdn-icons-png.flaticon.com/512/1850/1850682.png',
                 'Kreator':    'https://cdn-icons-png.flaticon.com/512/421/421019.png',
                 'ImageViewer':'https://cdn-icons-png.flaticon.com/512/7184/7184115.png',
+                'YouTube':    'https://cdn-icons-png.flaticon.com/512/1384/1384060.png',
                 'Widgety':    'https://cdn-icons-png.flaticon.com/512/6214/6214270.png'
             };
 
@@ -1081,7 +1298,7 @@ overscroll-behavior-y: contain;
 
     { id: 503, name: 'Notatnik', app: 'Notepad',     x: 10, y: 310, size: 'MEDIUM' },
     { id: 504, name: 'Paint', app: 'Paint',          x: 110, y: 310, size: 'LARGE' },
-    { id: 512, name: 'Browser', app: 'Browser',        x: 210, y: 310, size: 'MAX' },
+    { id: 512, name: 'Chrome', app: 'Browser',        x: 210, y: 310, size: 'MAX' },
     { id: 516, name: 'Kalkulator Paneli', app: 'kalk', x: 310, y: 310, size: 'P' },
 
     { id: 514, name: 'Pilot', app: 'Pilot',           x: 10, y: 610, size: 'P' },
@@ -1089,10 +1306,12 @@ overscroll-behavior-y: contain;
     { id: 515, name: 'LED', app: 'LED', x: 210, y: 610, size: 'K' },
     { id: 513, name: 'Listwa', app: 'Listwa',           x: 310, y: 610, size: 'K' },
   
-    { id: 517, name: 'Settings', app: 'Settings',x: 10, y: 710, size: 'MEDIUM' },
+    { id: 517, name: 'Ustawienia', app: 'Settings',x: 10, y: 710, size: 'MEDIUM' },
     { id: 529, name: 'nativ', app: 'nativ',            x: 110, y: 710, size: 'L' },
     { id: 519, name: 'info', app: 'info'            ,  x: 210, y: 710, size: 'L' },
     { id: 521, name: 'Smart', app: 'Smart',            x: 310, y: 710, size: 'P' },
+    { id: 540, name: 'YouTube', app: 'YouTube',         x: 10,  y: 410, size: 'MEDIUM' },
+
 
                              ],
                 trash: [],
@@ -1228,9 +1447,24 @@ overscroll-behavior-y: contain;
                 div.ondblclick = () => {
                     if(type === 'shortcut') {
                         if(data.app === 'Trash') MasterWindow.launch('Trash', 'Kosz', '', 'SMALL');
+                        
+                        /* --- YouTube: na mobile próbuje otworzyć apkę, na desktop nowe okno --- */
+                        else if(data.app === 'YouTube') {
+                            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                            if(isMobile) {
+                                /* Próba uruchomienia aplikacji YouTube przez deep link */
+                                window.location.href = 'vnd.youtube://';
+                                /* Fallback — jeśli apka nie jest zainstalowana, po 1.5s otwiera stronę */
+                                setTimeout(() => { window.open('https://www.youtube.com', '_blank'); }, 1500);
+                            } else {
+                                /* Desktop — otwiera YouTube w nowej karcie/oknie */
+                                window.open('https://www.youtube.com', '_blank');
+                            }
+                        }
                         else MasterWindow.launch(data.app, data.name, data.customUrl || '', data.size);
                     }
-                    else if(data.type === 'dir') MasterWindow.launch('Explorer', data.name, '', 'MEDIUM');
+                    /* Folder na pulpicie — otwiera Eksplorator bezpośrednio w tym folderze */
+                    else if(data.type === 'dir') MasterWindow.launch('Explorer', data.name, data.name, 'MEDIUM');
                     else MasterApp.openFile(data.name, data.content);
                 };
                 return div;
@@ -1562,6 +1796,8 @@ overscroll-behavior-y: contain;
             /* --- PART 3: APPLICATIONS LOGIC --- */
             const MasterApp = {
                 paths: new Map(),
+                /* Mapa zaznaczenia w eksploratorze: wid → Set<id> */
+                expSel: new Map(),
 
                 openFile: (name, content) => {
                     const ext = name.split('.').pop().toLowerCase();
@@ -1896,6 +2132,10 @@ overscroll-behavior-y: contain;
 
                     const activeRoot = path.length > 0 ? path[0] : 'Pulpit';
 
+                    /* Inicjalizacja setu zaznaczenia dla tego okna */
+                    if(!MasterApp.expSel.has(wid)) MasterApp.expSel.set(wid, new Set());
+                    const sel = MasterApp.expSel.get(wid);
+
                     body.innerHTML = `
                         <div class="exp-container">
                             <aside class="exp-sidebar">
@@ -1918,10 +2158,15 @@ overscroll-behavior-y: contain;
                                 <nav class="explorer-nav">
                                     <button onclick="MasterApp.expBack('${wid}')" style="background:none; border:1px solid var(--border-glass); color:white; cursor:pointer; border-radius:4px; padding:2px 8px;">⬅</button>
                                     <div class="path-display">VFS:/${path.join('/')}</div>
+                                    <!-- Przycisk usuń zaznaczone — widoczny gdy są zaznaczone elementy -->
+                                    <button class="exp-del-sel-btn" id="exp-del-${wid}" onclick="MasterApp.expRemoveSelected('${wid}')">
+                                        🗑 Usuń zaznaczone
+                                    </button>
                                 </nav>
                                 <div class="exp-grid" id="exp-grid-${wid}">
                                     ${currentDir.map(item => `
                                         <div class="file-item icon" style="position:static; width:100%;" 
+                                             onclick="MasterApp.expToggleSel('${wid}', '${item.id}', this)"
                                              ondblclick="MasterApp.handleFs('${wid}', '${item.name}', '${item.type}', \`${(item.content||'').replace(/`/g, '\\`')}\`)"
                                              oncontextmenu="MasterCtx.show(event, 'icon', {id: '${item.id}', type: 'fs-item', wid: '${wid}'})"
                                              data-id="${item.id}" data-type="fs-item">
@@ -1937,8 +2182,53 @@ overscroll-behavior-y: contain;
                     `;
 
                     const grid = document.getElementById(`exp-grid-${wid}`);
+                    /* Klik na puste miejsce siatki — odznacz wszystkie */
+                    grid.addEventListener('pointerdown', (e) => {
+                        if(e.target === grid) {
+                            MasterApp.expSel.get(wid).clear();
+                            grid.querySelectorAll('.file-item.selected').forEach(el => el.classList.remove('selected'));
+                            const delBtn = document.getElementById(`exp-del-${wid}`);
+                            if(delBtn) delBtn.style.display = 'none';
+                        }
+                    });
                     grid.addEventListener('contextmenu', (e) => {
                         if(e.target === grid) MasterCtx.show(e, 'explorer', {wid});
+                    });
+                },
+
+                /* --- TOGGLE ZAZNACZENIA ELEMENTU W EKSPLORATORZE ---
+                   Klik = zaznacz/odznacz; aktualizuje przycisk delete */
+                expToggleSel: (wid, id, el) => {
+                    if(!MasterApp.expSel.has(wid)) MasterApp.expSel.set(wid, new Set());
+                    const sel = MasterApp.expSel.get(wid);
+                    if(sel.has(id)) {
+                        sel.delete(id);
+                        el.classList.remove('selected');
+                    } else {
+                        sel.add(id);
+                        el.classList.add('selected');
+                    }
+                    /* Pokaż/ukryj przycisk usuwania zaznaczonych */
+                    const delBtn = document.getElementById(`exp-del-${wid}`);
+                    if(delBtn) delBtn.style.display = sel.size > 0 ? 'block' : 'none';
+                },
+
+                /* --- USUŃ ZAZNACZONE ELEMENTY W EKSPLORATORZE (do kosza) --- */
+                expRemoveSelected: (wid) => {
+                    const sel = MasterApp.expSel.get(wid);
+                    if(!sel || sel.size === 0) return;
+                    MasterDialog.confirm("Usuwanie", `Czy przenieść ${sel.size} element(ów) do kosza?`, () => {
+                        sel.forEach(id => {
+                            const item = MasterCore.getDeepFsItem(id, true);
+                            if(item) { item._originType = 'fs-item'; MasterCore.state.trash.push(item); }
+                        });
+                        sel.clear();
+                        MasterCore.save();
+                        MasterCore.renderDesktop();
+                        MasterWindow.active.forEach((v, k) => {
+                            if(v.app === 'Explorer') MasterApp.renderExplorer(k);
+                            if(v.app === 'Trash') MasterApp.renderTrash(k);
+                        });
                     });
                 },
 
@@ -2214,7 +2504,7 @@ overscroll-behavior-y: contain;
                         { id: 511, name: 'AppStore',          app: 'AppStore',   x: 310, y: 210, size: 'L'      },
                         { id: 503, name: 'Notatnik',          app: 'Notepad',    x: 10,  y: 310, size: 'MEDIUM' },
                         { id: 504, name: 'Paint',             app: 'Paint',      x: 110, y: 310, size: 'LARGE'  },
-                        { id: 512, name: 'Browser',           app: 'Browser',    x: 210, y: 310, size: 'MAX'    },
+                        { id: 512, name: 'Chrome',           app: 'Browser',    x: 210, y: 310, size: 'MAX'    },
                         { id: 516, name: 'Kalkulator Paneli', app: 'kalk',       x: 310, y: 310, size: 'P'      },
                         { id: 514, name: 'Pilot',             app: 'Pilot',      x: 10,  y: 610, size: 'P'      },
                         { id: 510, name: 'Pralka',            app: 'Pralka',     x: 110, y: 610, size: 'MEDIUM' },
@@ -2288,7 +2578,83 @@ overscroll-behavior-y: contain;
                         MasterApp.renderCalendar();
                     }
                 },
+        /* =====================================================
+                   calcAction — obsługuje logikę kalkulatora
+                   Przyjmuje: wid (id okna), val (wartość przycisku)
+                   Odczytuje i aktualizuje stan z MasterApp['calcStateXXX']
+                   Odświeża wyświetlacz calc-prev i calc-curr
+                   ===================================================== */
+                calcAction: (wid, val) => {
+                    /* Pobierz stan kalkulatora dla tego okna */
+                    let s = MasterApp['calcState' + wid];
+                    if (!s) {
+                        s = { current: '0', previous: '', operator: null };
+                        MasterApp['calcState' + wid] = s;
+                    }
 
+                    const prevEl = document.getElementById('calc-prev-' + wid);
+                    const currEl = document.getElementById('calc-curr-' + wid);
+
+                    if (val === 'C') {
+                        /* Wyczyść wszystko */
+                        s.current = '0';
+                        s.previous = '';
+                        s.operator = null;
+
+                    } else if (val === 'DEL') {
+                        /* Usuń ostatni znak; jeśli jeden znak — wróć do '0' */
+                        s.current = s.current.length > 1 ? s.current.slice(0, -1) : '0';
+
+                    } else if (val === '%') {
+                        /* Procent — podziel bieżącą wartość przez 100 */
+                        const n = parseFloat(s.current);
+                        if (!isNaN(n)) s.current = String(n / 100);
+
+                    } else if (['+', '-', '*', '/'].includes(val)) {
+                        /* Operator — zapisz bieżącą wartość jako poprzednią i ustaw operator */
+                        s.previous = s.current;
+                        s.operator = val;
+                        s.current = '0';
+
+                    } else if (val === '=') {
+                        /* Oblicz wynik */
+                        if (s.operator && s.previous !== '') {
+                            const a = parseFloat(s.previous);
+                            const b = parseFloat(s.current);
+                            let result;
+                            if      (s.operator === '+') result = a + b;
+                            else if (s.operator === '-') result = a - b;
+                            else if (s.operator === '*') result = a * b;
+                            else if (s.operator === '/') result = b !== 0 ? a / b : 'Błąd';
+
+                            /* Zaokrąglenie do 10 miejsc po przecinku, aby uniknąć błędów zmiennoprzecinkowych */
+                            if (typeof result === 'number') {
+                                result = parseFloat(result.toPrecision(10));
+                            }
+
+                            /* Pokaż działanie w górnej linii, wynik w dolnej */
+                            s.previous = `${s.previous} ${s.operator} ${s.current} =`;
+                            s.current = String(result);
+                            s.operator = null;
+                        }
+
+                    } else if (val === '.') {
+                        /* Przecinek dziesiętny — dodaj tylko jeśli jeszcze nie ma */
+                        if (!s.current.includes('.')) s.current += '.';
+
+                    } else {
+                        /* Cyfry 0–9 */
+                        if (s.current === '0') {
+                            s.current = val; /* Zastąp wiodące zero */
+                        } else {
+                            s.current += val;
+                        }
+                    }
+
+                    /* Odśwież wyświetlacz */
+                    if (prevEl) prevEl.textContent = s.previous || '';
+                    if (currEl) currEl.textContent = s.current;
+                },
                 renderCalendar: () => {
                     const grid = document.getElementById('cal-grid');
                     const now = new Date();
@@ -2350,7 +2716,12 @@ overscroll-behavior-y: contain;
                             if(icon) {
                                 const type = icon.dataset.type;
                                 if(type === 'trash-item') MasterCtx.show(e, 'trash-icon', { id: icon.dataset.id });
-                                else MasterCtx.show(e, 'icon', { id: icon.dataset.id, type: type });
+                                /* Jeśli prawy klik na zaznaczonym elemencie i wiele zaznaczonych → tryb multi */
+                                else if(MasterCore.selectedIcons.size > 1 && MasterCore.selectedIcons.has(icon)) {
+                                    MasterCtx.show(e, 'multi-icon', { type: type });
+                                } else {
+                                    MasterCtx.show(e, 'icon', { id: icon.dataset.id, type: type });
+                                }
                             }
                         }
                     };
@@ -2387,8 +2758,13 @@ overscroll-behavior-y: contain;
                             <div class="ctx-sep"></div>
                             <div class="ctx-item" onclick="MasterCtx.props('${meta.id}', '${meta.type}')">
                                <span><img src="https://cdn-icons-png.flaticon.com/512/9723/9723316.png" class="MINIicon"></span> Właściwości</div>`;
-                    } else if(mode === 'trash-icon') {
+                    } else if(mode === 'multi-icon') {
+                        /* --- MENU DLA WIELU ZAZNACZONYCH IKON NA PULPICIE --- */
+                        const count = MasterCore.selectedIcons.size;
                         html = `
+                            <div class="ctx-item" onclick="MasterCtx.removeSelected()">
+                               <span style="color:#ff5f57"><img src="https://cdn-icons-png.flaticon.com/512/11494/11494408.png" class="MINIicon"></span> Usuń zaznaczone (${count})</div>`;
+                    } else if(mode === 'trash-icon') {                        html = `
                             <div class="ctx-item" onclick="MasterCtx.restore('${meta.id}', '${meta.wid||''}')">
                                 <span><img src="https://cdn-icons-png.flaticon.com/512/10695/10695864.png" class="MINIicon"></span> Przywróć</div>
                             <div class="ctx-item" onclick="MasterCtx.shred('${meta.id}', '${meta.wid||''}')">
@@ -2562,6 +2938,35 @@ overscroll-behavior-y: contain;
                         const info = `Nazwa: ${item.name}\nTyp: ${item.type || 'Apka'}\nID: ${item.id}\nRozmiar: ${JSON.stringify(item).length} B`;
                         MasterDialog.alert("Właściwości", info);
                     }
+                },
+
+                /* --- USUWANIE WIELU ZAZNACZONYCH IKON NA PULPICIE ---
+                   Iteruje po wszystkich zaznaczonych ikonach i przenosi je do kosza */
+                removeSelected: () => {
+                    MasterCtx.hide();
+                    const count = MasterCore.selectedIcons.size;
+                    if(count === 0) return;
+                    MasterDialog.confirm("Usuwanie", `Czy przenieść ${count} element(ów) do kosza?`, () => {
+                        MasterCore.selectedIcons.forEach(icon => {
+                            const id = icon.dataset.id;
+                            const itype = icon.dataset.type;
+                            let item;
+                            if(itype === 'shortcut') {
+                                item = MasterCore.state.icons.find(i => i.id == id);
+                                MasterCore.state.icons = MasterCore.state.icons.filter(i => i.id != id);
+                            } else {
+                                item = MasterCore.getDeepFsItem(id, true);
+                            }
+                            if(item) { item._originType = itype; MasterCore.state.trash.push(item); }
+                        });
+                        MasterCore.selectedIcons.clear();
+                        MasterCore.save();
+                        MasterCore.renderDesktop();
+                        MasterWindow.active.forEach((v, k) => {
+                            if(v.app === 'Explorer') MasterApp.renderExplorer(k);
+                            if(v.app === 'Trash') MasterApp.renderTrash(k);
+                        });
+                    });
                 }
             };
 
@@ -2618,12 +3023,17 @@ overscroll-behavior-y: contain;
                ===================================================== */
             const MasterWidgets = {
 
-             DEFS: [
+              DEFS: [
                 { id: 'w-analog',  key: 'analog',  name: 'Zegar Analogowy',    icon: 'https://cdn-icons-png.flaticon.com/512/831/831269.png' },
                 { id: 'w-digital', key: 'digital', name: 'Zegar Cyfrowy', icon: 'https://cdn-icons-png.flaticon.com/512/16968/16968257.png' },
                 { id: 'w-notes',   key: 'notes',   name: 'Notatnik',            icon: 'https://cdn-icons-png.flaticon.com/512/752/752326.png' },
                 { id: 'w-weather', key: 'weather', name: 'Pogoda Tygodniowa',    icon: 'https://cdn-icons-png.flaticon.com/512/12157/12157555.png' },
+                { id: 'w-retro',   key: 'retro',   name: 'Zegar & Pogoda',   icon: 'https://cdn-icons-png.flaticon.com/512/7262/7262821.png' },
+                { id: 'w-music',   key: 'music',   name: 'Odtwarzacz Muzyki',  icon: 'https://cdn-icons-png.flaticon.com/512/9973/9973495.png' },
+                { id: 'w-dht',     key: 'dht',     name: 'Czujniki DHT',       icon: 'https://cdn-icons-png.flaticon.com/512/19038/19038751.png' }
             ],
+
+                
 
                   WMO: {
             // Czyste niebo
@@ -2668,6 +3078,28 @@ overscroll-behavior-y: contain;
                 _analogRunning:   false,
                 _digitalInterval: null,
                 _weatherInterval: null,
+                _retroInterval:   null,
+                _musicInterval:   null,
+                _dhtInterval:     null,
+
+                /* Stan odtwarzacza muzyki */
+                musicState: {
+                    playing: false, progress: 0, trackIndex: 0,
+                    tracks: [
+                        { title: 'Neon Nights',    artist: 'Synthwave',  art: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=400' },
+                        { title: 'Midnight Drive',  artist: 'Retrowave',  art: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=400' },
+                        { title: 'Electric Feel',   artist: 'Electro',    art: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=400' }
+                    ]
+                },
+
+                /* Przykładowe dane DHT (można zastąpić fetch z dhtData.json) */
+                dhtData: {
+                    kuchnia:  { temp: '23.0', hum: '48.0' },
+                    salon:    { temp: '24.7', hum: '30.0' },
+                    sypialnia:{ temp: '18.2', hum: '30.0' },
+                    gabinet:  { temp: '22.5', hum: '35.0' }
+                },
+
 
                 /* Odczyt stanu aktywności z localStorage */
                 getState: () => JSON.parse(localStorage.getItem('master_widgets_state') || '{}'),
@@ -2693,9 +3125,13 @@ overscroll-behavior-y: contain;
                     MasterWidgets.makeDraggable('w-digital', document.querySelector('#w-digital .widget-body'));
                     MasterWidgets.makeDraggable('w-notes',   document.querySelector('#w-notes .notes-header'));
                     MasterWidgets.makeDraggable('w-weather', document.querySelector('#w-weather .weather-top-row'));
+                    MasterWidgets.makeDraggable('w-retro',   document.querySelector('#w-retro .clock-section'));
+                    /* Nowe widgety: uchwyt do przeciągania przez okładkę i nagłówek */
+                    MasterWidgets.makeDraggable('w-music',   document.querySelector('#w-music .music-cover'));
+                    MasterWidgets.makeDraggable('w-dht',     document.querySelector('#w-dht .dht-header'));
                 },
 
-                /* --- Pokazuje widget i uruchamia jego logikę --- */
+/* --- Pokazuje widget i uruchamia jego logikę --- */
                 _showWidget: (widgetId) => {
                     const el = document.getElementById(widgetId);
                     if (!el) return;
@@ -2718,8 +3154,29 @@ overscroll-behavior-y: contain;
                         if (!MasterWidgets._weatherInterval)
                             MasterWidgets._weatherInterval = setInterval(MasterWidgets.fetchWeather, 30 * 60 * 1000);
                     }
+                    if (widgetId === 'w-retro') {
+                        MasterWidgets.updateRetroClock();
+                        if (!MasterWidgets._retroInterval)
+                            MasterWidgets._retroInterval = setInterval(MasterWidgets.updateRetroClock, 1000);
+                    }
+                    /* --- Widget: Odtwarzacz Muzyki --- */
+                    if (widgetId === 'w-music') {
+                        MasterWidgets.updateMusicUI();
+                        if (!MasterWidgets._musicInterval)
+                            MasterWidgets._musicInterval = setInterval(() => {
+                                if (MasterWidgets.musicState.playing) {
+                                    MasterWidgets.musicState.progress += 1;
+                                    MasterWidgets.updateMusicUI();
+                                }
+                            }, 1000);
+                    }
+                    /* --- Widget: Czujniki DHT --- */
+                    if (widgetId === 'w-dht') {
+                        MasterWidgets.refreshDHT();
+                        if (!MasterWidgets._dhtInterval)
+                            MasterWidgets._dhtInterval = setInterval(MasterWidgets.refreshDHT, 30000);
+                    }
                 },
-
                 /* --- Ukrywa widget i zatrzymuje jego procesy --- */
                 _hideWidget: (widgetId) => {
                     const el = document.getElementById(widgetId);
@@ -2732,6 +3189,21 @@ overscroll-behavior-y: contain;
                     if (widgetId === 'w-weather') {
                         clearInterval(MasterWidgets._weatherInterval);
                         MasterWidgets._weatherInterval = null;
+                    }
+                    /* Zatrzymaj muzykę przy ukrywaniu widgetu */
+                    if (widgetId === 'w-music') {
+                        clearInterval(MasterWidgets._musicInterval);
+                        MasterWidgets._musicInterval = null;
+                        MasterWidgets.musicState.playing = false;
+                        const btn = document.getElementById('music-play-pause');
+                        if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+                        const art = document.getElementById('music-art');
+                        if (art) art.classList.remove('playing');
+                    }
+                    /* Zatrzymaj odświeżanie DHT */
+                    if (widgetId === 'w-dht') {
+                        clearInterval(MasterWidgets._dhtInterval);
+                        MasterWidgets._dhtInterval = null;
                     }
                 },
 
@@ -2804,7 +3276,7 @@ body.innerHTML = `
                 /* --- Wczytuje zapisane pozycje widgetów --- */
                 loadPositions: () => {
                     const saved = JSON.parse(localStorage.getItem('master_widget_pos') || '{}');
-                    ['w-analog','w-digital','w-notes','w-weather'].forEach(id => {
+                    ['w-analog','w-digital','w-notes','w-weather','w-music','w-dht'].forEach(id => {
                         const el = document.getElementById(id);
                         if (!el || !saved[id]) return;
                         el.style.top    = saved[id].top;
@@ -2817,11 +3289,11 @@ body.innerHTML = `
                 /* --- Zapisuje aktualne pozycje widgetów --- */
                 savePositions: () => {
                     const pos = {};
-                    ['w-analog','w-digital','w-notes','w-weather'].forEach(id => {
+                    ['w-analog','w-digital','w-notes','w-weather','w-music','w-dht'].forEach(id => {
                         const el = document.getElementById(id);
                         if (el) pos[id] = { top: el.offsetTop+'px', left: el.offsetLeft+'px' };
                     });
-                    localStorage.setItem('', JSON.stringify(pos));
+                    localStorage.setItem('master_widget_pos', JSON.stringify(pos));
                 },
 
                 /* --- Drag & drop dla widgetu --- */
@@ -2849,6 +3321,32 @@ body.innerHTML = `
                         document.addEventListener('pointermove', move);
                         document.addEventListener('pointerup', up);
                     };
+                },
+
+                /* --- ZEGAR RETRO FLIP --- */
+                updateRetroClock: () => {
+                    const now = new Date();
+                    let hours = now.getHours();
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+                    hours = hours % 12;
+                    hours = hours ? hours : 12;
+                    const hoursStr = String(hours).padStart(2, '0');
+
+                    const elH = document.getElementById('retro-hours');
+                    const elM = document.getElementById('retro-min-val');
+                    const elAmPm = document.getElementById('retro-ampm');
+                    const elDate = document.getElementById('retro-current-date');
+
+                    if (elH) elH.textContent = hoursStr;
+                    if (elM) elM.textContent = minutes;
+                    if (elAmPm) elAmPm.textContent = ampm;
+
+                    if (elDate) {
+                        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+                        elDate.textContent = now.toLocaleDateString('pl-PL', options);
+                    }
                 },
 
                 /* --- ZEGAR ANALOGOWY (canvas + rAF) --- */
@@ -3017,6 +3515,82 @@ body.innerHTML = `
                         } catch {}
                         MasterWidgets.fetchWeather();
                     }, () => { /* geolokalizacja odrzucona — zostaje domyślna */ });
+                },
+
+                /* =============================================
+                   WIDGET: ODTWARZACZ MUZYKI
+                   ============================================= */
+
+                /* Odtwarza/pauzuje bieżący utwór */
+                toggleMusic: () => {
+                    MasterWidgets.musicState.playing = !MasterWidgets.musicState.playing;
+                    const btn = document.getElementById('music-play-pause');
+                    if (btn) btn.innerHTML = MasterWidgets.musicState.playing
+                        ? '<i class="fas fa-pause"></i>'
+                        : '<i class="fas fa-play"></i>';
+                    const art = document.getElementById('music-art');
+                    if (art) art.classList.toggle('playing', MasterWidgets.musicState.playing);
+                },
+
+                /* Przechodzi do poprzedniego utworu */
+                prevMusic: () => {
+                    const ms = MasterWidgets.musicState;
+                    ms.trackIndex = (ms.trackIndex - 1 + ms.tracks.length) % ms.tracks.length;
+                    ms.progress = 0;
+                    MasterWidgets.updateMusicUI();
+                },
+
+                /* Przechodzi do następnego utworu */
+                nextMusic: () => {
+                    const ms = MasterWidgets.musicState;
+                    ms.trackIndex = (ms.trackIndex + 1) % ms.tracks.length;
+                    ms.progress = 0;
+                    MasterWidgets.updateMusicUI();
+                },
+
+                /* Seekuje pozycję po kliknięciu w pasek postępu */
+                seekMusic: (e) => {
+                    const bar = e.currentTarget;
+                    const ratio = e.offsetX / bar.offsetWidth;
+                    MasterWidgets.musicState.progress = Math.round(ratio * 100);
+                    MasterWidgets.updateMusicUI();
+                },
+
+                /* Aktualizuje UI odtwarzacza (okładka, tytuł, artysta, pasek) */
+                updateMusicUI: () => {
+                    const ms = MasterWidgets.musicState;
+                    const track = ms.tracks[ms.trackIndex];
+                    const titleEl  = document.getElementById('music-title');
+                    const artistEl = document.getElementById('music-artist');
+                    const artEl    = document.getElementById('music-art');
+                    const progEl   = document.getElementById('music-progress');
+                    if (titleEl)  titleEl.innerText  = track.title;
+                    if (artistEl) artistEl.innerText = track.artist;
+                    if (artEl)    artEl.style.backgroundImage = `url('${track.art}')`;
+                    if (progEl)   progEl.style.width = (ms.progress % 100) + '%';
+                },
+
+                /* =============================================
+                   WIDGET: CZUJNIKI DHT
+                   ============================================= */
+
+                /* Renderuje karty pomiarów w widgecie DHT */
+                refreshDHT: () => {
+                    const container = document.getElementById('dht-container');
+                    if (!container) return;
+                    container.innerHTML = '';
+                    Object.keys(MasterWidgets.dhtData).forEach(room => {
+                        const data = MasterWidgets.dhtData[room];
+                        const card = document.createElement('div');
+                        card.className = 'dht-card';
+                        card.innerHTML = `
+                            <div class="dht-room">${room}</div>
+                            <div class="dht-values">
+                                <div class="dht-val dht-temp"><i class="fas fa-temperature-half"></i> ${data.temp}°C</div>
+                                <div class="dht-val dht-hum"><i class="fas fa-droplet"></i> ${data.hum}%</div>
+                            </div>`;
+                        container.appendChild(card);
+                    });
                 }
             };
 

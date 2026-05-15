@@ -5,7 +5,7 @@
   <title>Coder HTML/INO</title>
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#333">
+  <meta name="theme-color" content="#000">
   <meta name="color-scheme" content="dark light">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
   
   <link rel="manifest" href="manifest.json">
   <script>
-    // Rejestracja Service Workera dla PWA
+    // Rejestracja Service Workera
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
@@ -22,34 +22,49 @@
     }
   </script>
   <style>
-        /* Główne style interfejsu */
-        html, body {user-select: none;
-            margin: 0; padding: 0; height: 100%; width: 100%;
+	       	* {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+          }
+            button, 
+            a, 
+            input, 
+            select, 
+            textarea, 
+           [role="button"] {
+            -webkit-tap-highlight-color: transparent;
+            outline: none; /* Usuwa ramkę fokusu */
+}
+        /* Stylistyka Mastera - obsługa Notch i dynamicznych wysokości */
+        html, body {
+            margin: 0; padding: 0; width: 100%;
+            height: 100vh; /* Wsparcie dla starszych przeglądarek */
+            height: 100dvh; /* Wypełnia cały ekran, usuwając paski na dole */
             font-family: Arial, sans-serif; overflow: hidden;
-            background-color: #282A36;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            background-color: #000;
             box-sizing: border-box;
         }
         .container {
-            display: flex; height: 100vh; width: 100%;
-            height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+            display: flex; height: 100%; width: 100%;
+            /* Wyrównanie toolbaru idealnie pod notchem/paskiem statusu */
+            padding-top: env(safe-area-inset-top);
+            box-sizing: border-box;
         }
         #install-banner {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
-            background-color: #007bff; color: white; text-align: center;
+            background-color: #111; color: white; text-align: center;
             padding: 10px; display: none; justify-content: space-around;
             align-items: center; font-size: 14px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
         #install-banner button {
-            background-color: #28a745; color: white; border: none;
+            background-color: #222; color: white; border: none;
             padding: 8px 15px; border-radius: 5px; cursor: pointer;
         }
-        .editor-container, .preview-container { display: flex; flex-direction: column; width: 50%; height: 100%; }
-        .preview-container { border-left: 1px solid #444; background-color: #fff; }
+        .editor-container, .preview-container { display: flex; flex-direction: column; width: 50%; height: 100%; position: relative; }
+        .preview-container { border-left: 1px solid #111; background-color: #000; }
         @media (max-width: 768px) { .editor-container { width: 100%; } .preview-container { display: none; } }
         .toolbar {
-            background-color: #333; color: white; display: flex;
+            background-color: #000; color: white; display: flex;
             justify-content: space-between; align-items: center;
             padding: 10px; height: 40px; box-sizing: border-box;
             border-bottom: 1px solid #444;
@@ -60,44 +75,99 @@
             padding: 5px 10px; cursor: pointer; display: flex;
             align-items: center; gap: 5px; border-radius: 4px;
         }
-        .toolbar button:hover { background-color: #555; }
+        .toolbar button:hover { background-color: #111; }
         .editor-toolbar-groups { display: flex; align-items: center; flex-grow: 1; justify-content: flex-end; gap: 20px; }
         .editor-toolbar-groups > .button-group:first-child { margin-right: auto; }
         .button-group { display: flex; gap: 10px; }
-        .editor { flex-grow: 1; background-color: #333; overflow: hidden; }
-        .CodeMirror { height: 100% !important; font-size: 1.1em; }
-        #preview-frame { width: 100%; height: 100%; border: none; background-color: white; }
+        .editor { flex-grow: 1; background-color: #000; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .CodeMirror { flex-grow: 1; height: auto !important; font-size: 1.1em; }
+        #preview-frame { width: 100%; height: 100%; border: none; background-color: #000; }
+        
+     
         .context-menu {
-            position: absolute; background-color: #444; border: 1px solid #666;
-            border-radius: 5px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            position: absolute; background-color: #000; border: 1px solid #111;
+            border-radius: 5px;fullscreenOverlay.style.display box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
             z-index: 1000; display: none; list-style: none; margin: 0; padding: 5px 0; color: #fff;
         }
         .context-menu li { padding: 8px 15px; cursor: pointer; white-space: nowrap; }
-        .context-menu li:hover { background-color: #555; }
-
+        .context-menu li:hover { background-color: #111; }
         .CodeMirror-dialog { background: #444; color: #eee; padding: 5px 10px; }
         .CodeMirror-dialog input { background: #222; border: 1px solid #666; color: white; outline: none; margin-left: 5px; }
         .CodeMirror-search-hint { color: #aaa; font-size: 0.8em; margin-left: 10px; }
+
+        /* Pasek skrótów - przypisany do kontenera edytora, brak marginesu dolnego */
+        .keyboard-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
         
-        #status-info { 
-            user-select: none;
-            color: #ccc; 
-            font-size: 12px; 
-            margin-left: 10px; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            display: none; 
-            vertical-align: middle;
-            line-height: normal;
+        #keyboard-toggle {
+            background:#1115;
+            color:#9995;
+            border: none;
+            border-radius: 12px 12px 0 0;
+            padding: 5px 0;
+            cursor: pointer;
+            width: 80px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            transition: background 0.3s;
+            backdrop-filter: blur(1px);
+        }
+        
+        #keyboard-toggle:active {
+            background: #1119;
         }
 
-        @media (min-width: 600px) {
-            #status-info {
-                display: inline-block;
-            }
+        .mobile-keyboard-bar {
+            background:#1115;
+            display: none; 
+            justify-content: space-around;
+            padding: 5px;
+            border-top: 1px solid #1112;
+            gap: 5px;
+            width: 100%;
+            pointer-events: auto;
+            backdrop-filter: blur(1px);
         }
+        
+        .mobile-keyboard-bar button {
+            backdrop-filter: blur(1px);
+            flex: 1;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 0;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+      
+      .mobile-keyboard-bar button:hover {    background: #0009;}
+       .mobile-keyboard-bar button:active  {   background: #1112;}
+
+       /* Niewidzialna nakładka na cały ekran do wymuszenia trybu fullscreen przy pierwszym kliknięciu */
+       #fullscreen-overlay {
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           z-index: 99999;
+           background: transparent;
+           cursor: pointer;
+       }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css" />
@@ -106,8 +176,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.css" />
 </head>
 <body>
+    <div id="fullscreen-overlay"></div>
+
     <div id="install-banner">
-        <span>Zainstaluj aplikację Coder!</span>
+        <span>Zainstaluj aplikację Master!</span>
         <button id="install-button">ZAINSTALUJ!</button>
     </div>
     <div class="container">
@@ -118,7 +190,6 @@
                         <button onclick="undo()" title="Cofnij"><i class="fas fa-undo"></i></button>
                         <button onclick="redo()" title="Ponów"><i class="fas fa-redo"></i></button>
                         <button onclick="clearEditor()" title="Wyczyść"><i class="fas fa-trash"></i></button>
-                        <span id="status-info"></span>
                     </div>
                     <div class="button-group">
                         <button onclick="findAndReplace()" title="Znajdź i Zamień"><i class="fas fa-search"></i></button>
@@ -133,6 +204,17 @@
             </div>
             <div class="editor">
                 <textarea id="html-editor"></textarea>
+            </div>
+            <div class="keyboard-wrapper">
+                <button id="keyboard-toggle" onclick="toggleKeyboardBar()"><i class="fas fa-chevron-up"></i></button>
+                <div id="keyboard-bar" class="mobile-keyboard-bar">
+                    <button onclick="selectAll()">Ctrl+A</button>
+                   <button onclick="copyText()">Kopiuj</button>
+                    <button onclick="cutText()">Wytnij</button>
+                    <button onclick="copyText()">Ctrl+C</button>
+                    <button onclick="cutText()">Ctrl+X</button>
+                    <button onclick="pasteText()">Wklej</button>
+                </div>
             </div>
         </div>
         <div class="preview-container">
@@ -165,12 +247,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/search.min.js"></script>
 
     <script>
+        // --- SEKCJA: Obsługa ukrytego przycisku Fullscreen ---
+        // Poniższy kod nasłuchuje na pierwsze kliknięcie w niewidzialną warstwę. 
+        // Wywołuje tryb pełnoekranowy na całym dokumencie i usuwa warstwę.
+        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+        if (fullscreenOverlay) {
+            fullscreenOverlay.addEventListener('click', () => {
+                const docElm = document.documentElement;
+                if (docElm.requestFullscreen) {
+                    docElm.requestFullscreen();
+                } else if (docElm.mozRequestFullScreen) { // Firefox
+                    docElm.mozRequestFullScreen();
+                } else if (docElm.webkitRequestFullScreen) { // Chrome, Safari i Opera
+                    docElm.webkitRequestFullScreen();
+                } else if (docElm.msRequestFullscreen) { // IE/Edge
+                    docElm.msRequestFullscreen();
+                }
+                
+                // Ukryj nakładkę po pierwszym kliknięciu, aby odblokować interfejs pod spodem
+                fullscreenOverlay.style.display = 'none';
+            });
+        }
+
         const STORAGE_KEY = 'coder_html_ino_content';
         const previewFrame = document.getElementById('preview-frame');
-        const statusInfo = document.getElementById('status-info');
-        let currentFileHandle = null;
         
-        // Inicjalizacja CodeMirror
         const editor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
             mode: 'htmlmixed',
             lineNumbers: true,
@@ -185,7 +286,21 @@
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
         });
 
-        // Funkcja odświeżania podglądu
+        // Obsługa paska skrótów
+        function toggleKeyboardBar() {
+            const bar = document.getElementById('keyboard-bar');
+            const toggle = document.getElementById('keyboard-toggle');
+            const icon = toggle.querySelector('i');
+            
+            if (bar.style.display === 'none' || bar.style.display === '') {
+                bar.style.display = 'flex';
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                bar.style.display = 'none';
+                icon.className = 'fas fa-chevron-up';
+            }
+        }
+
         function updatePreview() {
             const content = editor.getValue();
             const doc = previewFrame.contentWindow.document;
@@ -193,185 +308,57 @@
             if (editor.getOption("mode") === "htmlmixed") {
                 doc.write(content);
             } else {
-                doc.write('<html><body style="background:#333;color:#fff;padding:20px;"><h1>Tryb INO/CPP</h1><p>Podgląd HTML wyłączony dla tego typu pliku.</p></body></html>');
+                doc.write('<html><body style="background:#333;color:#fff;padding:20px;"><h1>Tryb INO</h1><p>Podgląd wyłączony.</p></body></html>');
             }
             doc.close();
         }
 
-        // Zapisywanie zmian w localStorage
         editor.on("change", () => {
-            const content = editor.getValue();
-            if (content) {
-                localStorage.setItem(STORAGE_KEY, content);
-            }
+            localStorage.setItem(STORAGE_KEY, editor.getValue());
             updatePreview();
         });
 
-        // Weryfikacja uprawnień do pliku (kluczowe dla File System Access API)
-        async function verifyPermission(fileHandle, readWrite) {
-            const options = {};
-            if (readWrite) { options.mode = 'readwrite'; }
-            if ((await fileHandle.queryPermission(options)) === 'granted') { return true; }
-            if ((await fileHandle.requestPermission(options)) === 'granted') { return true; }
-            return false;
-        }
-
-        // Ładowanie zawartości pliku z uchwytu
-        async function loadFileFromHandle(handle) {
-            try {
-                if (await verifyPermission(handle, false)) {
-                    const file = await handle.getFile();
-                    const content = await file.text();
-                    currentFileHandle = handle;
-                    setModeForExtension(file.name);
-                    editor.setValue(content);
-                    updatePreview();
-                    statusInfo.textContent = `${file.name}`;
-                    document.title = `Coder - ${file.name}`;
-                    return true;
-                }
-            } catch (err) {
-                console.error("Błąd ładowania pliku:", err);
-            }
-            return false;
-        }
-
-        // Logika przy starcie aplikacji
-        window.addEventListener('DOMContentLoaded', async () => {
-            let fileOpened = false;
-
-            // Obsługa plików przekazanych przez system (PWA Launch Handler)
-            if ('launchQueue' in window) {
-                window.launchQueue.setConsumer(async (launchParams) => {
-                    if (launchParams.files && launchParams.files.length > 0) {
-                        fileOpened = await loadFileFromHandle(launchParams.files[0]);
-                    }
-                });
-            }
-
-            // Jeśli nie otwarto pliku z zewnątrz, wczytaj z pamięci podręcznej
-            setTimeout(() => {
-                if (!fileOpened) {
-                    loadFromStorage();
-                }
-            }, 300);
-        });
-
-        // Funkcja wczytywania z localStorage
-        function loadFromStorage() {
+        window.onload = () => {
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved && !editor.getValue()) {
-                editor.setValue(saved);
-                updatePreview();
-                statusInfo.textContent = "Wczytano autozapis";
-            }
-        }
+            if (saved) editor.setValue(saved);
+            updatePreview();
+        };
 
-        // Rozpoznawanie trybu kolorowania składni
         function setModeForExtension(filename) {
-            const newMode = (filename.endsWith(".ino") || filename.endsWith(".cpp")) ? "text/x-c++src" : "htmlmixed";
+            const newMode = filename.endsWith(".ino") ? "text/x-c++src" : "htmlmixed";
             editor.setOption("mode", newMode);
         }
 
-        // Funkcje toolbara
-        function undo() { editor.undo(); }
-        function redo() { editor.redo(); }
-        function clearEditor() { 
-            if(confirm("Czy na pewno chcesz wyczyścić edytor?")) {
-                editor.setValue(''); 
-                localStorage.removeItem(STORAGE_KEY);
-                updatePreview(); 
-                currentFileHandle = null; 
-                document.title = "Coder HTML/INO"; 
-                statusInfo.textContent = "";
-            }
-        }
-
+        function undo() { editor.undo(); editor.focus(); }
+        function redo() { editor.redo(); editor.focus(); }
+        function clearEditor() { editor.setValue(''); updatePreview(); editor.focus(); }
         function findAndReplace() { editor.execCommand("find"); }
 
-        // Funkcja zapisu pliku (nadpisywanie lub nowy zapis)
-        async function saveFile() {
-            const content = editor.getValue();
-            try {
-                // Jeśli mamy dostęp do systemowego uchwytu pliku (prawdziwe nadpisywanie)
-                if (currentFileHandle && 'showSaveFilePicker' in window) {
-                    if (await verifyPermission(currentFileHandle, true)) {
-                        const writable = await currentFileHandle.createWritable();
-                        await writable.write(content);
-                        await writable.close();
-                        statusInfo.textContent = "Zapisano zmiany.";
-                        return;
-                    }
-                } 
-                
-                // Jeśli to nowy plik lub przeglądarka nie wspiera File System API
-                if ('showSaveFilePicker' in window) {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: currentFileHandle ? currentFileHandle.name : 'index.html',
-                        types: [{
-                            description: 'Pliki kodu',
-                            accept: { 'text/html': ['.html'], 'text/plain': ['.ino', '.cpp'] }
-                        }]
-                    });
-                    currentFileHandle = handle;
-                    const writable = await handle.createWritable();
-                    await writable.write(content);
-                    await writable.close();
-                    setModeForExtension(handle.name);
-                    document.title = `Coder - ${handle.name}`;
-                    statusInfo.textContent = `${handle.name}`;
-                } else {
-                    // Fallback dla urządzeń bez dostępu do plików (np. niektóre przeglądarki mobilne)
-                    const name = prompt("Zapisz jako (pobieranie nowej kopii):", currentFileHandle ? currentFileHandle.name : "index.html");
-                    if (!name) return;
-                    const blob = new Blob([content], { type: 'text/plain' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = name;
-                    a.click();
-                    statusInfo.textContent = "Pobrano plik.";
-                }
-            } catch (err) {
-                console.error("Błąd zapisu:", err);
-                statusInfo.textContent = "Błąd zapisu.";
-            }
+        function saveFile() {
+            const name = prompt("Nazwa pliku:", "index.html");
+            if (!name) return;
+            setModeForExtension(name);
+            const blob = new Blob([editor.getValue()], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            a.click();
         }
 
-        // Funkcja wczytywania pliku
-        async function loadFile() {
-            if ('showOpenFilePicker' in window) {
-                try {
-                    const [handle] = await window.showOpenFilePicker({
-                        types: [{
-                            description: 'Pliki kodu',
-                            accept: { 'text/html': ['.html'], 'text/plain': ['.ino', '.cpp'] }
-                        }],
-                        multiple: false
-                    });
-                    await loadFileFromHandle(handle);
-                } catch (err) {
-                    console.log("Anulowano wybór pliku");
-                }
-            } else {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.onchange = e => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    setModeForExtension(file.name);
-                    const reader = new FileReader();
-                    reader.onload = () => { 
-                        editor.setValue(reader.result); 
-                        updatePreview(); 
-                        statusInfo.textContent = file.name;
-                    };
-                    reader.readAsText(file);
-                };
-                input.click();
-            }
+        function loadFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                setModeForExtension(file.name);
+                const reader = new FileReader();
+                reader.onload = () => { editor.setValue(reader.result); updatePreview(); };
+                reader.readAsText(file);
+            };
+            input.click();
         }
 
-        // Podglądy
         function previewInNewTab() {
             const content = editor.getValue();
             const previewWindow = window.open("", "_blank");
@@ -391,12 +378,11 @@
             doc.open(); doc.write(editor.getValue()); doc.close();
             const btn = doc.createElement('button');
             btn.innerHTML = '✕ Wyjdź';
-            Object.assign(btn.style, { position: 'fixed', top: '20px', right: '20px', padding: '10px', background: 'red', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px', zIndex: '10000' });
+            Object.assign(btn.style, { position: 'fixed', top: '20px', right: '20px', padding: '10px', background: 'red', color: 'white', border: 'none', cursor: 'pointer' });
             btn.onclick = () => document.body.removeChild(f);
             doc.body.appendChild(btn);
         }
 
-        // Menu kontekstowe
         const contextMenu = document.getElementById('context-menu');
         editor.getWrapperElement().addEventListener('contextmenu', (e) => {
             e.preventDefault();
@@ -406,13 +392,28 @@
         });
         document.addEventListener('click', () => contextMenu.style.display = 'none');
 
-        // Funkcje edycyjne
-        function selectAll() { editor.execCommand('selectAll'); }
-        function copyText() { navigator.clipboard.writeText(editor.getSelection()); }
-        function cutText() { navigator.clipboard.writeText(editor.getSelection()).then(() => editor.replaceSelection('')); }
-        function pasteText() { navigator.clipboard.readText().then(t => editor.replaceSelection(t)); }
+        function selectAll() { editor.execCommand('selectAll'); editor.focus(); }
+        function copyText() { 
+            const text = editor.getSelection();
+            if (text) navigator.clipboard.writeText(text);
+            editor.focus();
+        }
+        function cutText() { 
+            const text = editor.getSelection();
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    editor.replaceSelection('');
+                });
+            }
+            editor.focus();
+        }
+        function pasteText() { 
+            navigator.clipboard.readText().then(t => {
+                editor.replaceSelection(t);
+            });
+            editor.focus();
+        }
 
-        // Instalacja PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -423,6 +424,26 @@
             document.getElementById('install-banner').style.display = 'none';
             if (deferredPrompt) deferredPrompt.prompt();
         };
+
+        if ('launchQueue' in window) {
+            window.launchQueue.setConsumer(async (launchParams) => {
+                if (launchParams.files && launchParams.files.length > 0) {
+                    const fileHandle = launchParams.files[0];
+                    try {
+                        const file = await fileHandle.getFile();
+                        const content = await file.text();
+                        setModeForExtension(file.name);
+                        if (editor) {
+                            editor.setValue(content);
+                            updatePreview();
+                            document.title = `Edytujesz: ${file.name}`;
+                        }
+                    } catch (err) {
+                        console.error("Błąd podczas odczytu pliku:", err);
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
